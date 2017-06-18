@@ -9,7 +9,7 @@ namespace EthereumSamurai.Indexer
         static void Main(string[] args)
         {
             Console.Clear();
-            Console.Title = "BitcoinIndexer - Ver. " + Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationVersion;
+            Console.Title = "EthereumIndexer - Ver. " + Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationVersion;
 
             try
             {
@@ -22,13 +22,13 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
-                Console.WriteLine("cannot start jobs! Exception: " + e.Message);
+                Console.WriteLine("Can not start jobs! Exception: " + e.Message);
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey();
                 return;
             }
 
-            Console.WriteLine("BitcoinIndexer started");
+            Console.WriteLine("EthereumIndexer started");
             Console.WriteLine("Utc time: " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
 
             Console.WriteLine("Press 'q' to quit.");
