@@ -1,4 +1,5 @@
 ﻿using EthereumSamurai.Common;
+using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Indexer.Jobs;
 using Microsoft.Extensions.Configuration;
@@ -22,8 +23,7 @@ namespace EthereumSamurai.Indexer
             IServiceCollection collection = new ServiceCollection();
             collection.ConfigureServices(configuration);
             //RegisterJobs
-            //collection.AddSingleton<IBlockIndexJobFactory, BlockIndexJobFactory>();
-            //collection.AddSingleton<BlockIndexingJobDivider>();
+            collection.AddSingleton<IBlockIndexingJobFactory, BlockIndexingJobFactory>();
 
             Services = collection.BuildServiceProvider();
             Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
@@ -34,7 +34,11 @@ namespace EthereumSamurai.Indexer
         public void RunJobs()
         {
             CancellationTokenSource cts = new CancellationTokenSource();
-            IEnumerable<IJob> jobs = new List<IJob>();
+            var factory= Services.GetService<IBlockIndexingJobFactory>();
+            IEnumerable<IJob> jobs = new List<IJob>()
+            {
+                factory.GetJob(new IndexingSettings() { From = 1 })
+            };
 
             JobRunner runner = new JobRunner(jobs);
 
