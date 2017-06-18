@@ -24,7 +24,7 @@ namespace EthereumSamurai.Services
             _client = web3;
         }
 
-        public async Task<BlockContent> ReadBlockAsync(ulong blockHeight)
+        public async Task<BlockContent> ReadBlockAsync(BigInteger blockHeight)
         {
             BlockWithTransactions block = await _client.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockHeight));
             #region Block
