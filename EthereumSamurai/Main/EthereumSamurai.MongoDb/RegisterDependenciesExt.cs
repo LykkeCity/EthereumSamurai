@@ -1,7 +1,13 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using AutoMapper;
+using EthereumSamurai.Core.Settings;
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
+using MongoDB.Driver;
+using EthereumSamurai.MongoDb.Repositories;
+using EthereumSamurai.Core.Repositories;
 
 namespace EthereumSamurai.MongoDb
 {
@@ -9,6 +15,29 @@ namespace EthereumSamurai.MongoDb
     {
         public static IServiceCollection RegisterRepositories(this IServiceCollection collection)
         {
+            #region Automapper
+
+            //Add automapper
+            var mapper = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfiles(typeof(RegisterDependenciesExt).GetTypeInfo().Assembly);
+            });
+            collection.AddSingleton(sp => mapper.CreateMapper());
+
+            #endregion
+
+            #region Repositories
+
+            var provider = collection.BuildServiceProvider();
+            IBaseSettings settings = provider.GetService<IBaseSettings>();
+            var mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
+            collection.AddSingleton(typeof(MongoClient), mongoClient);
+            collection.AddSingleton<IMongoDatabase>(mongoClient.GetDatabase("EthereumIndexer"));
+
+            collection.AddSingleton<IBlockRepository, BlockRepository>();
+            collection.AddSingleton<ITransactionRepository, TransactionRepository>();
+
+            #endregion
 
             return collection;
         }

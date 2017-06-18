@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace EthereumSamurai.Services
 {
-    public class RpcBlockReader //: //IRpcBlockReader
+    public class RpcBlockReader : IRpcBlockReader
     {
         private readonly IBaseSettings _bitcoinIndexerSettings;
         private readonly IWeb3 _client;
@@ -94,8 +94,5 @@ namespace EthereumSamurai.Services
 
             return tip.Value;
         }
-
-        //Nicolas Dorier code below
-
     }
 }
