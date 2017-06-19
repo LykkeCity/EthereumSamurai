@@ -48,7 +48,7 @@ namespace EthereumSamurai.Services
                 Size = block.Size,
                 StateRoot= block.StateRoot,
                 Timestamp = block.Timestamp,
-                TotalDifficulty = block.Timestamp,
+                TotalDifficulty = block.TotalDifficulty,
                 TransactionsRoot = block.TransactionsRoot
             };
 
@@ -62,6 +62,7 @@ namespace EthereumSamurai.Services
             {
                 TransactionModel transactionModel = new TransactionModel()
                 {
+                    BlockTimestamp = block.Timestamp,
                     BlockHash = transaction.BlockHash,
                     BlockNumber = transaction.BlockNumber,
                     From = transaction.From,

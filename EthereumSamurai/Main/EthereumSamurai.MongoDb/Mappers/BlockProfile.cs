@@ -31,7 +31,7 @@ namespace EthereumSamurai.MongoDb.Mappers
                     blockEntity.GasLimit = blockModel.GasLimit.ToString();
                     blockEntity.Difficulty = blockModel.Difficulty.ToString();
                     blockEntity.TotalDifficulty = blockModel.TotalDifficulty.ToString();
-                    blockEntity.Number = blockModel.Number.ToString();
+                    blockEntity.Number = (ulong)blockModel.Number;
                     blockEntity.Size = blockModel.Size.ToString();
                 })
                 .ReverseMap()
@@ -41,7 +41,7 @@ namespace EthereumSamurai.MongoDb.Mappers
                     blockModel.GasLimit = BigInteger.Parse(blockEntity.GasLimit);
                     blockModel.Difficulty = BigInteger.Parse(blockEntity.Difficulty);
                     blockModel.TotalDifficulty = BigInteger.Parse(blockEntity.TotalDifficulty);
-                    blockModel.Number = BigInteger.Parse(blockEntity.Number);
+                    blockModel.Number = new BigInteger(blockEntity.Number);
                     blockModel.Size = BigInteger.Parse(blockEntity.Size);
                 });
         }

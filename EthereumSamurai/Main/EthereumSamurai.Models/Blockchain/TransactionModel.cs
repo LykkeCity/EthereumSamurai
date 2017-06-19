@@ -18,5 +18,6 @@ namespace EthereumSamurai.Models.Blockchain
         public string From { get; set; }
         public string To { get; set; }
         public string Input { get; set; }
+        public BigInteger BlockTimestamp { get; set; }
     }
 }

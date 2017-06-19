@@ -1,11 +1,15 @@
-﻿using EthereumSamurai.Common;
+﻿using AutoMapper;
+using EthereumSamurai.Common;
 using EthereumSamurai.Core.Models;
+using EthereumSamurai.Core.Repositories;
+using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Indexer.Jobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
@@ -19,8 +23,19 @@ namespace EthereumSamurai.Indexer
 
         public async Task Run(IConfigurationRoot configuration)
         {
-            var settings = GetSettings(configuration);
+            //var settings = GetSettings(configuration);
             IServiceCollection collection = new ServiceCollection();
+            #region Automapper
+
+            //Add automapper
+            var mapper = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfiles(typeof(MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
+                //cfg.AddProfiles(typeof(TransactionResponseProfile).GetTypeInfo().Assembly);
+            });
+            collection.AddSingleton(sp => mapper.CreateMapper());
+
+            #endregion
             collection.ConfigureServices(configuration);
             //RegisterJobs
             collection.AddSingleton<IBlockIndexingJobFactory, BlockIndexingJobFactory>();
@@ -34,22 +49,32 @@ namespace EthereumSamurai.Indexer
         public void RunJobs()
         {
             CancellationTokenSource cts = new CancellationTokenSource();
-            var factory= Services.GetService<IBlockIndexingJobFactory>();
-            IEnumerable<IJob> jobs = new List<IJob>()
+
+            try
             {
-                factory.GetJob(new IndexingSettings() { From = 1 })
-            };
+                IBlockRepository blockRepository = Services.GetService<IBlockRepository>();
+                IRpcBlockReader rpcBlockReader = Services.GetService<IRpcBlockReader>();
+                IBlockIndexingJobFactory factory = Services.GetService<IBlockIndexingJobFactory>();
+                IEnumerable<IJob> jobs = new List<IJob>()
+                {
+                    factory.GetJob(new IndexingSettings() { From = 1 })
+                };
 
-            JobRunner runner = new JobRunner(jobs);
+                JobRunner runner = new JobRunner(jobs);
 
-            AssemblyLoadContext.Default.Unloading += ctx =>
+                AssemblyLoadContext.Default.Unloading += ctx =>
+                {
+                    Console.WriteLine("SIGTERM recieved");
+
+                    cts.Cancel();
+                };
+
+                runner.RunTasks(cts.Token).Wait();
+            }
+            catch (Exception e)
             {
-                Console.WriteLine("SIGTERM recieved");
-
-                cts.Cancel();
-            };
-
-            runner.RunTasks(cts.Token).Wait();
+                throw;
+            }
         }
 
         static SettingsWrapper GetSettings(IConfigurationRoot configuration)

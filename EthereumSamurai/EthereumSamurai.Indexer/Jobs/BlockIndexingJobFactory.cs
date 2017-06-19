@@ -18,9 +18,9 @@ namespace EthereumSamurai.Indexer.Jobs
         private readonly IIndexingService _indexingService;
         private readonly ILogger _logger;
 
-        public BlockIndexingJobFactory(IRpcBlockReader rpcBlockReader, IIndexingService indexingService, ILogger logger)
+        public BlockIndexingJobFactory(IRpcBlockReader rpcBlockReader, IIndexingService indexingService, ILoggerFactory logger)
         {
-            _logger = logger;
+            _logger = logger.CreateLogger("BlockIndexingJobFactory");
             _indexingService = indexingService;
             _rpcBlockReader = rpcBlockReader;
         }

@@ -7,6 +7,7 @@ using EthereumSamurai.MongoDb.Entities;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -39,6 +40,14 @@ namespace EthereumSamurai.MongoDb.Repositories
             BlockEntity blockEntity = _mapper.Map<BlockEntity>(blockModel);
             await _collection.DeleteOneAsync((x) => x.BlockHash == blockEntity.BlockHash);
             await _collection.InsertOneAsync(blockEntity);
+        }
+
+        public async Task<BigInteger> GetLastSyncedBlockAsync()
+        {
+            var sort = Builders<BlockEntity>.Sort.Descending(x => x.Number); //build sort object   
+            BlockEntity result = _collection.Find<BlockEntity>(x => true).Sort(sort).FirstOrDefault();
+
+            return new BigInteger(result?.Number ?? 1);
         }
     }
 }

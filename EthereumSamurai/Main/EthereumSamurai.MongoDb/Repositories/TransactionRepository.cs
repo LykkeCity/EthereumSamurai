@@ -3,10 +3,13 @@ using EthereumSamurai.Core;
 using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
 using EthereumSamurai.MongoDb.Entities;
+using EthereumSamurai.MongoDb.Utils;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,6 +33,7 @@ namespace EthereumSamurai.MongoDb.Repositories
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.BlockNumber)),
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.From)),
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.To)),
+                new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.BlockTimestamp)),
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.BlockHash)),
             });
 
@@ -41,6 +45,73 @@ namespace EthereumSamurai.MongoDb.Repositories
             TransactionEntity transactionEntity = _mapper.Map<TransactionEntity>(transactionModel);
             await _collection.DeleteOneAsync((x) => x.TransactionHash == transactionEntity.TransactionHash);
             await _collection.InsertOneAsync(transactionEntity);
+        }
+
+        public async Task<TransactionModel> GetAsync(string transactionHash)
+        {
+            var filter = Builders<TransactionEntity>.Filter.Eq("_id", transactionHash);
+            IAsyncCursor<TransactionEntity> cursor = await _collection.FindAsync(filter);
+            TransactionEntity transactionEntity = cursor.FirstOrDefault();
+            TransactionModel transactionModel = _mapper.Map<TransactionModel>(transactionEntity);
+
+            return transactionModel;
+        }
+
+        public async Task<IEnumerable<TransactionModel>> GetAsync(TransactionQuery transactionQuery)
+        {
+            List<TransactionModel> result;
+            var filterBuilder = Builders<TransactionEntity>.Filter;
+            FilterDefinition<TransactionEntity> filter = filterBuilder.Empty;
+            if (!string.IsNullOrEmpty(transactionQuery.FromAddress))
+            {
+                FilterDefinition<TransactionEntity> filterFrom = filterBuilder.Eq(x => x.From, transactionQuery.FromAddress);
+                filter = filter & filterFrom; 
+            }
+
+            if (!string.IsNullOrEmpty(transactionQuery.ToAddress))
+            {
+                FilterDefinition<TransactionEntity> filterTo = filterBuilder.Eq(x => x.To, transactionQuery.ToAddress);
+                filter = filter & filterTo;
+            }
+
+            if (transactionQuery.StartDate.HasValue)
+            {
+                int unixTime = transactionQuery.StartDate.Value.GetUnixTime();
+                FilterDefinition<TransactionEntity> filterStartDate = filterBuilder.Gte(x => x.BlockTimestamp, (uint)unixTime);
+                filter = filter & filterStartDate;
+            }
+
+            if (transactionQuery.EndDate.HasValue)
+            {
+                int unixTime = transactionQuery.EndDate.Value.GetUnixTime();
+                FilterDefinition<TransactionEntity> filterEndDate = filterBuilder.Gte(x => x.BlockTimestamp, (uint)unixTime);
+                filter = filter & filterEndDate;
+            }
+
+            if (!string.IsNullOrEmpty(transactionQuery.ToAddress))
+            {
+                FilterDefinition<TransactionEntity> filterTo = filterBuilder.Eq(x => x.To, transactionQuery.ToAddress);
+                filter = filter & filterTo;
+            }
+
+            var sort = Builders<TransactionEntity>.Sort.Ascending(x => x.BlockNumber);
+            MongoDB.Driver.
+            IFindFluent< TransactionEntity,TransactionEntity > search = _collection.Find(filter);
+            result = new List<TransactionModel>();
+
+            if (transactionQuery.Start.HasValue && transactionQuery.Count.HasValue)
+            {
+                result = new List<TransactionModel>(transactionQuery.Start.Value - transactionQuery.Count.Value);
+                search = search.Skip(transactionQuery.Start).Limit(transactionQuery.Count);
+            }
+
+            await search.ForEachAsync(transactionEntity =>
+            {
+                TransactionModel transactionModel = _mapper.Map<TransactionModel>(transactionEntity);
+                result.Add(transactionModel);
+            });
+
+            return result;
         }
     }
 }

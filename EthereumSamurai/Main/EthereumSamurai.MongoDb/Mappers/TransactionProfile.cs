@@ -21,21 +21,23 @@ namespace EthereumSamurai.MongoDb.Mappers
             .AfterMap((transactionModel, transactionEntity) =>
             {
                 transactionEntity.TransactionIndex = transactionModel.TransactionIndex.ToString();
-                transactionEntity.BlockNumber      = transactionModel.BlockNumber.ToString();
+                transactionEntity.BlockNumber      = (ulong)transactionModel.BlockNumber;
                 transactionEntity.Gas              = transactionModel.Gas.ToString();
                 transactionEntity.GasPrice         = transactionModel.GasPrice.ToString();
                 transactionEntity.Value            = transactionModel.Value.ToString();
                 transactionEntity.Nonce            = transactionModel.Nonce.ToString();
+                transactionEntity.BlockTimestamp   = (uint)transactionModel.BlockTimestamp;
             })
             .ReverseMap()
             .AfterMap((transactionEntity, transactionModel) =>
             {
                 transactionModel.TransactionIndex = BigInteger.Parse(transactionEntity.TransactionIndex);
-                transactionModel.BlockNumber = BigInteger.Parse(transactionEntity.BlockNumber);
+                transactionModel.BlockNumber = new BigInteger(transactionEntity.BlockNumber);
                 transactionModel.Gas = BigInteger.Parse(transactionEntity.Gas);
                 transactionModel.GasPrice = BigInteger.Parse(transactionEntity.GasPrice);
                 transactionModel.Value = BigInteger.Parse(transactionEntity.Value);
                 transactionModel.Nonce = BigInteger.Parse(transactionEntity.Nonce);
+                transactionModel.BlockTimestamp = new BigInteger(transactionEntity.BlockTimestamp);
             });
         }
     }

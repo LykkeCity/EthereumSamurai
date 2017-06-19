@@ -12,6 +12,7 @@ namespace EthereumSamurai.Services
     {
         public static IServiceCollection RegisterServices(this IServiceCollection collection)
         {
+            collection.AddSingleton<IIndexingService, IndexingService>();
             collection.AddSingleton<IRpcBlockReader, RpcBlockReader>();
             collection.AddSingleton<Web3>((provider) =>
             {
