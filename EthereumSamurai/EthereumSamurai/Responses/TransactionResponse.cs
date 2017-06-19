@@ -16,29 +16,29 @@ namespace EthereumSamurai.Responses
     [DataContract]
     public class TransactionResponse
     {
-        [DataMember(Name = "")]
+        [DataMember(Name = "transactionIndex")]
         public int TransactionIndex { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "blockNumber")]
         public ulong BlockNumber { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "gas")]
         public string Gas { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "gasPrice")]
         public string GasPrice { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "value")]
         public string Value { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "nonce")]
         public string Nonce { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "transactionHash")]
         public string TransactionHash { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "blockHash")]
         public string BlockHash { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "from")]
         public string From { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "to")]
         public string To { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "input")]
         public string Input { get; set; }
-        [DataMember(Name = "")]
+        [DataMember(Name = "blockTimestamp")]
         public int BlockTimestamp { get; set; }
     }
 }

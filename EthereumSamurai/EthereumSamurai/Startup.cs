@@ -11,6 +11,7 @@ using EthereumSamurai.Common;
 using AutoMapper;
 using System.Reflection;
 using EthereumSamurai.Mappers;
+using EthereumSamurai.Filters;
 
 namespace EthereumSamurai
 {
@@ -44,11 +45,14 @@ namespace EthereumSamurai
             #endregion
             services.ConfigureServices(Configuration);
             // Add framework services.
-            services.AddMvc((options) =>
+            var builder = services.AddMvc();
+            var provider = services.BuildServiceProvider();
+            builder.AddMvcOptions(o =>
             {
-                //Validation for all actions
-                options.Filters.Insert(0, new Filters.ModelStateValidationFilter());
+                o.Filters.Insert(0, new Filters.ModelStateValidationFilter());
+                o.Filters.Add(new GlobalExceptionFilter(provider.GetService<ILoggerFactory>().CreateLogger("GlobalExceptionFilter")));
             });
+
             services.AddSwaggerGen(c =>
             {
                 c.SingleApiVersion(new Swashbuckle.Swagger.Model.Info
@@ -57,6 +61,7 @@ namespace EthereumSamurai
                     Title = "EthereumSamurai.Api"
                 });
             });
+
             return services.BuildServiceProvider();
         }
 

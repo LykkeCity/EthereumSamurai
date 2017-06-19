@@ -71,7 +71,7 @@ namespace EthereumSamurai.MongoDb.Repositories
             if (!string.IsNullOrEmpty(transactionQuery.ToAddress))
             {
                 FilterDefinition<TransactionEntity> filterTo = filterBuilder.Eq(x => x.To, transactionQuery.ToAddress);
-                filter = filter & filterTo;
+                filter = filter | filterTo;
             }
 
             if (transactionQuery.StartDate.HasValue)
@@ -88,12 +88,6 @@ namespace EthereumSamurai.MongoDb.Repositories
                 filter = filter & filterEndDate;
             }
 
-            if (!string.IsNullOrEmpty(transactionQuery.ToAddress))
-            {
-                FilterDefinition<TransactionEntity> filterTo = filterBuilder.Eq(x => x.To, transactionQuery.ToAddress);
-                filter = filter & filterTo;
-            }
-
             var sort = Builders<TransactionEntity>.Sort.Ascending(x => x.BlockNumber);
             MongoDB.Driver.
             IFindFluent< TransactionEntity,TransactionEntity > search = _collection.Find(filter);
@@ -101,7 +95,7 @@ namespace EthereumSamurai.MongoDb.Repositories
 
             if (transactionQuery.Start.HasValue && transactionQuery.Count.HasValue)
             {
-                result = new List<TransactionModel>(transactionQuery.Start.Value - transactionQuery.Count.Value);
+                result = new List<TransactionModel>(transactionQuery.Count.Value - transactionQuery.Start.Value);
                 search = search.Skip(transactionQuery.Start).Limit(transactionQuery.Count);
             }
 
