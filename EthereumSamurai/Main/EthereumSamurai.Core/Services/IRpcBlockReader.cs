@@ -10,5 +10,6 @@ namespace EthereumSamurai.Core.Services
     public interface IRpcBlockReader
     {
         Task<BlockContent> ReadBlockAsync(BigInteger blockHeight);
+        Task<BigInteger> GetBlockCount();
     }
 }

@@ -1,4 +1,5 @@
-﻿using EthereumSamurai.Core.Settings;
+﻿using AutoMapper;
+using EthereumSamurai.Core.Settings;
 using EthereumSamurai.MongoDb;
 using EthereumSamurai.Services;
 using Microsoft.Extensions.Configuration;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace EthereumSamurai.Common
@@ -15,6 +17,7 @@ namespace EthereumSamurai.Common
         public static IServiceCollection ConfigureServices(this IServiceCollection collection, IConfigurationRoot configuration)
         {
             collection.GetSettings(configuration);
+            
             collection.ConfigureRepositories();
             collection.ConfigureServices();
             collection.ConfigureLogging();
@@ -31,7 +34,7 @@ namespace EthereumSamurai.Common
             }
 
             var settings = GeneralSettingsReader.ReadGeneralSettings<SettingsWrapper>(connectionString);
-            collection.AddSingleton<IBaseSettings>(settings.EthereumIndexerSettings);
+            collection.AddSingleton<IBaseSettings>(settings.EthereumIndexer);
 
             return collection;
         }
@@ -55,5 +58,13 @@ namespace EthereumSamurai.Common
             collection.AddSingleton<ILoggerFactory>(loggerFactory);
             return collection;
         }
+
+        //private static IServiceCollection ConfigureAutomapper(this IServiceCollection collection)
+        //{
+           
+        //    return collection;
+        //}
+
+
     }
 }

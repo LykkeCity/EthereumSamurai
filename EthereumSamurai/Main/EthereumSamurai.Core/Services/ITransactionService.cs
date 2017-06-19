@@ -5,12 +5,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EthereumSamurai.Core.Repositories
+namespace EthereumSamurai.Core.Services
 {
-    public interface ITransactionRepository
+    public interface ITransactionService
     {
-        Task SaveAsync(TransactionModel TransactioModel);
         Task<IEnumerable<TransactionModel>> GetAsync(TransactionQuery transactionQuery);
-        Task<TransactionModel> GetAsync(string transactionHash);
     }
 }

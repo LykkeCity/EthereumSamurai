@@ -18,7 +18,7 @@ namespace EthereumSamurai.Core.Settings
 
     public class SettingsWrapper
     {
-        public IBaseSettings EthereumIndexerSettings { get; set; }
+        public BaseSettings EthereumIndexer { get; set; }
     }
 
     public class DB

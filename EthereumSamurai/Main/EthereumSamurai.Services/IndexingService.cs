@@ -3,6 +3,7 @@ using EthereumSamurai.Core.Services;
 using EthereumSamurai.Models;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,7 +20,12 @@ namespace EthereumSamurai.Services
             _transactionRepository = transactionRepository;
         }
 
-        public async Task IndexBlock(BlockContent blockContent)
+        public Task<BigInteger> GetLastBlockAsync()
+        {
+            return _blockRepository.GetLastSyncedBlockAsync();
+        }
+
+        public async Task IndexBlockAsync(BlockContent blockContent)
         {
             var blockModel = blockContent.BlockModel;
             var transactions = blockContent.Transactions;

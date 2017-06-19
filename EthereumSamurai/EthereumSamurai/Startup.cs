@@ -7,6 +7,10 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using EthereumSamurai.Common;
+using AutoMapper;
+using System.Reflection;
+using EthereumSamurai.Mappers;
 
 namespace EthereumSamurai
 {
@@ -25,19 +29,53 @@ namespace EthereumSamurai
         public IConfigurationRoot Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
-        public void ConfigureServices(IServiceCollection services)
+        public IServiceProvider ConfigureServices(IServiceCollection services)
         {
+            #region Automapper
+
+            //Add automapper
+            var mapper = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfiles(typeof(MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
+                cfg.AddProfiles(typeof(TransactionResponseProfile).GetTypeInfo().Assembly);
+            });
+            services.AddSingleton(sp => mapper.CreateMapper());
+
+            #endregion
+            services.ConfigureServices(Configuration);
             // Add framework services.
-            services.AddMvc();
+            services.AddMvc((options) =>
+            {
+                //Validation for all actions
+                options.Filters.Insert(0, new Filters.ModelStateValidationFilter());
+            });
+            services.AddSwaggerGen(c =>
+            {
+                c.SingleApiVersion(new Swashbuckle.Swagger.Model.Info
+                {
+                    Version = "v1",
+                    Title = "EthereumSamurai.Api"
+                });
+            });
+            return services.BuildServiceProvider();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
         {
-            loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+            app.UseCors((policyBuilder) =>
+            {
+                policyBuilder.AllowAnyHeader();
+                policyBuilder.AllowAnyOrigin();
+            });
+
+            loggerFactory.AddConsole();
             loggerFactory.AddDebug();
 
             app.UseMvc();
+
+            app.UseSwagger();
+            app.UseSwaggerUi();
         }
     }
 }

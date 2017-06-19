@@ -11,7 +11,8 @@ namespace EthereumSamurai.Indexer
     public class JobRunner
     {
         private readonly IEnumerable<IJob> _jobs;
-        private IEnumerable<Task> _runningTasks { get; set; }
+        private IEnumerable<Task> _runningTasks;
+        public CancellationToken _cancellationToken;
 
         public JobRunner(IEnumerable<IJob> jobs)
         {
@@ -21,6 +22,7 @@ namespace EthereumSamurai.Indexer
 
         public async Task RunTasks(CancellationToken cancellationToken)
         {
+            _cancellationToken = cancellationToken;
             _runningTasks = _jobs.Select(job => job.RunAsync(cancellationToken));
 
             await WaitAll();
@@ -38,7 +40,7 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
-
+                await RunTasks(_cancellationToken);
             }
         }
     }

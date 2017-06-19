@@ -15,28 +15,23 @@ namespace EthereumSamurai.MongoDb
     {
         public static IServiceCollection RegisterRepositories(this IServiceCollection collection)
         {
-            #region Automapper
-
-            //Add automapper
-            var mapper = new MapperConfiguration(cfg =>
-            {
-                cfg.AddProfiles(typeof(RegisterDependenciesExt).GetTypeInfo().Assembly);
-            });
-            collection.AddSingleton(sp => mapper.CreateMapper());
-
-            #endregion
-
             #region Repositories
 
-            var provider = collection.BuildServiceProvider();
-            IBaseSettings settings = provider.GetService<IBaseSettings>();
-            var mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
-            collection.AddSingleton(typeof(MongoClient), mongoClient);
-            collection.AddSingleton<IMongoDatabase>(mongoClient.GetDatabase("EthereumIndexer"));
+            try
+            {
+                var provider = collection.BuildServiceProvider();
+                IBaseSettings settings = provider.GetService<IBaseSettings>();
+                var mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
+                collection.AddSingleton(typeof(MongoClient), mongoClient);
+                collection.AddSingleton<IMongoDatabase>(mongoClient.GetDatabase("EthereumIndexer"));
 
-            collection.AddSingleton<IBlockRepository, BlockRepository>();
-            collection.AddSingleton<ITransactionRepository, TransactionRepository>();
-
+                collection.AddSingleton<IBlockRepository, BlockRepository>();
+                collection.AddSingleton<ITransactionRepository, TransactionRepository>();
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
             #endregion
 
             return collection;

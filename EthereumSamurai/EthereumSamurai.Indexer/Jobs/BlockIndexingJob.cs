@@ -41,6 +41,8 @@ namespace EthereumSamurai.Indexer.Jobs
             {
                 BigInteger currentBlockNumber = _indexingSettings.From;
                 Func<BigInteger, bool> checkDelegate = GetCheckDelegate(cancellationToken);
+                BigInteger lastSyncedNumber = await _indexingService.GetLastBlockAsync();
+                currentBlockNumber = lastSyncedNumber > currentBlockNumber ? lastSyncedNumber : currentBlockNumber;
 
                 try
                 {
@@ -50,7 +52,7 @@ namespace EthereumSamurai.Indexer.Jobs
                         await RetryPolicy.Execute(async () =>
                         {
                             BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                            await _indexingService.IndexBlock(blockContent);
+                            await _indexingService.IndexBlockAsync(blockContent);
                         }, 5);
 
                         currentBlockNumber++;
