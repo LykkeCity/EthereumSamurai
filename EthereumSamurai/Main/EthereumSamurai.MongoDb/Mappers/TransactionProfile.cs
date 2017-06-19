@@ -21,14 +21,20 @@ namespace EthereumSamurai.MongoDb.Mappers
             .AfterMap((transactionModel, transactionEntity) =>
             {
                 transactionEntity.TransactionIndex = transactionModel.TransactionIndex.ToString();
-                transactionEntity.BlockNumber      = (ulong)transactionModel.BlockNumber;
-                transactionEntity.Gas              = transactionModel.Gas.ToString();
-                transactionEntity.GasPrice         = transactionModel.GasPrice.ToString();
-                transactionEntity.Value            = transactionModel.Value.ToString();
-                transactionEntity.Nonce            = transactionModel.Nonce.ToString();
-                transactionEntity.BlockTimestamp   = (uint)transactionModel.BlockTimestamp;
-            })
-            .ReverseMap()
+                transactionEntity.BlockNumber = (ulong)transactionModel.BlockNumber;
+                transactionEntity.Gas = transactionModel.Gas.ToString();
+                transactionEntity.GasPrice = transactionModel.GasPrice.ToString();
+                transactionEntity.Value = transactionModel.Value.ToString();
+                transactionEntity.Nonce = transactionModel.Nonce.ToString();
+                transactionEntity.BlockTimestamp = (uint)transactionModel.BlockTimestamp;
+            }).ForAllOtherMembers(opt => opt.Ignore());
+
+            CreateMap<TransactionEntity, TransactionModel>()
+            .ForMember(dest => dest.TransactionHash, opt => opt.MapFrom(src => src.TransactionHash))
+            .ForMember(dest => dest.BlockHash, opt => opt.MapFrom(src => src.BlockHash))
+            .ForMember(dest => dest.From, opt => opt.MapFrom(src => src.From))
+            .ForMember(dest => dest.To, opt => opt.MapFrom(src => src.To))
+            .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.Input))
             .AfterMap((transactionEntity, transactionModel) =>
             {
                 transactionModel.TransactionIndex = BigInteger.Parse(transactionEntity.TransactionIndex);
@@ -38,7 +44,7 @@ namespace EthereumSamurai.MongoDb.Mappers
                 transactionModel.Value = BigInteger.Parse(transactionEntity.Value);
                 transactionModel.Nonce = BigInteger.Parse(transactionEntity.Nonce);
                 transactionModel.BlockTimestamp = new BigInteger(transactionEntity.BlockTimestamp);
-            });
+            }).ForAllOtherMembers(opt => opt.Ignore());
         }
     }
 }

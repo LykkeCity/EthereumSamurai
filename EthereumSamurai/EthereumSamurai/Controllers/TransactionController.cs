@@ -48,7 +48,7 @@ namespace EthereumSamurai.Controllers
                 response.Add(trResponse);
             });
 
-            return Ok(new FilteredTransactionsResponse()
+            return new JsonResult(new FilteredTransactionsResponse()
             {
                 Transactions = response
             });
