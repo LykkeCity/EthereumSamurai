@@ -2,7 +2,7 @@ version: '2'
 
 services:
   apirunner:
-    image: lykkex/lykke-ethereum-indexer-api:${tag}
+    image: lykkedev/lykke-ethereum-indexer-api:${tag}
     ports:
      - "${Port}:5000"
     environment:
