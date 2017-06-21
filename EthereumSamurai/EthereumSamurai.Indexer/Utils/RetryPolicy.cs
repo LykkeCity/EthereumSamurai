@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System; 
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,7 +7,11 @@ namespace EthereumSamurai.Indexer.Utils
 {
     public static class RetryPolicy
     {
-        public static async Task Execute(Func<Task> func, int retryCount)
+        /// <summary>
+        /// Retry policy with exponential waiting before retries
+        /// </summary>
+        /// <returns></returns>
+        public static async Task ExecuteAsync(Func<Task> func, int retryCount, int delayMs)
         {
             bool isExecutionCompleted = false;
             int currentTry = 1;
@@ -25,7 +29,9 @@ namespace EthereumSamurai.Indexer.Utils
                     {
                         throw;
                     }
-
+                    //Exponentially wait 200ms - 400ms - 800ms -...
+                    var retryVariable = Math.Pow(2, currentTry);
+                    await Task.Delay(delayMs * (int)retryVariable);
                     currentTry++;
                 }
 

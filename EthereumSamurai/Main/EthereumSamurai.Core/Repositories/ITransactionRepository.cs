@@ -12,5 +12,6 @@ namespace EthereumSamurai.Core.Repositories
         Task SaveAsync(TransactionModel TransactioModel);
         Task<IEnumerable<TransactionModel>> GetAsync(TransactionQuery transactionQuery);
         Task<TransactionModel> GetAsync(string transactionHash);
+        Task DeleteAllForBlockNumberAsync(ulong blockNumber);
     }
 }

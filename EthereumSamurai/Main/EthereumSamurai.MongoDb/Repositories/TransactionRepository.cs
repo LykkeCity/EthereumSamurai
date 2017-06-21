@@ -40,6 +40,13 @@ namespace EthereumSamurai.MongoDb.Repositories
             _mapper = mapper;
         }
 
+        public async Task DeleteAllForBlockNumberAsync(ulong blockNumber)
+        {
+            var filter = Builders<TransactionEntity>.Filter.Eq(x => x.BlockNumber, blockNumber);
+
+            await _collection.DeleteManyAsync(filter);
+        }
+
         public async Task SaveAsync(TransactionModel transactionModel)
         {
             TransactionEntity transactionEntity = _mapper.Map<TransactionEntity>(transactionModel);

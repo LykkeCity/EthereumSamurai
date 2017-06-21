@@ -39,21 +39,24 @@ namespace EthereumSamurai.Indexer.Jobs
         {
             return Task.Factory.StartNew(async () =>
             {
+                string indexerId = _indexingSettings.IndexerId;
                 BigInteger currentBlockNumber = _indexingSettings.From;
                 Func<BigInteger, bool> checkDelegate = GetCheckDelegate(cancellationToken);
-                BigInteger lastSyncedNumber = await _indexingService.GetLastBlockAsync();
-                currentBlockNumber = lastSyncedNumber > currentBlockNumber ? lastSyncedNumber : currentBlockNumber;
+                BigInteger? lastSyncedNumber = await _indexingService.GetLastBlockForIndexerAsync(indexerId);
+                currentBlockNumber = lastSyncedNumber.HasValue && lastSyncedNumber.Value > currentBlockNumber ? lastSyncedNumber.Value : currentBlockNumber;
 
                 try
                 {
                     while (checkDelegate(currentBlockNumber))
                     {
                         _logger.LogInformation($"Indexing block-{currentBlockNumber}");
-                        await RetryPolicy.Execute(async () =>
+                        await RetryPolicy.ExecuteAsync(async () =>
                         {
                             BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                            await _indexingService.IndexBlockAsync(blockContent);
-                        }, 5);
+                            BlockContext blockContext = new BlockContext(indexerId, blockContent);
+
+                            await _indexingService.IndexBlockAsync(blockContext);
+                        }, 5, 100);
 
                         currentBlockNumber++;
                     }
@@ -61,10 +64,10 @@ namespace EthereumSamurai.Indexer.Jobs
                 catch (Exception e)
                 {
                     _logger.LogError(new EventId(), e, $"Indexing failed for block-{currentBlockNumber}");
+                    throw;
                 }
 
-                _logger.LogInformation($"Indexing block-{currentBlockNumber} completed");
-                BigInteger lastProcessed = currentBlockNumber;
+                _logger.LogInformation($"Indexing {indexerId} completed. LastProcessed - {currentBlockNumber - 1}");
 
             }).Unwrap();
         }

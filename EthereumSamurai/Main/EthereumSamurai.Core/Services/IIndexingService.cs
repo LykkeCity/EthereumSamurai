@@ -9,7 +9,8 @@ namespace EthereumSamurai.Core.Services
 {
     public interface IIndexingService
     {
-        Task IndexBlockAsync(BlockContent blockContent);
+        Task IndexBlockAsync(BlockContext blockContext);
         Task<BigInteger> GetLastBlockAsync();
+        Task<BigInteger?> GetLastBlockForIndexerAsync(string indexerId);
     }
 }

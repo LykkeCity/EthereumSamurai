@@ -28,7 +28,7 @@ namespace EthereumSamurai.MongoDb.Repositories
 
             _collection.Indexes.CreateMany(new[]
             {
-                new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.Number)),
+                new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.BlockHash)),
                 new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Descending(x => x.Timestamp)),
             });
 

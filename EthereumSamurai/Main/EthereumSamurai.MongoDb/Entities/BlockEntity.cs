@@ -7,7 +7,7 @@ namespace EthereumSamurai.MongoDb.Entities
 {
     public class BlockEntity
     {
-        [BsonId]
+        [BsonElement]
         public string BlockHash { get; set; }
         [BsonElement]
         public string GasUsed { get; set; }
@@ -37,7 +37,7 @@ namespace EthereumSamurai.MongoDb.Entities
         public string Nonce { get; set; }
         [BsonElement]
         public string ParentHash { get; set; }
-        [BsonElement]
+        [BsonId]
         public ulong Number { get; set; }
         [BsonElement]
         public string StateRoot { get; set; }

@@ -5,8 +5,10 @@ using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Indexer.Jobs;
+using EthereumSamurai.Indexer.Settings;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -31,14 +33,17 @@ namespace EthereumSamurai.Indexer
             var mapper = new MapperConfiguration(cfg =>
             {
                 cfg.AddProfiles(typeof(MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
-                //cfg.AddProfiles(typeof(TransactionResponseProfile).GetTypeInfo().Assembly);
             });
             collection.AddSingleton(sp => mapper.CreateMapper());
 
             #endregion
+            IConfigurationSection indexerSettingsSection = configuration.GetSection("IndexerInstanceSettings");
+            IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
             collection.ConfigureServices(configuration);
-            //RegisterJobs
+            //Register jobs and settings
             collection.AddSingleton<IBlockIndexingJobFactory, BlockIndexingJobFactory>();
+            collection.AddSingleton<IIndexerInstanceSettings>(indexerSettings);
+            collection.AddSingleton<IInitalJobAssigner, InitalJobAssigner>();
 
             Services = collection.BuildServiceProvider();
             Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
@@ -52,15 +57,11 @@ namespace EthereumSamurai.Indexer
 
             try
             {
-                IBlockRepository blockRepository = Services.GetService<IBlockRepository>();
-                IRpcBlockReader rpcBlockReader = Services.GetService<IRpcBlockReader>();
-                IBlockIndexingJobFactory factory = Services.GetService<IBlockIndexingJobFactory>();
-                IEnumerable<IJob> jobs = new List<IJob>()
-                {
-                    factory.GetJob(new IndexingSettings() { From = 1 })
-                };
+                ILoggerFactory loggerFactory = Services.GetService<ILoggerFactory>();
+                IInitalJobAssigner initalJobAssigner = Services.GetService<IInitalJobAssigner>();
+                IEnumerable<IJob> jobs = initalJobAssigner.GetJobs();
 
-                JobRunner runner = new JobRunner(jobs);
+                JobRunner runner = new JobRunner(jobs, loggerFactory.CreateLogger("JobRunner"));
 
                 AssemblyLoadContext.Default.Unloading += ctx =>
                 {
