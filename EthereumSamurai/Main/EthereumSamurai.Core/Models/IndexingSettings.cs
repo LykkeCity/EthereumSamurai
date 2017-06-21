@@ -7,6 +7,7 @@ namespace EthereumSamurai.Core.Models
 {
     public interface IIndexingSettings
     {
+        string IndexerId { get; set; }
         BigInteger From { get; set; }
         BigInteger? To { get; set; }
     }
@@ -15,5 +16,6 @@ namespace EthereumSamurai.Core.Models
     {
         public BigInteger From { get; set; }
         public BigInteger? To { get; set; }
+        public string IndexerId { get; set; }
     }
 }

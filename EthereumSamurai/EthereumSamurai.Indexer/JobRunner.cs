@@ -1,4 +1,5 @@
 ﻿using EthereumSamurai.Indexer.Jobs;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,9 +14,11 @@ namespace EthereumSamurai.Indexer
         private readonly IEnumerable<IJob> _jobs;
         private IEnumerable<Task> _runningTasks;
         public CancellationToken _cancellationToken;
+        private readonly ILogger _logger;
 
-        public JobRunner(IEnumerable<IJob> jobs)
+        public JobRunner(IEnumerable<IJob> jobs, ILogger logger)
         {
+            _logger = logger;
             _jobs = jobs;
             _runningTasks = new List<Task>(jobs.Count());
         }
@@ -33,13 +36,15 @@ namespace EthereumSamurai.Indexer
             try
             {
                 await Task.WhenAll(_runningTasks).ConfigureAwait(false);
+                _logger.LogInformation($"Jobs has been completed");
             }
             catch (OperationCanceledException e)
             {
-
+                _logger.LogInformation($"Jobs has been canceled");
             }
             catch (Exception e)
             {
+                _logger.LogError(null, e, e.Message);
                 await RunTasks(_cancellationToken);
             }
         }

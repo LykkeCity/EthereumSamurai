@@ -10,4 +10,16 @@ namespace EthereumSamurai.Models
         public BlockModel BlockModel { get; set; }
         public List<TransactionModel> Transactions { get; set; }
     }
+
+    public class BlockContext
+    {
+        public BlockContext(string indexerId, BlockContent blockContent)
+        {
+            this.IndexerId = indexerId;
+            this.BlockContent = blockContent;
+        }
+
+        public BlockContent BlockContent { get; private set; }
+        public string IndexerId { get; private set; }
+    }
 }
