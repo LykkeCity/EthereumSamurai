@@ -31,5 +31,16 @@
   <ItemGroup>
     <ProjectReference Include="..\EthereumSamurai.Common\EthereumSamurai.Common.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <None Update=".dockerignore">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="docker-compose.yml">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Dockerfile">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 
 </Project>
