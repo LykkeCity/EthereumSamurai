@@ -17,11 +17,11 @@ namespace EthereumSamurai.Common
     {
         public static IServiceCollection ConfigureServices(this IServiceCollection collection, IConfigurationRoot configuration)
         {
+            collection.ConfigureLogging();
             collection.GetSettings(configuration);
 
             collection.ConfigureRepositories();
             collection.ConfigureServices();
-            collection.ConfigureLogging();
 
             return collection;
         }
