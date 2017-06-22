@@ -12,6 +12,7 @@ using AutoMapper;
 using System.Reflection;
 using EthereumSamurai.Mappers;
 using EthereumSamurai.Filters;
+using EthereumSamurai.Core.Services;
 
 namespace EthereumSamurai
 {
@@ -50,7 +51,7 @@ namespace EthereumSamurai
             builder.AddMvcOptions(o =>
             {
                 o.Filters.Insert(0, new Filters.ModelStateValidationFilter());
-                o.Filters.Add(new GlobalExceptionFilter(provider.GetService<ILoggerFactory>().CreateLogger("GlobalExceptionFilter")));
+                o.Filters.Add(new GlobalExceptionFilter(provider.GetService<ILog>()));
             });
 
             services.AddSwaggerGen(c =>

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.MongoDb;
 using EthereumSamurai.Services;
@@ -17,7 +18,7 @@ namespace EthereumSamurai.Common
         public static IServiceCollection ConfigureServices(this IServiceCollection collection, IConfigurationRoot configuration)
         {
             collection.GetSettings(configuration);
-            
+
             collection.ConfigureRepositories();
             collection.ConfigureServices();
             collection.ConfigureLogging();
@@ -53,15 +54,16 @@ namespace EthereumSamurai.Common
 
         private static IServiceCollection ConfigureLogging(this IServiceCollection collection)
         {
-            var loggerFactory = new LoggerFactory();
-            loggerFactory.AddConsole();
-            collection.AddSingleton<ILoggerFactory>(loggerFactory);
+            collection.AddSingleton<ILog, LogToConsole>();
+            //var loggerFactory = new LoggerFactory();
+            //loggerFactory.AddConsole();
+            //collection.AddSingleton<ILoggerFactory>(loggerFactory);
             return collection;
         }
 
         //private static IServiceCollection ConfigureAutomapper(this IServiceCollection collection)
         //{
-           
+
         //    return collection;
         //}
 

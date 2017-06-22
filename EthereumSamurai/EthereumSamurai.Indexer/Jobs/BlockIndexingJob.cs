@@ -17,12 +17,12 @@ namespace EthereumSamurai.Indexer.Jobs
         private readonly IRpcBlockReader _rpcBlockReader;
         private readonly IIndexingService _indexingService;
         private readonly IIndexingSettings _indexingSettings;
-        private readonly ILogger _logger;
+        private readonly ILog _logger;
 
         public BlockIndexingJob(IRpcBlockReader rpcBlockReader,
             IIndexingService indexingService,
             IIndexingSettings indexingSettings,
-            ILogger logger)
+            ILog logger)
         {
             _logger = logger;
             _rpcBlockReader = rpcBlockReader;
@@ -49,7 +49,7 @@ namespace EthereumSamurai.Indexer.Jobs
                 {
                     while (checkDelegate(currentBlockNumber))
                     {
-                        _logger.LogInformation($"Indexing block-{currentBlockNumber}");
+                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId, $"Indexing block-{currentBlockNumber}", DateTime.UtcNow);
                         await RetryPolicy.ExecuteAsync(async () =>
                         {
                             BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
@@ -63,11 +63,11 @@ namespace EthereumSamurai.Indexer.Jobs
                 }
                 catch (Exception e)
                 {
-                    _logger.LogError(new EventId(), e, $"Indexing failed for block-{currentBlockNumber}");
+                    await _logger.WriteErrorAsync("BlockIndexingJob", "RunAsync", $"Indexing failed for block-{currentBlockNumber}", e, DateTime.UtcNow);
                     throw;
                 }
-
-                _logger.LogInformation($"Indexing {indexerId} completed. LastProcessed - {currentBlockNumber - 1}");
+                await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                    $"Indexing {indexerId} completed. LastProcessed - {currentBlockNumber - 1}", DateTime.UtcNow);
 
             }).Unwrap();
         }

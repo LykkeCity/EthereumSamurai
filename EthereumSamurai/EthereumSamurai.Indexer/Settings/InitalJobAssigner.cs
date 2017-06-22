@@ -22,20 +22,20 @@ namespace EthereumSamurai.Indexer.Settings
         private readonly IBlockRepository _blockRepository;
         private readonly IRpcBlockReader _rpcBlockReader;
         private readonly IBlockIndexingJobFactory _factory;
-        private readonly ILoggerFactory _loggerFactory;
+        private readonly ILog _logger;
 
         public InitalJobAssigner(
             IIndexerInstanceSettings indexerInstanceSettings,
             IBlockRepository         blockRepository,
             IRpcBlockReader          rpcBlockReader,
             IBlockIndexingJobFactory factory,
-            ILoggerFactory           loggerFactory)
+            ILog logger)
         {
             _indexerInstanceSettings = indexerInstanceSettings;
             _blockRepository = blockRepository;
             _rpcBlockReader = rpcBlockReader;
             _factory = factory;
-            _loggerFactory = loggerFactory;
+            _logger = logger;
         }
 
         public IEnumerable<IJob> GetJobs()

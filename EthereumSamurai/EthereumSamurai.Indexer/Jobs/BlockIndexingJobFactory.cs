@@ -16,11 +16,11 @@ namespace EthereumSamurai.Indexer.Jobs
     {
         private readonly IRpcBlockReader _rpcBlockReader;
         private readonly IIndexingService _indexingService;
-        private readonly ILogger _logger;
+        private readonly ILog _logger;
 
-        public BlockIndexingJobFactory(IRpcBlockReader rpcBlockReader, IIndexingService indexingService, ILoggerFactory logger)
+        public BlockIndexingJobFactory(IRpcBlockReader rpcBlockReader, IIndexingService indexingService, ILog logger)
         {
-            _logger = logger.CreateLogger("BlockIndexingJobFactory");
+            _logger = logger;
             _indexingService = indexingService;
             _rpcBlockReader = rpcBlockReader;
         }
