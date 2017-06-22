@@ -31,5 +31,9 @@ namespace EthereumSamurai.MongoDb.Entities
         public string Nonce { get; set; }
         [BsonElement]
         public uint BlockTimestamp { get; set; }
+        [BsonElement]
+        public string ContractAddress { get; set; }
+        [BsonElement]
+        public string GasUsed { get; set; }
     }
 }

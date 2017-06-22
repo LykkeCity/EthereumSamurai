@@ -18,6 +18,7 @@ namespace EthereumSamurai.MongoDb.Mappers
             .ForMember(dest => dest.From, opt => opt.MapFrom(src => src.From))
             .ForMember(dest => dest.To, opt => opt.MapFrom(src => src.To))
             .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.Input))
+            .ForMember(dest => dest.ContractAddress, opt => opt.MapFrom(src => src.ContractAddress))
             .AfterMap((transactionModel, transactionEntity) =>
             {
                 transactionEntity.TransactionIndex = transactionModel.TransactionIndex.ToString();
@@ -27,6 +28,7 @@ namespace EthereumSamurai.MongoDb.Mappers
                 transactionEntity.Value = transactionModel.Value.ToString();
                 transactionEntity.Nonce = transactionModel.Nonce.ToString();
                 transactionEntity.BlockTimestamp = (uint)transactionModel.BlockTimestamp;
+                transactionEntity.GasUsed = transactionModel.GasUsed.ToString();
             }).ForAllOtherMembers(opt => opt.Ignore());
 
             CreateMap<TransactionEntity, TransactionModel>()
@@ -35,6 +37,7 @@ namespace EthereumSamurai.MongoDb.Mappers
             .ForMember(dest => dest.From, opt => opt.MapFrom(src => src.From))
             .ForMember(dest => dest.To, opt => opt.MapFrom(src => src.To))
             .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.Input))
+            .ForMember(dest => dest.ContractAddress, opt => opt.MapFrom(src => src.ContractAddress))
             .AfterMap((transactionEntity, transactionModel) =>
             {
                 transactionModel.TransactionIndex = BigInteger.Parse(transactionEntity.TransactionIndex);
@@ -44,6 +47,7 @@ namespace EthereumSamurai.MongoDb.Mappers
                 transactionModel.Value = BigInteger.Parse(transactionEntity.Value);
                 transactionModel.Nonce = BigInteger.Parse(transactionEntity.Nonce);
                 transactionModel.BlockTimestamp = new BigInteger(transactionEntity.BlockTimestamp);
+                transactionModel.GasUsed = BigInteger.Parse(transactionEntity.GasUsed);
             }).ForAllOtherMembers(opt => opt.Ignore());
         }
     }

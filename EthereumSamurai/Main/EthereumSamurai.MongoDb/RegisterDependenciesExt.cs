@@ -22,9 +22,9 @@ namespace EthereumSamurai.MongoDb
                 var provider = collection.BuildServiceProvider();
                 IBaseSettings settings = provider.GetService<IBaseSettings>();
                 var mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
+
                 collection.AddSingleton(typeof(MongoClient), mongoClient);
                 collection.AddSingleton<IMongoDatabase>(mongoClient.GetDatabase("EthereumIndexer"));
-
                 collection.AddSingleton<IBlockRepository, BlockRepository>();
                 collection.AddSingleton<ITransactionRepository, TransactionRepository>();
                 collection.AddSingleton<IBlockSyncedInfoRepository, BlockSyncedInfoRepository>();
