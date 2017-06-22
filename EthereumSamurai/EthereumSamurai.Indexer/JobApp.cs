@@ -21,10 +21,8 @@ namespace EthereumSamurai.Indexer
 {
     public class JobApp
     {
-        private ILoggerFactory _loggerFactory;
-        private ILogger _logger;
-
         public IServiceProvider Services { get; set; }
+        private ILog _logger;
 
         public async Task Run(IConfigurationRoot configuration)
         {
@@ -52,13 +50,12 @@ namespace EthereumSamurai.Indexer
 
                 Services = collection.BuildServiceProvider();
                 Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
-                _loggerFactory = Services.GetService<ILoggerFactory>();
-                _logger = _loggerFactory.CreateLogger("JobApp");
+                _logger = Services.GetService<ILog>();
                 RunJobs();
             }
             catch (Exception e)
             {
-                _logger.LogError(new EventId(), e, "Error on run");
+                await _logger.WriteErrorAsync("JobApp", "Run", "Error on run", e, DateTime.UtcNow);
                 throw;
             }
         }
@@ -69,11 +66,10 @@ namespace EthereumSamurai.Indexer
 
             try
             {
-                
                 IInitalJobAssigner initalJobAssigner = Services.GetService<IInitalJobAssigner>();
                 IEnumerable<IJob> jobs = initalJobAssigner.GetJobs();
 
-                JobRunner runner = new JobRunner(jobs, _loggerFactory.CreateLogger("JobRunner"));
+                JobRunner runner = new JobRunner(jobs, _logger);
 
                 AssemblyLoadContext.Default.Unloading += ctx =>
                 {
@@ -86,7 +82,7 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
-                _logger.LogError(new EventId(), e, "Error on run jobs");
+                _logger.WriteErrorAsync("JobApp", "RunJobs", "Error on RunJobs", e, DateTime.UtcNow).Wait();
                 throw;
             }
         }

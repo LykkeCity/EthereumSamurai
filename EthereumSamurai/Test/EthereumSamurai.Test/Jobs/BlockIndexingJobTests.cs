@@ -30,7 +30,7 @@ namespace EthereumSamurai.Test.Jobs
                 From = 1,
                 To = 1
             };
-            var logger = TestConfig.ServiceProvider.GetService<ILogger>();
+            var logger = TestConfig.ServiceProvider.GetService<ILog>();
 
             _blockIndexingJob = new BlockIndexingJob(rpcReader, _indexingService, indexingSettings, logger);
         }

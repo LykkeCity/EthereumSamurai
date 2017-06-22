@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using EthereumSamurai.Core.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Logging;
 using System;
@@ -10,9 +11,9 @@ namespace EthereumSamurai.Filters
 {
     public class GlobalExceptionFilter : IExceptionFilter, IDisposable
     {
-        private readonly ILogger _logger;
+        private readonly ILog _logger;
 
-        public GlobalExceptionFilter(ILogger logger)
+        public GlobalExceptionFilter(ILog logger)
         {
             _logger = logger;
         }
@@ -35,7 +36,7 @@ namespace EthereumSamurai.Filters
                 message = clientSideException.Message;
             }
 
-            _logger.LogError("ApiException - EthereumApi", $"Controller: {controller}, action: {action}", context.Exception);
+            _logger.WriteErrorAsync("GlobalExceptionFilter", "OnException", $"Controller: {controller}, action: {action}", context.Exception, DateTime.UtcNow);
 
             ex = new ApiException
             {
