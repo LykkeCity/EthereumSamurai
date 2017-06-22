@@ -40,5 +40,9 @@ namespace EthereumSamurai.Responses
         public string Input { get; set; }
         [DataMember(Name = "blockTimestamp")]
         public int BlockTimestamp { get; set; }
+        [DataMember(Name = "contractAddress")]
+        public string ContractAddress { get; set; }
+        [DataMember(Name = "gasUsed")]
+        public string GasUsed { get; set; }
     }
 }

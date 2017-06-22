@@ -27,6 +27,7 @@ namespace EthereumSamurai.Services
         public async Task<BlockContent> ReadBlockAsync(BigInteger blockHeight)
         {
             BlockWithTransactions block = await _client.Eth.Blocks.GetBlockWithTransactionsByNumber.SendRequestAsync(new HexBigInteger(blockHeight));
+            
             #region Block
 
             string blockHash = block.BlockHash;
@@ -60,6 +61,7 @@ namespace EthereumSamurai.Services
 
             foreach (var transaction in block.Transactions)
             {
+                var transactionReciept = await _client.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(transaction.TransactionHash);
                 TransactionModel transactionModel = new TransactionModel()
                 {
                     BlockTimestamp = block.Timestamp,
@@ -73,7 +75,9 @@ namespace EthereumSamurai.Services
                     To = transaction.To,
                     TransactionHash = transaction.TransactionHash,
                     TransactionIndex = transaction.TransactionIndex,
-                    Value = transaction.Value
+                    Value = transaction.Value,
+                    GasUsed = transactionReciept.GasUsed.Value,
+                    ContractAddress = transactionReciept.ContractAddress
                 };
 
                 blockTransactions.Add(transactionModel);

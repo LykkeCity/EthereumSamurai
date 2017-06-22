@@ -18,6 +18,7 @@ namespace EthereumSamurai.Mappers
             .ForMember(dest => dest.From, opt => opt.MapFrom(src => src.From))
             .ForMember(dest => dest.To, opt => opt.MapFrom(src => src.To))
             .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.Input))
+            .ForMember(dest => dest.ContractAddress, opt => opt.MapFrom(src => src.ContractAddress))
             .AfterMap((transactionModel, transactionEntity) =>
             {
                 transactionEntity.TransactionIndex = (int)transactionModel.TransactionIndex;
@@ -27,6 +28,7 @@ namespace EthereumSamurai.Mappers
                 transactionEntity.Value = transactionModel.Value.ToString();
                 transactionEntity.Nonce = transactionModel.Nonce.ToString();
                 transactionEntity.BlockTimestamp = (int)transactionModel.BlockTimestamp;
+                transactionEntity.GasUsed = transactionModel.GasUsed.ToString();
             })
             .ReverseMap();
         }
