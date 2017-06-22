@@ -2,7 +2,7 @@ version: '2'
 
 services:
   jobrunner:
-    image: lykkedev/lykke-service-ethereumjob:${tag}
+    image: lykkedev/lykke-ethereum-indexer-jobs:${tag}
     environment:
      - ConnectionStrings__ConnectionString=${SettingsConnString}
      - IndexerInstanceSettings__IndexerId=${IndexerId}
