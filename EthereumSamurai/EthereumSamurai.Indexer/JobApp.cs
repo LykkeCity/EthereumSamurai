@@ -55,6 +55,7 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
+                Console.WriteLine($"{e.Message} -{e.StackTrace} - {DateTime.UtcNow}");
                 await _logger.WriteErrorAsync("JobApp", "Run", "Error on run", e, DateTime.UtcNow);
                 throw;
             }
@@ -82,6 +83,7 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
+                Console.WriteLine($"{e.Message} -{e.StackTrace} - {DateTime.UtcNow}");
                 _logger.WriteErrorAsync("JobApp", "RunJobs", "Error on RunJobs", e, DateTime.UtcNow).Wait();
                 throw;
             }
