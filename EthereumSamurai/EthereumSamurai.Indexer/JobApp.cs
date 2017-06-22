@@ -21,34 +21,46 @@ namespace EthereumSamurai.Indexer
 {
     public class JobApp
     {
+        private ILoggerFactory _loggerFactory;
+        private ILogger _logger;
+
         public IServiceProvider Services { get; set; }
 
         public async Task Run(IConfigurationRoot configuration)
         {
-            //var settings = GetSettings(configuration);
-            IServiceCollection collection = new ServiceCollection();
-            #region Automapper
-
-            //Add automapper
-            var mapper = new MapperConfiguration(cfg =>
+            try
             {
-                cfg.AddProfiles(typeof(MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
-            });
-            collection.AddSingleton(sp => mapper.CreateMapper());
+                //var settings = GetSettings(configuration);
+                IServiceCollection collection = new ServiceCollection();
+                #region Automapper
 
-            #endregion
-            IConfigurationSection indexerSettingsSection = configuration.GetSection("IndexerInstanceSettings");
-            IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
-            collection.ConfigureServices(configuration);
-            //Register jobs and settings
-            collection.AddSingleton<IBlockIndexingJobFactory, BlockIndexingJobFactory>();
-            collection.AddSingleton<IIndexerInstanceSettings>(indexerSettings);
-            collection.AddSingleton<IInitalJobAssigner, InitalJobAssigner>();
+                //Add automapper
+                var mapper = new MapperConfiguration(cfg =>
+                {
+                    cfg.AddProfiles(typeof(MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
+                });
+                collection.AddSingleton(sp => mapper.CreateMapper());
 
-            Services = collection.BuildServiceProvider();
-            Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
+                #endregion
+                IConfigurationSection indexerSettingsSection = configuration.GetSection("IndexerInstanceSettings");
+                IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
+                collection.ConfigureServices(configuration);
+                //Register jobs and settings
+                collection.AddSingleton<IBlockIndexingJobFactory, BlockIndexingJobFactory>();
+                collection.AddSingleton<IIndexerInstanceSettings>(indexerSettings);
+                collection.AddSingleton<IInitalJobAssigner, InitalJobAssigner>();
 
-            RunJobs();
+                Services = collection.BuildServiceProvider();
+                Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
+                _loggerFactory = Services.GetService<ILoggerFactory>();
+                _logger = _loggerFactory.CreateLogger("JobApp");
+                RunJobs();
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(new EventId(), e, "Error on run");
+                throw;
+            }
         }
 
         public void RunJobs()
@@ -57,11 +69,11 @@ namespace EthereumSamurai.Indexer
 
             try
             {
-                ILoggerFactory loggerFactory = Services.GetService<ILoggerFactory>();
+                
                 IInitalJobAssigner initalJobAssigner = Services.GetService<IInitalJobAssigner>();
                 IEnumerable<IJob> jobs = initalJobAssigner.GetJobs();
 
-                JobRunner runner = new JobRunner(jobs, loggerFactory.CreateLogger("JobRunner"));
+                JobRunner runner = new JobRunner(jobs, _loggerFactory.CreateLogger("JobRunner"));
 
                 AssemblyLoadContext.Default.Unloading += ctx =>
                 {
@@ -74,6 +86,7 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
+                _logger.LogError(new EventId(), e, "Error on run jobs");
                 throw;
             }
         }
