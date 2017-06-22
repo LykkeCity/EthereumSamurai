@@ -5,3 +5,7 @@ services:
     image: lykkedev/lykke-service-ethereumjob:${tag}
     environment:
      - ConnectionStrings__ConnectionString=${SettingsConnString}
+     - IndexerInstanceSettings__IndexerId=${IndexerId}
+     - IndexerInstanceSettings__ThreadAmount=${ThreadAmount}
+     - IndexerInstanceSettings__StartBlock=${StartBlock}
+     - IndexerInstanceSettings__StopBlock=${StopBlock}
