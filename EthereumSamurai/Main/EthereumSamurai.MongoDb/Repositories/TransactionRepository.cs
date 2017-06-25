@@ -10,6 +10,7 @@ using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -105,6 +106,42 @@ namespace EthereumSamurai.MongoDb.Repositories
                 result = new List<TransactionModel>(transactionQuery.Count.Value - transactionQuery.Start.Value);
                 search = search.Skip(transactionQuery.Start).Limit(transactionQuery.Count);
             }
+
+            await search.ForEachAsync(transactionEntity =>
+            {
+                TransactionModel transactionModel = _mapper.Map<TransactionModel>(transactionEntity);
+                result.Add(transactionModel);
+            });
+
+            return result;
+        }
+
+        public async Task<IEnumerable<TransactionModel>> GetForBlockNumberAsync(ulong blockNumber)
+        {
+            List<TransactionModel> result;
+            var filterBuilder = Builders<TransactionEntity>.Filter;
+            FilterDefinition<TransactionEntity> filter = filterBuilder.Eq(x => x.BlockNumber, blockNumber); ;
+
+            IFindFluent<TransactionEntity, TransactionEntity> search = _collection.Find(filter);
+            result = new List<TransactionModel>();
+
+            await search.ForEachAsync(transactionEntity =>
+            {
+                TransactionModel transactionModel = _mapper.Map<TransactionModel>(transactionEntity);
+                result.Add(transactionModel);
+            });
+
+            return result;
+        }
+
+        public async Task<IEnumerable<TransactionModel>> GetForBlockHashAsync(string blockHash)
+        {
+            List<TransactionModel> result;
+            var filterBuilder = Builders<TransactionEntity>.Filter;
+            FilterDefinition<TransactionEntity> filter = filterBuilder.Eq(x => x.BlockHash, blockHash); ;
+
+            IFindFluent<TransactionEntity, TransactionEntity> search = _collection.Find(filter);
+            result = new List<TransactionModel>();
 
             await search.ForEachAsync(transactionEntity =>
             {
