@@ -24,5 +24,19 @@ namespace EthereumSamurai.Services
 
             return transactions;
         }
+
+        public async Task<IEnumerable<TransactionModel>> GetForBlockHashAsync(string blockHash)
+        {
+            IEnumerable<TransactionModel> transactions = await _transactionRepository.GetForBlockHashAsync(blockHash);
+
+            return transactions;
+        }
+
+        public async Task<IEnumerable<TransactionModel>> GetForBlockNumberAsync(ulong blockNumber)
+        {
+            IEnumerable<TransactionModel> transactions = await _transactionRepository.GetForBlockNumberAsync(blockNumber);
+
+            return transactions;
+        }
     }
 }

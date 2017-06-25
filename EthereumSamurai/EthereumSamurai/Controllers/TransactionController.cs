@@ -9,6 +9,7 @@ using EthereumSamurai.Models.Blockchain;
 using AutoMapper;
 using EthereumSamurai.Responses;
 using EthereumSamurai.Requests;
+using EthereumSamurai.Filters;
 
 namespace EthereumSamurai.Controllers
 {
@@ -27,9 +28,9 @@ namespace EthereumSamurai.Controllers
 
         [Route("{address}")]
         [HttpGet]
-        //[ProducesResponseType(typeof(OperationIdResponse), 200)]
-        //[ProducesResponseType(typeof(ApiException), 400)]
-        //[ProducesResponseType(typeof(ApiException), 500)]
+        [ProducesResponseType(typeof(FilteredTransactionsResponse), 200)]
+        [ProducesResponseType(typeof(ApiException), 400)]
+        [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress(GetAddressHistoryRequest request)
         {
             var transactionQuery = new TransactionQuery()
@@ -41,6 +42,36 @@ namespace EthereumSamurai.Controllers
             };
 
             List<TransactionModel> transactions = (await _transactionService.GetAsync(transactionQuery)).ToList();
+           
+            return ProcessResponse(transactions);
+        }
+
+        [Route("block/number/{blockNumber}")]
+        [HttpGet]
+        [ProducesResponseType(typeof(FilteredTransactionsResponse), 200)]
+        [ProducesResponseType(typeof(ApiException), 400)]
+        [ProducesResponseType(typeof(ApiException), 500)]
+        public async Task<IActionResult> GetForBlockNumber([FromRoute] ulong blockNumber)
+        {
+            List<TransactionModel> transactions = (await _transactionService.GetForBlockNumberAsync(blockNumber)).ToList();
+
+            return ProcessResponse(transactions);
+        }
+
+        [Route("block/hash/{blockHash}")]
+        [HttpGet]
+        [ProducesResponseType(typeof(FilteredTransactionsResponse), 200)]
+        [ProducesResponseType(typeof(ApiException), 400)]
+        [ProducesResponseType(typeof(ApiException), 500)]
+        public async Task<IActionResult> GetForBlockNumber([FromRoute] string blockHash)
+        {
+            List<TransactionModel> transactions = (await _transactionService.GetForBlockHashAsync(blockHash)).ToList();
+
+            return ProcessResponse(transactions);
+        }
+
+        private IActionResult ProcessResponse(List<TransactionModel> transactions)
+        {
             List<TransactionResponse> response = new List<TransactionResponse>(transactions.Count);
             transactions.ForEach(transaction =>
             {

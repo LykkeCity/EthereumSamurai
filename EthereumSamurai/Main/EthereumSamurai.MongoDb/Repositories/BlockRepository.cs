@@ -38,7 +38,7 @@ namespace EthereumSamurai.MongoDb.Repositories
         public async Task SaveAsync(BlockModel blockModel)
         {
             BlockEntity blockEntity = _mapper.Map<BlockEntity>(blockModel);
-            await _collection.DeleteOneAsync((x) => x.BlockHash == blockEntity.BlockHash);
+            await _collection.DeleteOneAsync((x) => x.Number == blockEntity.Number);
             await _collection.InsertOneAsync(blockEntity);
         }
 
