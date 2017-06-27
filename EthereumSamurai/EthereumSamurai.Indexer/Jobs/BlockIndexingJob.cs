@@ -2,6 +2,7 @@
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Indexer.Utils;
 using EthereumSamurai.Models;
+using EthereumSamurai.Models.Blockchain;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -18,16 +19,21 @@ namespace EthereumSamurai.Indexer.Jobs
         private readonly IIndexingService _indexingService;
         private readonly IIndexingSettings _indexingSettings;
         private readonly ILog _logger;
+        private readonly IBlockService _blockService;
+        private bool _firstRun;
 
         public BlockIndexingJob(IRpcBlockReader rpcBlockReader,
             IIndexingService indexingService,
             IIndexingSettings indexingSettings,
-            ILog logger)
+            ILog logger,
+            IBlockService blockService)
         {
+            _blockService = blockService;
             _logger = logger;
             _rpcBlockReader = rpcBlockReader;
             _indexingService = indexingService;
             _indexingSettings = indexingSettings;
+            _firstRun = true;
         }
 
         public Task RunAsync()
@@ -47,18 +53,35 @@ namespace EthereumSamurai.Indexer.Jobs
 
                 try
                 {
+                    if (_firstRun && _indexingSettings.From == currentBlockNumber)
+                    {
+                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                            $"Indexing begins from block-{currentBlockNumber}", DateTime.UtcNow);
+
+                        BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                        BlockContext blockContext = new BlockContext(indexerId, blockContent);
+
+                        await _indexingService.IndexBlockAsync(blockContext);
+                        currentBlockNumber++;
+                        _firstRun = false;
+                    }
+                    //avg 400 ms per 1 block(on local machine)
+                    int iterationVector = 0;
                     while (checkDelegate(currentBlockNumber))
                     {
-                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId, $"Indexing block-{currentBlockNumber}", DateTime.UtcNow);
+                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                            $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}", DateTime.UtcNow);
                         await RetryPolicy.ExecuteAsync(async () =>
                         {
                             BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                            bool blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
+                            iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
                             BlockContext blockContext = new BlockContext(indexerId, blockContent);
 
                             await _indexingService.IndexBlockAsync(blockContext);
                         }, 5, 100);
 
-                        currentBlockNumber++;
+                        currentBlockNumber += iterationVector;
                     }
                 }
                 catch (Exception e)

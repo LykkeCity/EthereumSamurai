@@ -50,7 +50,8 @@ namespace EthereumSamurai.Services
                 StateRoot= block.StateRoot,
                 Timestamp = block.Timestamp,
                 TotalDifficulty = block.TotalDifficulty,
-                TransactionsRoot = block.TransactionsRoot
+                TransactionsRoot = block.TransactionsRoot,
+                
             };
 
             #endregion

@@ -43,7 +43,7 @@ namespace EthereumSamurai.MongoDb.Mappers
                     blockModel.TotalDifficulty = BigInteger.Parse(blockEntity.TotalDifficulty);
                     blockModel.Number = new BigInteger(blockEntity.Number);
                     blockModel.Size = BigInteger.Parse(blockEntity.Size);
-                });
+                }).ForAllOtherMembers(opt => opt.Ignore());
         }
     }
 }

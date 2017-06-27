@@ -42,6 +42,26 @@ namespace EthereumSamurai.MongoDb.Repositories
             await _collection.InsertOneAsync(blockEntity);
         }
 
+        public async Task<bool> DoesBlockExistAsync(string blockHash)
+        {
+            var filterBuilder = Builders<BlockEntity>.Filter;
+            FilterDefinition<BlockEntity> filter = filterBuilder.Eq(x => x.BlockHash, blockHash);
+            BlockEntity blockEntity = await _collection.Find(filter).FirstOrDefaultAsync();
+
+            return blockEntity != null;
+        }
+
+        public async Task<BlockModel> GetForHashAsync(string blockHash)
+        {
+            var filterBuilder = Builders<BlockEntity>.Filter;
+            FilterDefinition<BlockEntity> filter = filterBuilder.Eq(x => x.BlockHash, blockHash);
+
+            BlockEntity blockEntity = await _collection.Find(filter).FirstOrDefaultAsync();
+            BlockModel blockModel = _mapper.Map<BlockModel>(blockEntity);
+
+            return blockModel;
+        }
+
         public async Task<BigInteger> GetLastSyncedBlockAsync()
         {
             var sort = Builders<BlockEntity>.Sort.Descending(x => x.Number); //build sort object   

@@ -9,7 +9,9 @@ namespace EthereumSamurai.Core.Repositories
 {
     public interface IBlockRepository
     {
+        Task<bool> DoesBlockExistAsync(string blockHash);
         Task SaveAsync(BlockModel blockModel);
+        Task<BlockModel> GetForHashAsync(string blockHash);
         Task<BigInteger> GetLastSyncedBlockAsync();
     }
 }
