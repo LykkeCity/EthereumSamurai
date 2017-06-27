@@ -92,7 +92,7 @@ namespace EthereumSamurai.MongoDb.Repositories
             if (transactionQuery.EndDate.HasValue)
             {
                 int unixTime = transactionQuery.EndDate.Value.GetUnixTime();
-                FilterDefinition<TransactionEntity> filterEndDate = filterBuilder.Gte(x => x.BlockTimestamp, (uint)unixTime);
+                FilterDefinition<TransactionEntity> filterEndDate = filterBuilder.Lte(x => x.BlockTimestamp, (uint)unixTime);
                 filter = filter & filterEndDate;
             }
 
@@ -100,7 +100,7 @@ namespace EthereumSamurai.MongoDb.Repositories
             MongoDB.Driver.
             IFindFluent< TransactionEntity,TransactionEntity > search = _collection.Find(filter);
             result = new List<TransactionModel>();
-
+            search = search.Sort(sort);
             if (transactionQuery.Start.HasValue && transactionQuery.Count.HasValue)
             {
                 result = new List<TransactionModel>(transactionQuery.Count.Value - transactionQuery.Start.Value);

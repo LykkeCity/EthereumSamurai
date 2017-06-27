@@ -16,6 +16,7 @@ namespace EthereumSamurai.Indexer
         private IEnumerable<Task> _runningTasks;
         public CancellationToken _cancellationToken;
         private readonly ILog _logger;
+        private Dictionary<Task, CancellationTokenSource> _taskCancellationDictionary;
 
         public JobRunner(IEnumerable<IJob> jobs, ILog logger)
         {
@@ -26,8 +27,17 @@ namespace EthereumSamurai.Indexer
 
         public async Task RunTasks(CancellationToken cancellationToken)
         {
+            _taskCancellationDictionary = new Dictionary<Task, CancellationTokenSource>();
             _cancellationToken = cancellationToken;
-            _runningTasks = _jobs.Select(job => job.RunAsync(cancellationToken));
+            _runningTasks = _jobs.Select(job =>
+            {
+                CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                CancellationToken linkedToken = cts.Token;
+                var task = job.RunAsync(linkedToken);
+                _taskCancellationDictionary[task] = cts;
+
+                return task;
+            });
 
             await WaitAll();
         }
@@ -45,7 +55,12 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
-                await _logger.WriteErrorAsync("JobRunner", "WaitAll", "Error during indexing. Retry", e,  DateTime.UtcNow);
+                _runningTasks?.ToList().ForEach(task =>
+                {
+                    _taskCancellationDictionary[task].Cancel();
+                });
+                await _logger.WriteErrorAsync("JobRunner", "WaitAll", "Error during indexing. Retry", e, DateTime.UtcNow);
+                await Task.Delay(1000);
                 await RunTasks(_cancellationToken);
             }
         }

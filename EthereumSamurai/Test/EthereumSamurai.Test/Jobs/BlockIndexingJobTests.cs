@@ -17,6 +17,7 @@ namespace EthereumSamurai.Test.Jobs
     {
         private BlockIndexingJob _blockIndexingJob;
         private IIndexingService _indexingService;
+        private IBlockService _blockService;
 
         [TestInitialize]
         public void InitDependencies()
@@ -24,6 +25,7 @@ namespace EthereumSamurai.Test.Jobs
             TestConfig.ReconfigureServices();
             var rpcReader = TestConfig.ServiceProvider.GetService<IRpcBlockReader>();
             _indexingService = TestConfig.ServiceProvider.GetService<IIndexingService>();
+            _blockService = TestConfig.ServiceProvider.GetService<IBlockService>();
             var indexingSettings = new IndexingSettings()
             {
                 IndexerId = "TestIndexer",
@@ -32,7 +34,7 @@ namespace EthereumSamurai.Test.Jobs
             };
             var logger = TestConfig.ServiceProvider.GetService<ILog>();
 
-            _blockIndexingJob = new BlockIndexingJob(rpcReader, _indexingService, indexingSettings, logger);
+            _blockIndexingJob = new BlockIndexingJob(rpcReader, _indexingService, indexingSettings, logger, _blockService);
         }
 
         [TestMethod]
