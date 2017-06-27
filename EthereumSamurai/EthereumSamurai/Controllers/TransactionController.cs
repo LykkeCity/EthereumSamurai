@@ -33,10 +33,11 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress(GetAddressHistoryRequest request)
         {
+            string address = request.Address.ToLower();
             var transactionQuery = new TransactionQuery()
             {
-                FromAddress = request.Address,
-                ToAddress = request.Address,
+                FromAddress = address,
+                ToAddress = address,
                 Start = request.Start,
                 Count = request.Count
             };
