@@ -96,7 +96,7 @@ namespace EthereumSamurai.MongoDb.Repositories
                 filter = filter & filterEndDate;
             }
 
-            var sort = Builders<TransactionEntity>.Sort.Ascending(x => x.BlockNumber);
+            var sort = Builders<TransactionEntity>.Sort.Descending(x => x.BlockNumber);
             MongoDB.Driver.
             IFindFluent< TransactionEntity,TransactionEntity > search = _collection.Find(filter);
             result = new List<TransactionModel>();
