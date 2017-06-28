@@ -16,6 +16,7 @@ namespace EthereumSamurai.Services
             collection.AddSingleton<IIndexingService, IndexingService>();
             collection.AddSingleton<IRpcBlockReader, RpcBlockReader>();
             collection.AddSingleton<IBlockService, BlockService>();
+            collection.AddSingleton<IBalanceService, BalanceService>();
             collection.AddSingleton<Web3>((provider) =>
             {
                 var settings = provider.GetService<IBaseSettings>();

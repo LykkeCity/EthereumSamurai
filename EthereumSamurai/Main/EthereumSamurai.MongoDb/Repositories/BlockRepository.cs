@@ -62,6 +62,14 @@ namespace EthereumSamurai.MongoDb.Repositories
             return blockModel;
         }
 
+        public async Task<BigInteger> GetSyncedBlocksCountAsync()
+        {
+            var filterBuilder = Builders<BlockEntity>.Filter;
+            BigInteger result = await _collection.CountAsync(filterBuilder.Empty);
+
+            return result;
+        }
+
         public async Task<BigInteger> GetLastSyncedBlockAsync()
         {
             var sort = Builders<BlockEntity>.Sort.Descending(x => x.Number); //build sort object   

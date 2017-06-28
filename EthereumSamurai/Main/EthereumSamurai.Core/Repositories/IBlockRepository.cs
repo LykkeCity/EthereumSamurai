@@ -13,5 +13,6 @@ namespace EthereumSamurai.Core.Repositories
         Task SaveAsync(BlockModel blockModel);
         Task<BlockModel> GetForHashAsync(string blockHash);
         Task<BigInteger> GetLastSyncedBlockAsync();
+        Task<BigInteger> GetSyncedBlocksCountAsync();
     }
 }
