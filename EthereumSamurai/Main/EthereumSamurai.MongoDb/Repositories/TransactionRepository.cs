@@ -36,6 +36,9 @@ namespace EthereumSamurai.MongoDb.Repositories
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.To)),
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.BlockTimestamp)),
                 new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Ascending(x => x.BlockHash)),
+                new CreateIndexModel<TransactionEntity>(Builders<TransactionEntity>.IndexKeys.Combine(
+                    Builders<TransactionEntity>.IndexKeys.Ascending(x => x.From),
+                    Builders<TransactionEntity>.IndexKeys.Descending(x => x.Nonce)))
             });
 
             _mapper = mapper;
