@@ -9,7 +9,7 @@ namespace EthereumSamurai.Filters
 {
     public class ModelStateValidationFilter : ActionFilterAttribute
     {
-        public void OnActionExecuting(ActionExecutingContext context)
+        public override void OnActionExecuting(ActionExecutingContext context)
         {
             if (!context.ModelState.IsValid)
             {
