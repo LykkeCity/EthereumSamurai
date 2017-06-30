@@ -76,13 +76,14 @@ namespace EthereumSamurai.MongoDb.Repositories
             if (!string.IsNullOrEmpty(transactionQuery.FromAddress))
             {
                 FilterDefinition<TransactionEntity> filterFrom = filterBuilder.Eq(x => x.From, transactionQuery.FromAddress);
-                filter = filter & filterFrom; 
+                filter = filter & filterFrom;
             }
 
             if (!string.IsNullOrEmpty(transactionQuery.ToAddress))
             {
                 FilterDefinition<TransactionEntity> filterTo = filterBuilder.Eq(x => x.To, transactionQuery.ToAddress);
-                filter = filter | filterTo;
+
+                filter = transactionQuery.FromAddress == transactionQuery.ToAddress ? filter | filterTo : filter & filterTo;
             }
 
             if (transactionQuery.StartDate.HasValue)
@@ -101,14 +102,14 @@ namespace EthereumSamurai.MongoDb.Repositories
 
             var sort = Builders<TransactionEntity>.Sort.Descending(x => x.BlockNumber);
             MongoDB.Driver.
-            IFindFluent< TransactionEntity,TransactionEntity > search = _collection.Find(filter);
+            IFindFluent<TransactionEntity, TransactionEntity> search = _collection.Find(filter);
             result = new List<TransactionModel>();
             search = search.Sort(sort);
-            if (transactionQuery.Start.HasValue && transactionQuery.Count.HasValue)
-            {
-                result = new List<TransactionModel>(transactionQuery.Count.Value - transactionQuery.Start.Value);
-                search = search.Skip(transactionQuery.Start).Limit(transactionQuery.Count);
-            }
+
+            transactionQuery.Start = transactionQuery.Start.HasValue ? transactionQuery.Start : 0;
+            transactionQuery.Count = transactionQuery.Count.HasValue && transactionQuery.Count != 0 ? transactionQuery.Count : (int)await search.CountAsync();
+            result = new List<TransactionModel>(transactionQuery.Count.Value);
+            search = search.Skip(transactionQuery.Start).Limit(transactionQuery.Count);
 
             await search.ForEachAsync(transactionEntity =>
             {
