@@ -9,6 +9,7 @@ using EthereumSamurai.Core.Models;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Numerics;
+using Moq;
 
 namespace EthereumSamurai.Test.Jobs
 {
@@ -32,9 +33,9 @@ namespace EthereumSamurai.Test.Jobs
                 From = 1,
                 To = 1
             };
-            var logger = TestConfig.ServiceProvider.GetService<ILog>();
+            var logger = new Mock<ILog>();
 
-            _blockIndexingJob = new BlockIndexingJob(rpcReader, _indexingService, indexingSettings, logger, _blockService);
+            _blockIndexingJob = new BlockIndexingJob(rpcReader, _indexingService, indexingSettings, logger.Object, _blockService);
         }
 
         [TestMethod]
