@@ -6,7 +6,7 @@ using System.Numerics;
 using System.Runtime.Serialization;
 using System.Text;
 
-namespace EthereumSamurai.Models.Debug
+namespace EthereumSamurai.Models.DebugModels
 {
     public class CustomConverter<T> : JsonConverter
     {
@@ -54,7 +54,7 @@ namespace EthereumSamurai.Models.Debug
         [DataMember(Name = "depth")]
         public int Depth { get; set; }
         [DataMember(Name = "error")]
-        public string Error { get; set; }
+        public object Error { get; set; }
         [DataMember(Name = "stack")]
         public List<string> Stack { get; set; }
         [DataMember(Name = "memory")]
