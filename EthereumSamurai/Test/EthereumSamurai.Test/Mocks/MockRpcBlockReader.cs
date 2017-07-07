@@ -7,7 +7,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using System.Linq;
 
-namespace EthereumSamurai.Test.Mocks
+namespace EthereumSamurai.UnitTest.Mocks
 {
     public class MockRpcBlockReader : IRpcBlockReader
     {
