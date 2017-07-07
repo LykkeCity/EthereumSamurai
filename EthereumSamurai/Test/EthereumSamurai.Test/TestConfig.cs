@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace EthereumSamurai.Test
+namespace EthereumSamurai.UnitTest
 {
     public static class TestConfig
     {

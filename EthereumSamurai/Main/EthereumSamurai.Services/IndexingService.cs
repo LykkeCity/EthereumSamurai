@@ -50,7 +50,7 @@ namespace EthereumSamurai.Services
             }
 
             //Indexer fingerPrint
-            var blockSyncedInfoModel = new Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
+            var blockSyncedInfoModel = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
             await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);
         }
     }

@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using System.Numerics;
 using Moq;
 
-namespace EthereumSamurai.Test.Jobs
+namespace EthereumSamurai.UnitTest.Jobs
 {
     [TestClass]
     public class BlockIndexingJobTests
