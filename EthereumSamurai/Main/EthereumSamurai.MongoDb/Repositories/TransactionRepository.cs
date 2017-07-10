@@ -58,6 +58,24 @@ namespace EthereumSamurai.MongoDb.Repositories
             await _collection.InsertOneAsync(transactionEntity);
         }
 
+        public async Task SaveManyForBlockAsync(IEnumerable<TransactionModel> transactionModels, ulong blockNumber)
+        {
+            if (transactionModels.Count() == 0)
+            {
+                return;
+            }
+
+            var entities = new List<TransactionEntity>(transactionModels.Count());
+            foreach (var transactionModel in transactionModels)
+            {
+                TransactionEntity transactionEntity = _mapper.Map<TransactionEntity>(transactionModel);
+                entities.Add(transactionEntity);
+            }
+
+            await _collection.DeleteManyAsync((x) => x.BlockNumber == blockNumber);
+            await _collection.InsertManyAsync(entities);
+        }
+
         public async Task<TransactionModel> GetAsync(string transactionHash)
         {
             var filter = Builders<TransactionEntity>.Filter.Eq("_id", transactionHash);

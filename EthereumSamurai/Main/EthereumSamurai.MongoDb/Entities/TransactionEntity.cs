@@ -35,5 +35,7 @@ namespace EthereumSamurai.MongoDb.Entities
         public string ContractAddress { get; set; }
         [BsonElement]
         public string GasUsed { get; set; }
+        [BsonElement]
+        public string HasError { get; set; }
     }
 }

@@ -3,30 +3,24 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace EthereumSamurai.Models.DebugModels
+namespace EthereumSamurai.Models.Blockchain
 {
-    public class TraceResultModel
-    {
-        public bool HasError { get; set; }
-
-        public IEnumerable<TransferValueModel> Transfers { get; set; }
-    }
-
-    public enum TransferValueModelType
+    public enum InternalMessageModelType
     {
         CREATION,
         TRANSACTION,
         TRANSFER
     }
 
-    public class TransferValueModel
+    public class InternalMessageModel
     {
-        public int Depth { get; set; }
         public string TransactionHash { get; set; }
+        public BigInteger BlockNumber { get; set; }
         public string FromAddress { get; set; }
         public string ToAddress { get; set; }
+        public int Depth { get; set;}
         public BigInteger Value { get; set; }
-        public TransferValueModelType Type { get; set; }
         public int MessageIndex { get; set; }
+        public InternalMessageModelType Type { get; set; }
     }
 }

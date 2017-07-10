@@ -38,6 +38,10 @@ namespace EthereumSamurai.Services.Models.DebugModels
     public class TransactionTracer
     {
         private AddressUtil _addressUtil;
+        private TreeNode<CallStackFrame> _callTree;
+        private TreeNode<CallStackFrame> _currentNode;
+        private int _currentDepth = 0;
+        private List<TransferValue> _allTransfers;
 
         public string FromAddress { get; private set; }
         public string ToAddress { get; private set; }
@@ -45,9 +49,12 @@ namespace EthereumSamurai.Services.Models.DebugModels
         public string Error { get; private set; }
         public TransferValueType Type { get; private set; }
         public List<CallStackFrame> Stack { get; private set; }
+        public string ContractAddress { get; private set; }
 
-        public TransactionTracer(string from, string transactionHash, string toAddress, BigInteger value)
+        public TransactionTracer(string from, string transactionHash, string toAddress, string contractAddress, BigInteger value)
         {
+            _allTransfers = new List<TransferValue>();
+            ContractAddress = contractAddress;
             _addressUtil = new AddressUtil();
             TransactionHash = transactionHash;
             Stack = new List<CallStackFrame>();
@@ -60,6 +67,7 @@ namespace EthereumSamurai.Services.Models.DebugModels
                 Type = TransferValueType.TRANSACTION;
             }
 
+            string destinationAddress = toAddress ?? ContractAddress ?? Constants.EmptyAddress;
             List<TransferValue> transfers = new List<TransferValue>();
             if (value != 0)
             {
@@ -68,100 +76,90 @@ namespace EthereumSamurai.Services.Models.DebugModels
                     Depth = 0,
                     TransactionHash = transactionHash,
                     FromAddress = from,
-                    ToAddress = toAddress,
+                    ToAddress = destinationAddress,
                     Value = value,
                     Type = this.Type
                 });
             }
 
-            Stack.Add(new CallStackFrame()
+            var initialCallStack = new CallStackFrame()
             {
-                Address = ToAddress,
+                Address = destinationAddress,
+                OpCode = Type == TransferValueType.CREATION ? OpCodes.CREATE : null,
                 Transfers = transfers.ToArray()
-            });
+            };
+
+            Stack.Add(initialCallStack);
+
+            _callTree = new TreeNode<CallStackFrame>(initialCallStack, 0);
+            _currentNode = _callTree;
         }
 
         public async Task ProcessLog(StructLogItem structLog)
         {
+            _currentDepth = structLog.Depth;
+            CallStackFrame addedOnCurrentProcessing = null;
             if (structLog.Error != null)
             {
-                this.Stack.RemoveAt(this.Stack.Count - 1);
-                if (this.Stack.Count == 0)
-                {
-                    this.Error = structLog.Error?.ToString();
-                }
+                this.Error = structLog.Error?.ToString();
+
                 return;
             }
 
-            if (structLog.Depth == this.Stack.Count - 1)
+            if (structLog.Depth == _currentNode.Depth)
             {
-                var returnFrame = this.Stack.Last();
-                this.Stack.RemoveAt(this.Stack.Count - 1);
-                var topFrame = this.Stack.Last();
+                var returnFrame = _currentNode.Data;
+                _currentNode = _currentNode.Parent;
+                var topFrame = _currentNode.Data;
 
-                if (topFrame.OpCode == OpCodes.CREATE)
+                if (topFrame.OpCode == OpCodes.CREATE || returnFrame.OpCode == OpCodes.CREATE)
                 {
-                    // Now we know our new address, fill it in everywhere.
-                    topFrame.Address = structLog.Stack.Last();
-                    await Fixup(returnFrame.Transfers, topFrame.Address);
+                    string lastAddress = structLog.Stack.Last();
+                    returnFrame.Address = FormatAddress(lastAddress);
+                    await Fixup(returnFrame.Transfers, returnFrame.Address);
                 }
-
-                var allTransfers = new TransferValue[topFrame.Transfers.Length + returnFrame.Transfers.Length];
-                topFrame.Transfers.CopyTo(allTransfers, 0);
-                returnFrame.Transfers.CopyTo(allTransfers, topFrame.Transfers.Length);
-                // Our call succeded, so add any transfers that happened to the current stack frame
-                topFrame.Transfers = allTransfers;
-            }
-            else if (structLog.Depth != this.Stack.Count)
-            {
-                throw new Exception($"Unexpected stack transition: was {this.Stack.Count}, now {structLog.Depth}");
             }
 
             switch (structLog.Opcode)
             {
                 case OpCodes.CREATE:
                     {
-                        // CREATE adds a frame to the stack, but we don't know their address yet - we'll fill it in
-                        // when the call returns.
                         var value = new HexBigInteger(structLog.Stack.Last());
-                        var src = this.Stack.Last().Address;
+                        string src = _currentDepth - 1 == _currentNode.Depth ? _currentNode.Data.Address : _currentNode.Parent?.Data.Address;
 
                         TransferValue[] transfers = null;
-                        if (value.Value != 0)
-                        {
-                            transfers = new TransferValue[]{ new TransferValue(){
-                            Depth = this.Stack.Count,
+                        //if (value.Value != 0)
+                        //{
+                        transfers = new TransferValue[]{ new TransferValue(){
+                            Depth = structLog.Depth,
                             ToAddress = Constants.EmptyAddress,
                             Value = value.Value,
-                            FromAddress = FromAddress,
+                            FromAddress = src,
                             TransactionHash = TransactionHash,
                             Type = TransferValueType.CREATION
                         }};
-                        }
+                        //}
 
-                        var frame = new CallStackFrame()
+                        addedOnCurrentProcessing = new CallStackFrame()
                         {
                             Address = Constants.EmptyAddress,
                             OpCode = structLog.Opcode,
                             Transfers = transfers ?? new TransferValue[] { }
                         };
-
-                        this.Stack.Add(frame);
                     }
                     break;
 
                 case OpCodes.CALL:
                     {
-                        // CALL adds a frame to the stack with the target address and value
                         var value = new HexBigInteger(structLog.Stack[structLog.Stack.Count - 3]);
-                        var dest = _addressUtil.ConvertToChecksumAddress(structLog.Stack[structLog.Stack.Count - 2].TrimStart(new char[] { '0' }));
+                        var dest = FormatAddress(structLog.Stack[structLog.Stack.Count - 2]);
+                        string src = _currentNode.Data.Address;
 
                         TransferValue[] transfers = null;
                         if (value.Value != 0)
                         {
-                            var src = this.Stack.Last().Address;
                             transfers = new TransferValue[]{ new TransferValue(){
-                            Depth = this.Stack.Count,
+                            Depth = structLog.Depth,//this.Stack.Count,
                             ToAddress = dest,
                             Value = value.Value,
                             FromAddress = src,
@@ -170,34 +168,30 @@ namespace EthereumSamurai.Services.Models.DebugModels
                         }};
                         }
 
-                        var frame = new CallStackFrame()
+                        addedOnCurrentProcessing = new CallStackFrame()
                         {
                             Address = dest,
                             OpCode = structLog.Opcode,
                             Transfers = transfers ?? new TransferValue[] { }
                         };
-
-                        this.Stack.Add(frame);
                     }
                     break;
 
                 case OpCodes.CALLCODE:
                 case OpCodes.DELEGATECALL:
-                    // CALLCODE and DELEGATECALL don't transfer value or change the from address, but do create
-                    // a separate failure domain.
                     {
-                        var frame = new CallStackFrame()
+                        string src = _currentNode.Data.Address;
+                        addedOnCurrentProcessing = new CallStackFrame()
                         {
-                            Address = this.Stack.Last().Address,
+                            Address = src,
                             OpCode = structLog.Opcode,
                         };
-
-                        this.Stack.Add(frame);
                     }
                     break;
 
                 case OpCodes.SUICIDE:
                     // SUICIDE results in a transfer back to the calling address.
+                    //TODO: Find a way to calculate such TransferValue
                     {
                     }
                     break;
@@ -205,16 +199,35 @@ namespace EthereumSamurai.Services.Models.DebugModels
                 default:
                     break;
             }
+
+            if (addedOnCurrentProcessing != null)
+            {
+                this.Stack.Add(addedOnCurrentProcessing);
+                TreeNode<CallStackFrame> newNode = new TreeNode<CallStackFrame>(addedOnCurrentProcessing, _currentDepth);
+                if (_currentDepth == _currentNode.Depth)
+                {
+                    _currentNode.Parent.AddChild(newNode);
+                }
+                else
+                {
+                    _currentNode.AddChild(newNode);
+                }
+
+                _currentNode = newNode;
+            }
         }
 
         public TraceResult BuildResult()
         {
-            var stackResult = Stack.FirstOrDefault();
-
+            var transfers = new List<TransferValue>();
+            _callTree.RecursivelyProcessAllNodes((data) =>
+            {
+                transfers.AddRange(data.Transfers);
+            });
             return new TraceResult()
             {
                 HasError = !string.IsNullOrEmpty(Error),
-                Transfers = stackResult?.Transfers
+                Transfers = transfers
             };
         }
 
@@ -232,6 +245,14 @@ namespace EthereumSamurai.Services.Models.DebugModels
                     transfer.ToAddress = address;
                 }
             }
+        }
+
+        private string FormatAddress(string address)
+        {
+            string trimmed = address.TrimStart(new char[] { '0' });
+            string formated = _addressUtil.ConvertToChecksumAddress(trimmed).ToLower();
+
+            return formated;
         }
     }
 }
