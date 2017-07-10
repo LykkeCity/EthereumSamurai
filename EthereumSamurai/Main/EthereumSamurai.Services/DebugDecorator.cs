@@ -28,7 +28,7 @@ namespace EthereumSamurai.Services
             _debugApiService = debugApiService;
         }
 
-        public async Task<TraceResultModel> TraceTransactionAsync(string fromAddress, string toAddress, BigInteger value,
+        public async Task<TraceResultModel> TraceTransactionAsync(string fromAddress, string toAddress, string contractAddress, BigInteger value,
             string transactionHash, bool withMemory, bool withStack, bool withStorage)
         {
             Newtonsoft.Json.Linq.JObject jObject =
@@ -44,7 +44,7 @@ namespace EthereumSamurai.Services
             var str = jObject.ToString();
             TransactionTrace trace = jObject.ToObject<TransactionTrace>();
 
-            TransactionTracer tracer = new TransactionTracer(fromAddress, transactionHash, toAddress, value);
+            TransactionTracer tracer = new TransactionTracer(fromAddress, transactionHash, toAddress, contractAddress, value);
 
             foreach (var log in trace.StructLogs)
             {
@@ -56,8 +56,10 @@ namespace EthereumSamurai.Services
             return new TraceResultModel()
             {
                 HasError = result.HasError,
-                Transfers = result.Transfers?.Select(x => new TransferValueModel()
+                Transfers = result.Transfers?.Where(x => x.Type != TransferValueType.TRANSACTION)
+                .Select((x, counter) => new TransferValueModel()
                 {
+                    MessageIndex = counter,
                     Depth = x.Depth,
                     FromAddress = x.FromAddress,
                     ToAddress = x.ToAddress,

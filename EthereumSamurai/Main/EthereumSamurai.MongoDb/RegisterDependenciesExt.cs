@@ -28,6 +28,7 @@ namespace EthereumSamurai.MongoDb
                 collection.AddSingleton<IBlockRepository, BlockRepository>();
                 collection.AddSingleton<ITransactionRepository, TransactionRepository>();
                 collection.AddSingleton<IBlockSyncedInfoRepository, BlockSyncedInfoRepository>();
+                collection.AddSingleton<IInternalMessageRepository, InternalMessageRepository>();
             }
             catch (Exception e)
             {
