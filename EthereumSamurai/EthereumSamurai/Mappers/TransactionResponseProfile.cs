@@ -19,6 +19,7 @@ namespace EthereumSamurai.Mappers
             .ForMember(dest => dest.To, opt => opt.MapFrom(src => src.To))
             .ForMember(dest => dest.Input, opt => opt.MapFrom(src => src.Input))
             .ForMember(dest => dest.ContractAddress, opt => opt.MapFrom(src => src.ContractAddress))
+            .ForMember(dest => dest.HasError, opt => opt.MapFrom(src => src.HasError))
             .AfterMap((transactionModel, transactionEntity) =>
             {
                 transactionEntity.TransactionIndex = (int)transactionModel.TransactionIndex;

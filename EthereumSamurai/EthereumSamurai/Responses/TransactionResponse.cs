@@ -44,5 +44,7 @@ namespace EthereumSamurai.Responses
         public string ContractAddress { get; set; }
         [DataMember(Name = "gasUsed")]
         public string GasUsed { get; set; }
+        [DataMember(Name = "hasError")]
+        public bool HasError { get; set; }
     }
 }
