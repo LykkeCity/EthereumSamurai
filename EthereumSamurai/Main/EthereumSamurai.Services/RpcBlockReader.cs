@@ -92,7 +92,8 @@ namespace EthereumSamurai.Services
                             ToAddress = x.ToAddress,
                             TransactionHash = x.TransactionHash,
                             Value = x.Value,
-                            Type = (InternalMessageModelType)x.Type
+                            Type = (InternalMessageModelType)x.Type,
+                            BlockTimestamp = blockModel.Timestamp
                         }));
                     }
                 }
