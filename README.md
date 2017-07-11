@@ -21,7 +21,7 @@ To configure indexing job you should pass additional configuration(see appsettin
 If application exits before indexing is completed you can restart it and it would start indexing from the last synced point(points if ThreadAmount > 1).
 - **IndexerId** - any string. If you want to run multiple indexers on several VM.
 - **ThreadAmount** - amount of threads for that particular indexer instance.
-- **StartBlock** - block wrom which indexing start 
+- **StartBlock** - block from which indexing starts 
 - **StopBlock** - stop the indexing instance on the block with *BlockNumber == StopBlock*(Leave it null or skip in configuration)
 
 ## Logic behind ThreadAmount
