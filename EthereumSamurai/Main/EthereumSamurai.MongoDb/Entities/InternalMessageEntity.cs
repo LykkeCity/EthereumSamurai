@@ -1,4 +1,5 @@
-﻿using MongoDB.Bson.Serialization.Attributes;
+﻿using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -8,6 +9,8 @@ namespace EthereumSamurai.MongoDb.Entities
 {
     public class InternalMessageEntity
     {
+        [BsonId]
+        public ObjectId Id { get; set; }
         [BsonElement]
         public int MessageIndex { get; set; }
         [BsonElement]

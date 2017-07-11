@@ -138,7 +138,7 @@ namespace EthereumSamurai.MongoDb.Repositories
             internalMessageQuery.Count = internalMessageQuery.Count.HasValue && internalMessageQuery.Count != 0 ? internalMessageQuery.Count : (int)await search.CountAsync();
             search = search.Skip(internalMessageQuery.Start).Limit(internalMessageQuery.Count);
             result = new List<InternalMessageModel>(internalMessageQuery.Count.Value);
-            IAsyncCursor<InternalMessageEntity> cursor = await _collection.FindAsync(filter);
+            IAsyncCursor<InternalMessageEntity> cursor = await search.ToCursorAsync();
 
             await cursor.ForEachAsync((internalMessage) =>
             {
