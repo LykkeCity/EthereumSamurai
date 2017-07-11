@@ -32,5 +32,7 @@ namespace EthereumSamurai.Responses
         public int MessageIndex { get; set; }
         [DataMember(Name = "type")]
         public string Type { get; set; }
+        [DataMember(Name = "blockTimeStamp")]
+        public uint BlockTimeStamp { get; set; }
     }
 }

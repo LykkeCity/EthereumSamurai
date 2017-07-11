@@ -23,6 +23,7 @@ namespace EthereumSamurai.MongoDb.Mappers
             {
                 internalMessageEntity.Value = internalMessageModel.Value.ToString();
                 internalMessageEntity.Type = (int)internalMessageModel.Type;
+                internalMessageEntity.BlockTimestamp = (uint)internalMessageModel.BlockTimestamp;
             })
             .ForAllOtherMembers(opt => opt.Ignore());
 
@@ -37,6 +38,7 @@ namespace EthereumSamurai.MongoDb.Mappers
              {
                  internalMessageModel.Type = (InternalMessageModelType)internalMessageEntity.Type;
                  internalMessageModel.Value = BigInteger.Parse(internalMessageEntity.Value);
+                 internalMessageModel.BlockTimestamp = internalMessageEntity.BlockTimestamp;
              })
             .ForAllOtherMembers(opt => opt.Ignore());
         }

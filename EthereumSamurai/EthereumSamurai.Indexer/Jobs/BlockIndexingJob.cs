@@ -69,17 +69,23 @@ namespace EthereumSamurai.Indexer.Jobs
                     int iterationVector = 0;
                     while (checkDelegate(currentBlockNumber))
                     {
+                        BlockContent blockContent = null;
+                        int transactionCount = 0;
                         await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
                             $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}", DateTime.UtcNow);
                         await RetryPolicy.ExecuteAsync(async () =>
                         {
-                            BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                            blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
                             bool blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
                             iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
                             BlockContext blockContext = new BlockContext(indexerId, blockContent);
+                            transactionCount = blockContent.Transactions.Count;
 
                             await _indexingService.IndexBlockAsync(blockContext);
                         }, 5, 100);
+
+                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                           $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}", DateTime.UtcNow);
 
                         currentBlockNumber += iterationVector;
                     }

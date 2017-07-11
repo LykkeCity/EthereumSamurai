@@ -22,6 +22,7 @@ namespace EthereumSamurai.Mappers
                 transactionEntity.BlockNumber = (ulong)transactionModel.BlockNumber;
                 transactionEntity.Value = transactionModel.Value.ToString();
                 transactionEntity.Type = transactionModel.Type.ToString();
+                transactionEntity.BlockTimeStamp = (uint)transactionModel.BlockTimestamp;
             })
             .ReverseMap();
         }
