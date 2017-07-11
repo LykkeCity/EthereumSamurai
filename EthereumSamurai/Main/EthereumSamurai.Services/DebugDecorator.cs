@@ -36,12 +36,9 @@ namespace EthereumSamurai.Services
                 {
                     DisableMemory = !withMemory,
                     DisableStack = !withStack,
-                    DisableStorage = !withStack,
-                    FullStorage = !withMemory && !withStack && !withStack
+                    DisableStorage = !withStorage
                 });
 
-            List<string> tokens = new List<string>(jObject.Count);
-            var str = jObject.ToString();
             TransactionTrace trace = jObject.ToObject<TransactionTrace>();
 
             TransactionTracer tracer = new TransactionTracer(fromAddress, transactionHash, toAddress, contractAddress, value);
