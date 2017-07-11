@@ -96,7 +96,7 @@ namespace EthereumSamurai.Services
                         }));
                     }
                 }
-                catch
+                catch (Exception e)
                 { }
 
                 TransactionModel transactionModel = new TransactionModel()

@@ -27,5 +27,7 @@ namespace EthereumSamurai.MongoDb.Entities
         public int Depth { get; set; }
         [BsonElement]
         public int Type { get; set; }
+        [BsonElement]
+        public uint BlockTimestamp { get; set; }
     }
 }

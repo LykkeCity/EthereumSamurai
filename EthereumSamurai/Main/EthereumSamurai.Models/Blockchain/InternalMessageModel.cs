@@ -22,5 +22,6 @@ namespace EthereumSamurai.Models.Blockchain
         public BigInteger Value { get; set; }
         public int MessageIndex { get; set; }
         public InternalMessageModelType Type { get; set; }
+        public BigInteger BlockTimestamp { get; set; }
     }
 }
