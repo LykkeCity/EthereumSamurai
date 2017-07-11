@@ -222,7 +222,10 @@ namespace EthereumSamurai.Services.Models.DebugModels
             var transfers = new List<TransferValue>();
             _callTree.RecursivelyProcessAllNodes((data) =>
             {
-                transfers.AddRange(data.Transfers);
+                if (data?.Transfers != null)
+                {
+                    transfers.AddRange(data.Transfers);
+                }
             });
             return new TraceResult()
             {
