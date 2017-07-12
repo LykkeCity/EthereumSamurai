@@ -81,7 +81,7 @@ namespace EthereumSamurai.Services
                     withStack: true,
                     withStorage: false);
 
-                    if (traceResult?.Transfers != null)
+                    if (traceResult != null && traceResult.Transfers != null && !traceResult.HasError)
                     {
                         internalMessages.AddRange(traceResult.Transfers.Select(x => new InternalMessageModel()
                         {
