@@ -57,10 +57,10 @@ namespace EthereumSamurai.Models.DebugModels
         public object Error { get; set; }
         [DataMember(Name = "stack")]
         public List<string> Stack { get; set; }
-        [DataMember(Name = "memory")]
-        public IEnumerable<string>  Memory { get; set; }
-        [DataMember(Name = "storage")]
-        public Dictionary<string, string> Storage { get; set; }
+        //[DataMember(Name = "memory")]
+        //public IEnumerable<string>  Memory { get; set; }
+        //[DataMember(Name = "storage")]
+        //public Dictionary<string, string> Storage { get; set; }
     }
     /*
     {

@@ -45,6 +45,17 @@ namespace EthereumSamurai.IntegrationTest
         }
 
         [TestMethod]
+        public async Task DebugTest_TraceTransactionForBigBigTrace()
+        {
+            string trHash = "0x6b83e1111dce521ede985921aea1da39f38db5615e0d786c136b467c576da8c3";
+            var transaction = await _web3.Eth.Transactions.GetTransactionByHash.SendRequestAsync(trHash);
+            var transactionReciept = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(trHash);
+
+            var result = await _debug.TraceTransactionAsync(transaction.From, transaction.To, transactionReciept.ContractAddress,
+                transaction.Value.Value, trHash, false, true, false);
+        }
+
+        [TestMethod]
         public async Task DebugTest_TraceTransactionForTransfer()
         {
             string trHash = "0xae43914fd28467c8eccb706f3c8b2a6c0e69e231a490e79acc35b82d567572ad";//"0x9351a796b8a85d451fbae62ba26b07173134416d782026c08169dd0743cdc0e2";
