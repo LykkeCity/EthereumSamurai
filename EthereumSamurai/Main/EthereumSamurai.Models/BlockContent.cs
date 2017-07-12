@@ -10,6 +10,7 @@ namespace EthereumSamurai.Models
         public BlockModel BlockModel { get; set; }
         public List<TransactionModel> Transactions { get; set; }
         public List<InternalMessageModel> InternalMessages { get; set; }
+        public IEnumerable<AddressHistoryModel> AddressHistory { get; set; }
     }
 
     public class BlockContext

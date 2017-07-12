@@ -14,6 +14,7 @@ namespace EthereumSamurai.Core
         public const string TransactionCollectionName = "TransactionCollection";
         public const string BlockSyncedInfoCollectionName = "BlockSyncedInfoCollectionName";
         public const string InternalMessageCollectionName = "InternalMessageCollection";
+        public const string AddressHistoryCollectionName = "AddressHistoryCollection";
 
         #endregion
     }

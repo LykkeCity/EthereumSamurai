@@ -35,7 +35,7 @@ namespace EthereumSamurai.MongoDb.Repositories
                 new CreateIndexModel<InternalMessageEntity>(Builders<InternalMessageEntity>.IndexKeys.Ascending(x => x.BlockNumber)),
                 new CreateIndexModel<InternalMessageEntity>(Builders<InternalMessageEntity>.IndexKeys.Ascending(x => x.ToAddress)),
                 new CreateIndexModel<InternalMessageEntity>(Builders<InternalMessageEntity>.IndexKeys.Ascending(x => x.FromAddress)),
-                 new CreateIndexModel<InternalMessageEntity>(Builders<InternalMessageEntity>.IndexKeys.Combine(
+                new CreateIndexModel<InternalMessageEntity>(Builders<InternalMessageEntity>.IndexKeys.Combine(
                     Builders<InternalMessageEntity>.IndexKeys.Ascending(x => x.TransactionHash),
                     Builders<InternalMessageEntity>.IndexKeys.Ascending(x => x.MessageIndex)))
             });

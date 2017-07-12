@@ -19,9 +19,9 @@ namespace EthereumSamurai.MongoDb
 
             try
             {
-                var provider = collection.BuildServiceProvider();
+                IServiceProvider provider = collection.BuildServiceProvider();
                 IBaseSettings settings = provider.GetService<IBaseSettings>();
-                var mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
+                MongoClient mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
 
                 collection.AddSingleton(typeof(MongoClient), mongoClient);
                 collection.AddSingleton<IMongoDatabase>(mongoClient.GetDatabase("EthereumIndexer"));
@@ -29,6 +29,7 @@ namespace EthereumSamurai.MongoDb
                 collection.AddSingleton<ITransactionRepository, TransactionRepository>();
                 collection.AddSingleton<IBlockSyncedInfoRepository, BlockSyncedInfoRepository>();
                 collection.AddSingleton<IInternalMessageRepository, InternalMessageRepository>();
+                collection.AddSingleton<IAddressHistoryRepository, AddressHistoryRepository>();
             }
             catch (Exception e)
             {
