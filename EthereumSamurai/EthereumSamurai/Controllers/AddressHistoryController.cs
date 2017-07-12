@@ -15,14 +15,14 @@ namespace EthereumSamurai.Controllers
 {
     [Route("api/[controller]")]
     [Produces("application/json")]
-    public class InternalMessagesController : Controller
+    public class AddressHistoryController : Controller
     {
         private readonly IMapper _mapper;
-        private readonly IInternalMessageService _internalMessageService;
+        private readonly IAddressHistoryService _addressHistoryService;
 
-        public InternalMessagesController(IInternalMessageService internalMessageService, IMapper mapper)
+        public AddressHistoryController(IAddressHistoryService addressHistoryService, IMapper mapper)
         {
-            _internalMessageService = internalMessageService;
+            _addressHistoryService = addressHistoryService;
             _mapper = mapper;
         }
 
@@ -34,7 +34,7 @@ namespace EthereumSamurai.Controllers
         public async Task<IActionResult> GetForAddress(GetAddressInternalMessageHistoryRequest request)
         {
             string address = request.address.ToLower();
-            var transactionQuery = new InternalMessageQuery()
+            var transactionQuery = new AddressHistoryQuery()
             {
                 FromAddress = address,
                 ToAddress = address,
@@ -44,23 +44,23 @@ namespace EthereumSamurai.Controllers
                 Count = request.Count
             };
 
-            List<InternalMessageModel> messages = (await _internalMessageService.GetAsync(transactionQuery)).ToList();
+            List<AddressHistoryModel> messages = (await _addressHistoryService.GetAsync(transactionQuery)).ToList();
            
             return ProcessResponse(messages);
         }
 
-        private IActionResult ProcessResponse(List<InternalMessageModel> messages)
+        private IActionResult ProcessResponse(List<AddressHistoryModel> messages)
         {
-            List<InternalMessageResponse> response = new List<InternalMessageResponse>(messages.Count);
+            List<AddressHistoryResponse> response = new List<AddressHistoryResponse>(messages.Count);
             messages.ForEach(transaction =>
             {
-                InternalMessageResponse trResponse = _mapper.Map<InternalMessageResponse>(transaction);
+                AddressHistoryResponse trResponse = _mapper.Map<AddressHistoryResponse>(transaction);
                 response.Add(trResponse);
             });
 
-            return new JsonResult(new FilteredInternalMessageResponse()
+            return new JsonResult(new FilteredAddressHistoryResponse()
             {
-                Messages = response
+                History = response
             });
         }
     }

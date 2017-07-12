@@ -15,16 +15,19 @@ namespace EthereumSamurai.Services
         private readonly ITransactionRepository _transactionRepository;
         private readonly IBlockSyncedInfoRepository _blockSyncedInfoRepository;
         private readonly IInternalMessageRepository _internalMessageRepository;
+        private readonly IAddressHistoryRepository _addressHistoryRepository;
 
         public IndexingService(IBlockRepository blockRepository,
             ITransactionRepository transactionRepository,
             IBlockSyncedInfoRepository blockSyncedInfoRepository,
-            IInternalMessageRepository internalMessageRepository)
+            IInternalMessageRepository internalMessageRepository,
+            IAddressHistoryRepository addressHistoryRepository)
         {
             _blockRepository = blockRepository;
             _transactionRepository = transactionRepository;
             _blockSyncedInfoRepository = blockSyncedInfoRepository;
             _internalMessageRepository = internalMessageRepository;
+            _addressHistoryRepository = addressHistoryRepository;
         }
 
         public Task<BigInteger> GetLastBlockAsync()
@@ -45,11 +48,13 @@ namespace EthereumSamurai.Services
             var blockModel = blockContent.BlockModel;
             var transactions = blockContent.Transactions;
             var internalMessages = blockContent.InternalMessages;
+            var addressHistory = blockContent.AddressHistory;
             ulong blockNumber = (ulong)blockModel.Number;
 
             await _blockRepository.SaveAsync(blockModel);
             await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
             await _internalMessageRepository.SaveManyForBlockAsync(internalMessages, blockNumber);
+            await _addressHistoryRepository.SaveManyForBlockAsync(addressHistory, blockNumber);
             //Indexer fingerPrint
             var blockSyncedInfoModel = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
             await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);

@@ -20,7 +20,9 @@ namespace EthereumSamurai.Services
             collection.AddSingleton<IBalanceService, BalanceService>();
             collection.AddSingleton<IDebug, DebugDecorator>();
             collection.AddSingleton<IInternalMessageService, InternalMessageService>();
-            
+            collection.AddSingleton<IAddressHistoryService, AddressHistoryService>();
+
+
             collection.AddSingleton<Web3>((provider) =>
             {
                 var settings = provider.GetService<IBaseSettings>();

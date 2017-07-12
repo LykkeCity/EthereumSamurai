@@ -81,7 +81,7 @@ namespace EthereumSamurai.Services
                     withStack: true,
                     withStorage: false);
 
-                    if (traceResult != null && traceResult.Transfers != null && !traceResult.HasError)
+                    if (traceResult != null && !traceResult.HasError && traceResult.Transfers != null)
                     {
                         internalMessages.AddRange(traceResult.Transfers.Select(x => new InternalMessageModel()
                         {
@@ -122,14 +122,57 @@ namespace EthereumSamurai.Services
                 blockTransactions.Add(transactionModel);
             }
 
+            IEnumerable<AddressHistoryModel> addressHistory = ExtractAddressHistory(internalMessages, blockTransactions);
+
             #endregion
 
             return new BlockContent()
             {
+                AddressHistory = addressHistory,
                 InternalMessages = internalMessages,
                 Transactions = blockTransactions,
                 BlockModel = blockModel
             };
+        }
+
+        private static IEnumerable<AddressHistoryModel> ExtractAddressHistory(List<InternalMessageModel> internalMessages,
+            List<TransactionModel> blockTransactions)
+        {
+            Dictionary<string, int> trHashIndexDictionary = new Dictionary<string, int>();
+            IEnumerable<AddressHistoryModel> history = blockTransactions.Select(transaction =>
+            {
+                int index = (int)transaction.TransactionIndex;
+                string trHash = transaction.TransactionHash;
+                trHashIndexDictionary[trHash] = index;
+
+                return new AddressHistoryModel()
+                {
+                    MessageIndex = -1,
+                    TransactionIndex = (int)transaction.TransactionIndex,
+                    BlockNumber = (ulong)transaction.BlockNumber,
+                    BlockTimestamp = (uint)transaction.BlockTimestamp,
+                    From = transaction.From,
+                    HasError = transaction.HasError,
+                    To = transaction.To,
+                    TransactionHash = transaction.TransactionHash,
+                    Value = transaction.Value,
+                };
+            });
+
+            history = history.Concat(internalMessages.Select(message => new AddressHistoryModel()
+            {
+                MessageIndex = message.MessageIndex,
+                TransactionIndex = trHashIndexDictionary[message.TransactionHash],
+                TransactionHash = message.TransactionHash,
+                To = message.ToAddress,
+                HasError = false,
+                From = message.FromAddress,
+                BlockNumber = (ulong)message.BlockNumber,
+                BlockTimestamp = (uint)message.BlockTimestamp,
+                Value = message.Value,
+            }));
+
+            return history;
         }
 
         //just the tip

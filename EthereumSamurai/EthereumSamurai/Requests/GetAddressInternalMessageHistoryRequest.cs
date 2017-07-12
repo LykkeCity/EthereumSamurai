@@ -14,7 +14,7 @@ namespace EthereumSamurai.Requests
         [FromRoute]
         [Required]
         [DataMember(Name ="address")]
-        public string Address { get; set; }
+        public string address { get; set; }
 
         [FromQuery]
         [DataMember(Name = "startBlock")]
