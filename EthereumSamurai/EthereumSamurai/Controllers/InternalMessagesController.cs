@@ -26,6 +26,18 @@ namespace EthereumSamurai.Controllers
             _mapper = mapper;
         }
 
+        [Route("txHash/{transactionHash}")]
+        [HttpGet]
+        [ProducesResponseType(typeof(FilteredInternalMessageResponse), 200)]
+        [ProducesResponseType(typeof(ApiException), 400)]
+        [ProducesResponseType(typeof(ApiException), 500)]
+        public async Task<IActionResult> GetForAddress([FromRoute] string transactionHash)
+        {
+            List<InternalMessageModel> messages = (await _internalMessageService.GetAsync(transactionHash)).ToList();
+
+            return ProcessResponse(messages);
+        }
+
         [Route("{address}")]
         [HttpGet]
         [ProducesResponseType(typeof(FilteredInternalMessageResponse), 200)]

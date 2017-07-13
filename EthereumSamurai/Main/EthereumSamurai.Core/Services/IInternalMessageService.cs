@@ -9,6 +9,7 @@ namespace EthereumSamurai.Core.Services
 {
     public interface IInternalMessageService
     {
+        Task<IEnumerable<InternalMessageModel>> GetAsync(string transactionHash);
         Task<IEnumerable<InternalMessageModel>> GetAsync(InternalMessageQuery internalMessageQuery);
     }
 }
