@@ -112,11 +112,14 @@ namespace EthereumSamurai.Services.Models.DebugModels
                 _currentNode = _currentNode.Parent;
                 var topFrame = _currentNode.Data;
 
-                if (topFrame.OpCode == OpCodes.CREATE || returnFrame.OpCode == OpCodes.CREATE)
+                if ((topFrame.OpCode == OpCodes.CREATE || returnFrame.OpCode == OpCodes.CREATE))
                 {
                     string lastAddress = structLog.Stack.Last();
                     returnFrame.Address = FormatAddress(lastAddress);
-                    await Fixup(returnFrame.Transfers, returnFrame.Address);
+                    if (returnFrame.Transfers != null && returnFrame.Transfers.Count() != 0)
+                    {
+                        await Fixup(returnFrame.Transfers, returnFrame.Address);
+                    }
                 }
             }
 
