@@ -73,16 +73,18 @@ namespace EthereumSamurai.MongoDb.Repositories
                 filter = filter & filterEndBlock;
             }
 
-            var sort = Builders<AddressHistoryEntity>.Sort
-                .Descending(x => x.BlockNumber)
-                .Ascending(x => x.TransactionIndex)
-                .Ascending(x => x.MessageIndex);
+            var sort = Builders<AddressHistoryEntity>.Sort.Combine(
+                 Builders<AddressHistoryEntity>.Sort.Descending(x => x.BlockNumber),
+                  Builders<AddressHistoryEntity>.Sort.Ascending(x => x.TransactionIndex),
+                  Builders<AddressHistoryEntity>.Sort.Ascending(x => x.MessageIndex)
+                );
+
             MongoDB.Driver.IFindFluent<AddressHistoryEntity, AddressHistoryEntity> search = _collection.Find(filter);
             result = new List<AddressHistoryModel>();
             search = search.Sort(sort);
 
             addressHistoryQuery.Start = addressHistoryQuery.Start.HasValue ? addressHistoryQuery.Start : 0;
-            addressHistoryQuery.Count = addressHistoryQuery.Count.HasValue && addressHistoryQuery.Count != 0 ? addressHistoryQuery.Count : 
+            addressHistoryQuery.Count = addressHistoryQuery.Count.HasValue && addressHistoryQuery.Count != 0 ? addressHistoryQuery.Count :
                 (int)await search.CountAsync();
             result = new List<AddressHistoryModel>(addressHistoryQuery.Count.Value);
             search = search.Skip(addressHistoryQuery.Start).Limit(addressHistoryQuery.Count);
