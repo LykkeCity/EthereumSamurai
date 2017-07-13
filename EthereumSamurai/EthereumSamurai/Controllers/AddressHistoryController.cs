@@ -28,7 +28,7 @@ namespace EthereumSamurai.Controllers
 
         [Route("{address}")]
         [HttpGet]
-        [ProducesResponseType(typeof(FilteredInternalMessageResponse), 200)]
+        [ProducesResponseType(typeof(FilteredAddressHistoryResponse), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress(GetAddressInternalMessageHistoryRequest request)
