@@ -25,6 +25,13 @@ namespace EthereumSamurai.Services
             return transactions;
         }
 
+        public async Task<TransactionModel> GetAsync(string transactionHash)
+        {
+            TransactionModel transaction = await _transactionRepository.GetAsync(transactionHash);
+
+            return transaction;
+        }
+
         public async Task<IEnumerable<TransactionModel>> GetForBlockHashAsync(string blockHash)
         {
             IEnumerable<TransactionModel> transactions = await _transactionRepository.GetForBlockHashAsync(blockHash);

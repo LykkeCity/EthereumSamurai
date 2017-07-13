@@ -18,6 +18,13 @@ namespace EthereumSamurai.Services
             _internalMessageRepository = internalMessageRepository;
         }
 
+        public async Task<IEnumerable<InternalMessageModel>> GetAsync(string transactionHash)
+        {
+            IEnumerable<InternalMessageModel> messages = await _internalMessageRepository.GetAsync(transactionHash);
+
+            return messages;
+        }
+
         public async Task<IEnumerable<InternalMessageModel>> GetAsync(InternalMessageQuery internalMessageQuery)
         {
             IEnumerable<InternalMessageModel> messages = await _internalMessageRepository.GetAllByFilterAsync(internalMessageQuery);

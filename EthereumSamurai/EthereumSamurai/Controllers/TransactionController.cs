@@ -26,6 +26,19 @@ namespace EthereumSamurai.Controllers
             _mapper = mapper;
         }
 
+        [Route("txHash/{transactionHash}")]
+        [HttpGet]
+        [ProducesResponseType(typeof(TransactionResponse), 200)]
+        [ProducesResponseType(typeof(ApiException), 400)]
+        [ProducesResponseType(typeof(ApiException), 500)]
+        public async Task<IActionResult> GetForAddress([FromRoute] string transactionHash)
+        {
+            TransactionModel transaction = await _transactionService.GetAsync(transactionHash);
+            TransactionResponse trResponse = _mapper.Map<TransactionResponse>(transaction);
+
+            return new JsonResult(trResponse);
+        }
+
         [Route("{address}")]
         [HttpGet]
         [ProducesResponseType(typeof(FilteredTransactionsResponse), 200)]
