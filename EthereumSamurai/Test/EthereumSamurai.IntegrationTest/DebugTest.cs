@@ -47,7 +47,7 @@ namespace EthereumSamurai.IntegrationTest
         [TestMethod]
         public async Task DebugTest_TraceTransactionForBigBigTrace()
         {
-            string trHash = "0x6b83e1111dce521ede985921aea1da39f38db5615e0d786c136b467c576da8c3";
+            string trHash = "0x41ab6e34dc167c64a7cb4bc7be1b1b811b29472507559b6377b7098945034f57";
             var transaction = await _web3.Eth.Transactions.GetTransactionByHash.SendRequestAsync(trHash);
             var transactionReciept = await _web3.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(trHash);
 

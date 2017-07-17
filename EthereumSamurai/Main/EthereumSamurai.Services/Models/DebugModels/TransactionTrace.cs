@@ -41,6 +41,14 @@ namespace EthereumSamurai.Models.DebugModels
     }
 
     [DataContract]
+    public class TransactionTraceResponse
+    {
+        [DataMember(Name = "result")]
+        public TransactionTrace TransactionTrace { get; set; }
+
+    }
+
+    [DataContract]
     public class StructLogItem
     {
         [DataMember(Name = "op")]
