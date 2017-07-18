@@ -18,6 +18,7 @@ namespace EthereumSamurai.Indexer
         private readonly ILog _logger;
         private Dictionary<Task, CancellationTokenSource> _taskCancellationDictionary;
         private Dictionary<Task, IJob> _taskJobDictionary;
+        private object _locker = new object();
 
         public JobRunner(IEnumerable<IJob> jobs, ILog logger)
         {
@@ -62,21 +63,27 @@ namespace EthereumSamurai.Indexer
 
         private async Task WaitAndRetryAll()
         {
-            try
+            do
             {
-                await Task.WhenAll(_runningTasks).ConfigureAwait(false);
-                await _logger.WriteInfoAsync("JobRunner", "WaitAndRetryAll", "", "Jobs has been completed", DateTime.UtcNow);
-            }
-            catch (OperationCanceledException e)
-            {
-                await _logger.WriteInfoAsync("JobRunner", "WaitAndRetryAll", "", "Jobs has been cancelled", DateTime.UtcNow);
-            }
-            catch (Exception e)
-            {
-                await _logger.WriteErrorAsync("JobRunner", "WaitAndRetryAll", "Error during indexing. Retry", e, DateTime.UtcNow);
-                await Task.Delay(1000);
-                await RunTasks(_cancellationToken);
-            }
+                try
+                {
+                    Task.WaitAny(_runningTasks.ToArray(), _cancellationToken);
+                    await RunTasks(_cancellationToken);
+                }
+                catch (OperationCanceledException e)
+                {
+                    await _logger.WriteInfoAsync("JobRunner", "WaitAndRetryAll", "", "Jobs has been cancelled", DateTime.UtcNow);
+                }
+                catch (Exception e)
+                {
+                    await _logger.WriteErrorAsync("JobRunner", "WaitAndRetryAll", "Error during indexing. Retry", e, DateTime.UtcNow);
+                    await Task.Delay(1000);
+                    await RunTasks(_cancellationToken);
+                }
+            } while (!_cancellationToken.IsCancellationRequested ||
+            _runningTasks.Where(x => x.Status == TaskStatus.RanToCompletion).Count() != _runningTasks.Count());
+
+            await _logger.WriteInfoAsync("JobRunner", "WaitAndRetryAll", "", "Jobs has been completed", DateTime.UtcNow);
         }
 
         private async Task WaitAll()
@@ -102,7 +109,7 @@ namespace EthereumSamurai.Indexer
             }
         }
 
-        private async Task Wait(Task taskToWait)
+        private async Task RepeatTillCompleted(Task taskToWait)
         {
             try
             {
@@ -115,7 +122,6 @@ namespace EthereumSamurai.Indexer
             }
             catch (Exception e)
             {
-                _taskCancellationDictionary[taskToWait].Cancel();
                 await _logger.WriteErrorAsync("JobRunner", "Wait", "Error during indexing. Retry", e, DateTime.UtcNow);
                 await Task.Delay(1000);
                 await RunTasks(_cancellationToken);
