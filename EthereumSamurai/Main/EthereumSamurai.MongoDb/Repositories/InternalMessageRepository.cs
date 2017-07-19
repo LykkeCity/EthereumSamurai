@@ -43,6 +43,13 @@ namespace EthereumSamurai.MongoDb.Repositories
             _mapper = mapper;
         }
 
+        public async Task DeleteAllForHash(string transactionHash)
+        {
+            var filter = Builders<InternalMessageEntity>.Filter.Eq(x => x.TransactionHash, transactionHash);
+
+            await _collection.DeleteManyAsync(filter);
+        }
+
         public async Task DeleteAllForBlockNumberAsync(ulong blockNumber)
         {
             var filter = Builders<InternalMessageEntity>.Filter.Eq(x => x.BlockNumber, blockNumber);
@@ -63,6 +70,7 @@ namespace EthereumSamurai.MongoDb.Repositories
         {
             if (internalMessages.Count() == 0)
             {
+                await _collection.DeleteManyAsync((x) => x.BlockNumber == blockNumber);
                 return;
             }
 

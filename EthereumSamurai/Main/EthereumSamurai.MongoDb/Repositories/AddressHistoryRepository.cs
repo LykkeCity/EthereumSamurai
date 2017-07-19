@@ -29,6 +29,7 @@ namespace EthereumSamurai.MongoDb.Repositories
 
             _collection.Indexes.CreateMany(new[]
             {
+                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionHash)),
                 new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.BlockNumber)),
                 new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.From)),
                 new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.To)),
@@ -39,6 +40,11 @@ namespace EthereumSamurai.MongoDb.Repositories
             });
 
             _mapper = mapper;
+        }
+
+        public async Task DeleteByHash(string hash)
+        {
+            await _collection.DeleteManyAsync((x) => x.TransactionHash == hash);
         }
 
         public async Task<IEnumerable<AddressHistoryModel>> GetAsync(AddressHistoryQuery addressHistoryQuery)

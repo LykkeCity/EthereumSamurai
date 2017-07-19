@@ -18,10 +18,12 @@ namespace EthereumSamurai.Indexer
         private readonly ILog _logger;
         private Dictionary<Task, CancellationTokenSource> _taskCancellationDictionary;
         private Dictionary<Task, IJob> _taskJobDictionary;
+        private Dictionary<IJob, bool> _completionDictionary;
         private object _locker = new object();
 
         public JobRunner(IEnumerable<IJob> jobs, ILog logger)
         {
+            _completionDictionary = new Dictionary<IJob, bool>();
             _taskCancellationDictionary = new Dictionary<Task, CancellationTokenSource>();
             _taskJobDictionary = new Dictionary<Task, IJob>();
             _logger = logger;
@@ -32,12 +34,26 @@ namespace EthereumSamurai.Indexer
         public async Task RunTasks(CancellationToken cancellationToken)
         {
             _cancellationToken = cancellationToken;
-            _runningTasks = _jobs.Select(job =>
-            {
-                return RunJob(job);
-            });
-
             await WaitAndRetryAll();
+        }
+
+        private async Task<IEnumerable<Task>> RunJobs(CancellationToken cancellationToken)
+        {
+            lock (_locker)
+            {
+                _cancellationToken = cancellationToken;
+                _runningTasks = _jobs.Select(job =>
+                {
+                    if (!_completionDictionary.ContainsKey(job))
+                    {
+                        return RunJob(job);
+                    }
+
+                    return null;
+                }).Where(task => task != null);
+            }
+
+            return _runningTasks.ToList();
         }
 
         private Task RunJob(IJob job)
@@ -57,18 +73,28 @@ namespace EthereumSamurai.Indexer
                 _taskCancellationDictionary[runningTask] = cts;
                 _taskJobDictionary[runningTask] = job;
             }
+            else if (runningTask.Status == TaskStatus.RanToCompletion || runningTask.Status == TaskStatus.Canceled)
+            {
+                var completedJob = _taskJobDictionary[runningTask];
+                _completionDictionary[completedJob] = true;
+                _taskCancellationDictionary.Remove(runningTask);
+                _taskJobDictionary.Remove(runningTask);
+
+                return null;
+            }
 
             return runningTask;
         }
 
         private async Task WaitAndRetryAll()
         {
+            IEnumerable<Task> currentlyRunning = null;
             do
             {
+                currentlyRunning = await RunJobs(_cancellationToken);
                 try
                 {
-                    Task.WaitAny(_runningTasks.ToArray(), _cancellationToken);
-                    await RunTasks(_cancellationToken);
+                    Task.WaitAny(currentlyRunning.ToArray(), _cancellationToken);
                 }
                 catch (OperationCanceledException e)
                 {
@@ -78,10 +104,10 @@ namespace EthereumSamurai.Indexer
                 {
                     await _logger.WriteErrorAsync("JobRunner", "WaitAndRetryAll", "Error during indexing. Retry", e, DateTime.UtcNow);
                     await Task.Delay(1000);
-                    await RunTasks(_cancellationToken);
                 }
-            } while (!_cancellationToken.IsCancellationRequested ||
-            _runningTasks.Where(x => x.Status == TaskStatus.RanToCompletion).Count() != _runningTasks.Count());
+            } while (!_cancellationToken.IsCancellationRequested &&
+            currentlyRunning.Where(x => x.Status == TaskStatus.RanToCompletion).Count() != currentlyRunning.Count() && currentlyRunning.Count() !=0);
+
 
             await _logger.WriteInfoAsync("JobRunner", "WaitAndRetryAll", "", "Jobs has been completed", DateTime.UtcNow);
         }
