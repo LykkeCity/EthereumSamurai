@@ -10,6 +10,7 @@ namespace EthereumSamurai.Core.Repositories
     public interface IInternalMessageRepository
     {
         Task SaveManyForBlockAsync(IEnumerable<InternalMessageModel> internalMessages, ulong blockNumber);
+        Task DeleteAllForHash(string transactionHash);
         Task DeleteAllForBlockNumberAsync(ulong blockNumber);
         Task<IEnumerable<InternalMessageModel>> GetAsync(string transactionHash);
         Task<IEnumerable<InternalMessageModel>> GetAllByFilterAsync(InternalMessageQuery internalMessageQuery);

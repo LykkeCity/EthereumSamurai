@@ -10,6 +10,7 @@ namespace EthereumSamurai.Core.Repositories
     public interface ITransactionRepository
     {
         Task SaveAsync(TransactionModel TransactioModel);
+        Task DeleteByHash(string transactionHash);
         Task<IEnumerable<TransactionModel>> GetAsync(TransactionQuery transactionQuery);
         Task<TransactionModel> GetAsync(string transactionHash);
         Task<IEnumerable<TransactionModel>> GetForBlockNumberAsync(ulong blockNumber);

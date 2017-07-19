@@ -52,7 +52,26 @@ namespace EthereumSamurai.Services
             ulong blockNumber = (ulong)blockModel.Number;
 
             await _blockRepository.SaveAsync(blockModel);
-            await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
+
+            #region ProcessTransactions
+            try
+            {
+                await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
+            }
+            catch
+            {
+                foreach (var transaction in transactions)
+                {
+                    string trHash = transaction.TransactionHash;
+                    await _transactionRepository.DeleteByHash(trHash);
+                    await _internalMessageRepository.DeleteAllForHash(trHash);
+                    await _addressHistoryRepository.DeleteByHash(trHash);
+                }
+
+                await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
+            }
+            #endregion
+
             await _internalMessageRepository.SaveManyForBlockAsync(internalMessages, blockNumber);
             await _addressHistoryRepository.SaveManyForBlockAsync(addressHistory, blockNumber);
             //Indexer fingerPrint

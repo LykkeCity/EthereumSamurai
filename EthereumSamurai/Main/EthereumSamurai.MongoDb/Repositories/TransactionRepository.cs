@@ -51,6 +51,13 @@ namespace EthereumSamurai.MongoDb.Repositories
             await _collection.DeleteManyAsync(filter);
         }
 
+        public async Task DeleteByHash(string transactionHash)
+        {
+            var filter = Builders<TransactionEntity>.Filter.Eq(x => x.TransactionHash, transactionHash);
+
+            await _collection.DeleteOneAsync(filter);
+        }
+
         public async Task SaveAsync(TransactionModel transactionModel)
         {
             TransactionEntity transactionEntity = _mapper.Map<TransactionEntity>(transactionModel);
@@ -62,6 +69,7 @@ namespace EthereumSamurai.MongoDb.Repositories
         {
             if (transactionModels.Count() == 0)
             {
+                await _collection.DeleteManyAsync((x) => x.BlockNumber == blockNumber);
                 return;
             }
 
