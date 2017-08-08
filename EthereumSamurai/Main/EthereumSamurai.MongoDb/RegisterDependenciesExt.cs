@@ -21,7 +21,7 @@ namespace EthereumSamurai.MongoDb
             {
                 IServiceProvider provider = collection.BuildServiceProvider();
                 IBaseSettings settings = provider.GetService<IBaseSettings>();
-                MongoClient mongoClient = new MongoClient(settings.Db.MongoDBConnectionString);
+                MongoClient mongoClient = new MongoClient(settings.DbSettings.MongoDBConnectionString);
 
                 collection.AddSingleton(typeof(MongoClient), mongoClient);
                 collection.AddSingleton<IMongoDatabase>(mongoClient.GetDatabase("EthereumIndexer"));

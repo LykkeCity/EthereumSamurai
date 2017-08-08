@@ -1,18 +1,19 @@
-﻿using EthereumSamurai.Models.Blockchain;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 using System.Threading.Tasks;
+using EthereumSamurai.Models.Blockchain;
 
 namespace EthereumSamurai.Core.Repositories
 {
     public interface IBlockRepository
     {
         Task<bool> DoesBlockExistAsync(string blockHash);
-        Task SaveAsync(BlockModel blockModel);
+
         Task<BlockModel> GetForHashAsync(string blockHash);
+
         Task<BigInteger> GetLastSyncedBlockAsync();
+
         Task<BigInteger> GetSyncedBlocksCountAsync();
+
+        Task SaveAsync(BlockModel blockModel);
     }
 }

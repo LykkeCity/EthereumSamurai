@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace EthereumSamurai.Core
+﻿namespace EthereumSamurai.Core
 {
     public static class Constants
     {
@@ -10,11 +6,11 @@ namespace EthereumSamurai.Core
 
         #region MongoDB_Collections
 
-        public const string BlockCollectionName = "BlockCollection";
-        public const string TransactionCollectionName = "TransactionCollection";
+        public const string AddressHistoryCollectionName  = "AddressHistoryCollection";
+        public const string BlockCollectionName           = "BlockCollection";
         public const string BlockSyncedInfoCollectionName = "BlockSyncedInfoCollectionName";
         public const string InternalMessageCollectionName = "InternalMessageCollection";
-        public const string AddressHistoryCollectionName = "AddressHistoryCollection";
+        public const string TransactionCollectionName     = "TransactionCollection";
 
         #endregion
     }

@@ -1,18 +1,20 @@
-﻿using EthereumSamurai.Models.Blockchain;
-using EthereumSamurai.Models.Query;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
 
 namespace EthereumSamurai.Core.Repositories
 {
     public interface IInternalMessageRepository
     {
-        Task SaveManyForBlockAsync(IEnumerable<InternalMessageModel> internalMessages, ulong blockNumber);
-        Task DeleteAllForHash(string transactionHash);
         Task DeleteAllForBlockNumberAsync(ulong blockNumber);
-        Task<IEnumerable<InternalMessageModel>> GetAsync(string transactionHash);
+
+        Task DeleteAllForHash(string transactionHash);
+
         Task<IEnumerable<InternalMessageModel>> GetAllByFilterAsync(InternalMessageQuery internalMessageQuery);
+
+        Task<IEnumerable<InternalMessageModel>> GetAsync(string transactionHash);
+
+        Task SaveManyForBlockAsync(IEnumerable<InternalMessageModel> internalMessages, ulong blockNumber);
     }
 }
