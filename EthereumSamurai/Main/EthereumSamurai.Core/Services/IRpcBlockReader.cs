@@ -1,15 +1,13 @@
-﻿using EthereumSamurai.Models;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 using System.Threading.Tasks;
+using EthereumSamurai.Models;
 
 namespace EthereumSamurai.Core.Services
 {
     public interface IRpcBlockReader
     {
-        Task<BlockContent> ReadBlockAsync(BigInteger blockHeight);
         Task<BigInteger> GetBlockCount();
+
+        Task<BlockContent> ReadBlockAsync(BigInteger blockHeight);
     }
 }

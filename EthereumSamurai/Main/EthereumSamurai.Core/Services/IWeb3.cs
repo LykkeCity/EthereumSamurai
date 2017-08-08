@@ -4,27 +4,37 @@ using Nethereum.RPC;
 using Nethereum.RPC.TransactionManagers;
 using Nethereum.Signer;
 using Nethereum.Util;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace EthereumSamurai.Core.Services
 {
     public interface IWeb3
     {
-        ShhApiService Shh { get; }
-        EthApiContractService Eth { get; }
         IClient Client { get; }
-        TransactionSigner OfflineTransactionSigner { get; }
+
         UnitConversion Convert { get; }
-        ITransactionManager TransactionManager { get; set; }
-        PersonalApiService Personal { get; }
+
+        EthApiContractService Eth { get; }
+
         NetApiService Net { get; }
 
+        TransactionSigner OfflineTransactionSigner { get; }
+
+        PersonalApiService Personal { get; }
+
+        ShhApiService Shh { get; }
+
+        ITransactionManager TransactionManager { get; set; }
+
+
+
         string GetAddressFromPrivateKey(string privateKey);
+
         bool IsChecksumAddress(string address);
+
         string Sha3(string value);
+
         string ToChecksumAddress(string address);
+
         string ToValid20ByteAddress(string address);
     }
 }

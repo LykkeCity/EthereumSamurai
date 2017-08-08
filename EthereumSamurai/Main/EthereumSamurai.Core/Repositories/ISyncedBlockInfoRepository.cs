@@ -1,18 +1,17 @@
-﻿using EthereumSamurai.Models.Blockchain;
-using EthereumSamurai.Models.Indexing;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 using System.Threading.Tasks;
+using EthereumSamurai.Models.Indexing;
 
 namespace EthereumSamurai.Core.Repositories
 {
     public interface IBlockSyncedInfoRepository
     {
-        Task SaveAsync(BlockSyncedInfoModel syncedBlockInfo);
-        Task<BigInteger?> GetLastSyncedBlockForIndexerAsync(string indexerId);
         Task ClearAll();
+
         Task ClearForIndexer(string indexerId);
+
+        Task<BigInteger?> GetLastSyncedBlockForIndexerAsync(string indexerId);
+
+        Task SaveAsync(BlockSyncedInfoModel syncedBlockInfo);
     }
 }
