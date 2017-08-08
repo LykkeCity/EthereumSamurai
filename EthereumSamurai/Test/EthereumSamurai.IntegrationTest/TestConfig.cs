@@ -2,6 +2,7 @@
 using EthereumSamurai.Common;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
+using EthereumSamurai.Indexer.Dependencies;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ namespace EthereumSamurai.IntegrationTest
     {
         private static IServiceCollection _serviceCollection;
         public static IServiceProvider ServiceProvider { get; private set; }
+        public static IndexerInstanceSettings IndexerInstanceSettings { get; private set; }
 
         public static void ReconfigureServices ()
         {
@@ -37,10 +39,18 @@ namespace EthereumSamurai.IntegrationTest
             _serviceCollection.AddSingleton(sp => mapper.CreateMapper());
 
             #endregion
-
+            _serviceCollection.ConfigureServices(root);
             //IConfigurationSection indexerSettingsSection = configuration.GetSection("IndexerInstanceSettings");
             //IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
-            _serviceCollection.ConfigureServices(root);
+            IndexerInstanceSettings indexerSettings = new IndexerInstanceSettings()
+            {
+                IndexerId = "EthereumSamurai.IntegrationTest_0",
+                StartBlock = 0,
+                ThreadAmount = 1
+            };
+            //Register jobs and settings
+            DependencyConfig.RegisterServices(_serviceCollection, indexerSettings);
+            
             ServiceProvider = _serviceCollection.BuildServiceProvider();
         }
     }
