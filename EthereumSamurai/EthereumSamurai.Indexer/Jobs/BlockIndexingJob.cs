@@ -50,55 +50,61 @@ namespace EthereumSamurai.Indexer.Jobs
                 Func<BigInteger, bool> checkDelegate = GetCheckDelegate(cancellationToken);
                 BigInteger? lastSyncedNumber = await _indexingService.GetLastBlockForIndexerAsync(indexerId);
                 currentBlockNumber = lastSyncedNumber.HasValue && lastSyncedNumber.Value > currentBlockNumber ? lastSyncedNumber.Value : currentBlockNumber;
-
-                try
-                {
-                    if (_firstRun && _indexingSettings.From == currentBlockNumber)
-                    {
-                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                            $"Indexing begins from block-{currentBlockNumber}", DateTime.UtcNow);
-
-                        BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                        BlockContext blockContext = new BlockContext(indexerId, blockContent);
-
-                        await _indexingService.IndexBlockAsync(blockContext);
-                        currentBlockNumber++;
-                        _firstRun = false;
-                    }
-                    //avg 400 ms per 1 block(on local machine)
-                    int iterationVector = 0;
-                    while (checkDelegate(currentBlockNumber))
-                    {
-                        BlockContent blockContent = null;
-                        int transactionCount = 0;
-                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                            $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}", DateTime.UtcNow);
-                        await RetryPolicy.ExecuteAsync(async () =>
-                        {
-                            blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                            bool blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
-                            iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
-                            BlockContext blockContext = new BlockContext(indexerId, blockContent);
-                            transactionCount = blockContent.Transactions.Count;
-
-                            await _indexingService.IndexBlockAsync(blockContext);
-                        }, 5, 100);
-
-                        await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                           $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}", DateTime.UtcNow);
-
-                        currentBlockNumber += iterationVector;
-                    }
-                }
-                catch (Exception e)
-                {
-                    await _logger.WriteErrorAsync("BlockIndexingJob", "RunAsync", $"Indexing failed for block-{currentBlockNumber}", e, DateTime.UtcNow);
-                    throw;
-                }
+                BigInteger lastProcessedBlockNumber = await IndexBlocksAsync(indexerId, currentBlockNumber, checkDelegate);
                 await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                    $"Indexing {indexerId} completed. LastProcessed - {currentBlockNumber - 1}", DateTime.UtcNow);
+                    $"Indexing {indexerId} completed. LastProcessed - {lastProcessedBlockNumber - 1}", DateTime.UtcNow);
 
             }).Unwrap();
+        }
+
+        private async Task<BigInteger> IndexBlocksAsync(string indexerId, BigInteger currentBlockNumber, Func<BigInteger, bool> checkDelegate)
+        {
+            try
+            {
+                if (_firstRun && _indexingSettings.From == currentBlockNumber)
+                {
+                    await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                        $"Indexing begins from block-{currentBlockNumber}", DateTime.UtcNow);
+
+                    BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                    BlockContext blockContext = new BlockContext(indexerId, blockContent);
+
+                    await _indexingService.IndexBlockAsync(blockContext);
+                    currentBlockNumber++;
+                    _firstRun = false;
+                }
+                //avg 400 ms per 1 block(on local machine)
+                int iterationVector = 0;
+                while (checkDelegate(currentBlockNumber))
+                {
+                    BlockContent blockContent = null;
+                    int transactionCount = 0;
+                    await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                        $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}", DateTime.UtcNow);
+                    await RetryPolicy.ExecuteAsync(async () =>
+                    {
+                        blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                        BlockContext blockContext = new BlockContext(indexerId, blockContent);
+                        transactionCount = blockContent.Transactions.Count;
+                        bool blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
+                        iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
+
+                        await _indexingService.IndexBlockAsync(blockContext);
+                    }, 5, 100);
+
+                    await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
+                       $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}", DateTime.UtcNow);
+
+                    currentBlockNumber += iterationVector;
+                }
+            }
+            catch (Exception e)
+            {
+                await _logger.WriteErrorAsync("BlockIndexingJob", "RunAsync", $"Indexing failed for block-{currentBlockNumber}", e, DateTime.UtcNow);
+                throw;
+            }
+
+            return currentBlockNumber;
         }
 
         private Func<BigInteger, bool> GetCheckDelegate(CancellationToken cancellationToken)

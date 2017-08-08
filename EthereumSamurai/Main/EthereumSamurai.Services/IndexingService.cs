@@ -16,18 +16,21 @@ namespace EthereumSamurai.Services
         private readonly IBlockSyncedInfoRepository _blockSyncedInfoRepository;
         private readonly IInternalMessageRepository _internalMessageRepository;
         private readonly IAddressHistoryRepository _addressHistoryRepository;
+        private readonly IErc20ContractRepository _erc20ContractRepository;
 
         public IndexingService(IBlockRepository blockRepository,
             ITransactionRepository transactionRepository,
             IBlockSyncedInfoRepository blockSyncedInfoRepository,
             IInternalMessageRepository internalMessageRepository,
-            IAddressHistoryRepository addressHistoryRepository)
+            IAddressHistoryRepository addressHistoryRepository,
+            IErc20ContractRepository erc20ContractRepository)
         {
             _blockRepository = blockRepository;
             _transactionRepository = transactionRepository;
             _blockSyncedInfoRepository = blockSyncedInfoRepository;
             _internalMessageRepository = internalMessageRepository;
             _addressHistoryRepository = addressHistoryRepository;
+            _erc20ContractRepository = erc20ContractRepository;
         }
 
         public Task<BigInteger> GetLastBlockAsync()
@@ -49,6 +52,7 @@ namespace EthereumSamurai.Services
             var transactions = blockContent.Transactions;
             var internalMessages = blockContent.InternalMessages;
             var addressHistory = blockContent.AddressHistory;
+            var erc20Addresses = blockContent.CreatedErc20Contracts;
             ulong blockNumber = (ulong)blockModel.Number;
 
             await _blockRepository.SaveAsync(blockModel);
@@ -57,6 +61,7 @@ namespace EthereumSamurai.Services
             try
             {
                 await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
+                
             }
             catch
             {
@@ -66,6 +71,7 @@ namespace EthereumSamurai.Services
                     await _transactionRepository.DeleteByHash(trHash);
                     await _internalMessageRepository.DeleteAllForHash(trHash);
                     await _addressHistoryRepository.DeleteByHash(trHash);
+                    await _erc20ContractRepository.DeleteByHash(trHash);
                 }
 
                 await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
@@ -74,6 +80,7 @@ namespace EthereumSamurai.Services
 
             await _internalMessageRepository.SaveManyForBlockAsync(internalMessages, blockNumber);
             await _addressHistoryRepository.SaveManyForBlockAsync(addressHistory, blockNumber);
+            await _erc20ContractRepository.SaveManyForBlockAsync(erc20Addresses, blockNumber);
             //Indexer fingerPrint
             var blockSyncedInfoModel = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
             await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);

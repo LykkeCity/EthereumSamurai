@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\EthereumSamurai.Common\EthereumSamurai.Common.csproj" />
+    <ProjectReference Include="..\..\EthereumSamurai.Indexer\EthereumSamurai.Indexer.csproj" />
     <ProjectReference Include="..\..\Main\EthereumSamurai.Core\EthereumSamurai.Core.csproj" />
   </ItemGroup>
 
