@@ -1,4 +1,5 @@
 ﻿using EthereumSamurai.Core.Services;
+using EthereumSamurai.Core.Services.Erc20;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models;
 using EthereumSamurai.Models.Blockchain;
@@ -20,12 +21,14 @@ namespace EthereumSamurai.Services
         private readonly IBaseSettings _bitcoinIndexerSettings;
         private readonly IWeb3 _client;
         private readonly IDebug _debug;
+        private readonly IErc20Detector _erc20Detector;
 
-        public RpcBlockReader(IBaseSettings bitcoinIndexerSettings, IWeb3 web3, IDebug debug)
+        public RpcBlockReader(IBaseSettings bitcoinIndexerSettings, IWeb3 web3, IDebug debug, IErc20Detector erc20Detector)
         {
             _bitcoinIndexerSettings = bitcoinIndexerSettings;
             _client = web3;
             _debug = debug;
+            _erc20Detector = erc20Detector;
         }
 
         public async Task<BlockContent> ReadBlockAsync(BigInteger blockHeight)
@@ -38,7 +41,7 @@ namespace EthereumSamurai.Services
             BlockModel blockModel = new BlockModel()
             {
                 TransactionsCount = block.Transactions.Length,
-                BlockHash = block.BlockHash,
+                BlockHash = blockHash,
                 Difficulty = block.Difficulty,
                 ExtraData = block.ExtraData,
                 GasLimit = block.GasLimit,
@@ -126,12 +129,50 @@ namespace EthereumSamurai.Services
 
             #endregion
 
+            #region Contracts
+
+            Dictionary<string, Tuple<string, string>> contractInfoMap = new Dictionary<string, Tuple<string, string>>();
+            IEnumerable<string> deployedContracts = blockTransactions?.Where(x => x.ContractAddress != null).Select(x =>
+            {
+                string contractAddress = x.ContractAddress;
+                contractInfoMap[contractAddress] = Tuple.Create<string, string>(x.TransactionHash, x.From);
+                return contractAddress;
+            })?.Concat(
+                internalMessages?.Where(x => x.Type == InternalMessageModelType.CREATION).Select(x =>
+                {
+                    string contractAddress = x.ToAddress;
+                    contractInfoMap[contractAddress] = Tuple.Create<string, string>(x.TransactionHash, x.FromAddress);
+                    return contractAddress;
+                }));
+            List<Erc20ContractModel> erc20Contracts = new List<Erc20ContractModel>();
+            foreach (var contractAddress in deployedContracts)
+            {
+                bool isCompatible = await _erc20Detector.IsContractErc20Compatible(contractAddress);
+                if (isCompatible)
+                {
+                    var tuple = contractInfoMap[contractAddress];
+                    erc20Contracts.Add(new Erc20ContractModel()
+                    {
+                        Address = contractAddress,
+                        BlockHash = blockHash,
+                        BlockNumber = block.Number.Value,
+                        BlockTimestamp = block.Timestamp.Value,
+                        DeployerAddress = tuple.Item2,
+                        TokenName = "",
+                        TransactionHash = tuple.Item1
+                    });
+                }
+            }
+
+            #endregion 
+
             return new BlockContent()
             {
                 AddressHistory = addressHistory,
                 InternalMessages = internalMessages,
                 Transactions = blockTransactions,
-                BlockModel = blockModel
+                BlockModel = blockModel,
+                CreatedErc20Contracts = erc20Contracts
             };
         }
 
