@@ -82,7 +82,10 @@ namespace EthereumSamurai.Services
             var responseString = await response.Content.ReadAsStringAsync();
             TransactionTraceResponse traceResponse = (TransactionTraceResponse)Newtonsoft.Json.JsonConvert.DeserializeObject(responseString, typeof(TransactionTraceResponse));
             TransactionTrace trace = traceResponse.TransactionTrace;//jObject.ToObject<TransactionTrace>();//
-
+            if (trace == null)
+            {
+                return null;
+            }
             TransactionTracer tracer = new TransactionTracer(fromAddress, transactionHash, toAddress, contractAddress, value);
 
             foreach (var log in trace.StructLogs)
