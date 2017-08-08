@@ -4,6 +4,7 @@ using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
+using EthereumSamurai.Indexer.Dependencies;
 using EthereumSamurai.Indexer.Jobs;
 using EthereumSamurai.Indexer.Settings;
 using Microsoft.Extensions.Configuration;
@@ -44,9 +45,7 @@ namespace EthereumSamurai.Indexer
                 IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
                 collection.ConfigureServices(configuration);
                 //Register jobs and settings
-                collection.AddSingleton<IBlockIndexingJobFactory, BlockIndexingJobFactory>();
-                collection.AddSingleton<IIndexerInstanceSettings>(indexerSettings);
-                collection.AddSingleton<IInitalJobAssigner, InitalJobAssigner>();
+                DependencyConfig.RegisterServices(collection, indexerSettings);
 
                 Services = collection.BuildServiceProvider();
                 Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");

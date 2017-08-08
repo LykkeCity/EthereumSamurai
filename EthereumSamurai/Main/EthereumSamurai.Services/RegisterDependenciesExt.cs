@@ -1,5 +1,7 @@
 ﻿using EthereumSamurai.Core.Services;
+using EthereumSamurai.Core.Services.Erc20;
 using EthereumSamurai.Core.Settings;
+using EthereumSamurai.Services.Erc20;
 using Microsoft.Extensions.DependencyInjection;
 using Nethereum.Geth;
 using Nethereum.Web3;
@@ -21,7 +23,11 @@ namespace EthereumSamurai.Services
             collection.AddSingleton<IDebug, DebugDecorator>();
             collection.AddSingleton<IInternalMessageService, InternalMessageService>();
             collection.AddSingleton<IAddressHistoryService, AddressHistoryService>();
+            #region Erc20
 
+            collection.AddSingleton<IErc20Detector, Erc20Detector>();
+
+            #endregion
 
             collection.AddSingleton<Web3>((provider) =>
             {

@@ -11,6 +11,7 @@ namespace EthereumSamurai.Models
         public List<TransactionModel> Transactions { get; set; }
         public List<InternalMessageModel> InternalMessages { get; set; }
         public IEnumerable<AddressHistoryModel> AddressHistory { get; set; }
+        public List<Erc20ContractModel> CreatedErc20Contracts { get; set; }
     }
 
     public class BlockContext
