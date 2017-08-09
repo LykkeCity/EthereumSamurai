@@ -2,7 +2,7 @@
 {
     public class BaseSettings : IBaseSettings
     {
-        public DbSettings DbSettings { get; set; }
+        public DB DB { get; set; }
 
         public string EthereumRpcUrl { get; set; }
     }
