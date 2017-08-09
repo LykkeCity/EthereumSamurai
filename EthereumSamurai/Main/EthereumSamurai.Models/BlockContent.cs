@@ -1,28 +1,20 @@
-﻿using EthereumSamurai.Models.Blockchain;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
+using EthereumSamurai.Models.Blockchain;
 
 namespace EthereumSamurai.Models
 {
     public class BlockContent
     {
-        public BlockModel BlockModel { get; set; }
-        public List<TransactionModel> Transactions { get; set; }
-        public List<InternalMessageModel> InternalMessages { get; set; }
         public IEnumerable<AddressHistoryModel> AddressHistory { get; set; }
+
+        public BlockModel BlockModel { get; set; }
+
         public List<Erc20ContractModel> CreatedErc20Contracts { get; set; }
-    }
 
-    public class BlockContext
-    {
-        public BlockContext(string indexerId, BlockContent blockContent)
-        {
-            this.IndexerId = indexerId;
-            this.BlockContent = blockContent;
-        }
+        public List<InternalMessageModel> InternalMessages { get; set; }
 
-        public BlockContent BlockContent { get; private set; }
-        public string IndexerId { get; private set; }
+        public List<TransactionModel> Transactions { get; set; }
+
+        public List<Erc20TransferHistoryModel> Transfers { get; set; }
     }
 }

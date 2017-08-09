@@ -2,7 +2,7 @@
 {
     public interface IBaseSettings
     {
-        DbSettings DbSettings { get; set; }
+        DB DB { get; set; }
 
         string EthereumRpcUrl { get; set; }
     }
