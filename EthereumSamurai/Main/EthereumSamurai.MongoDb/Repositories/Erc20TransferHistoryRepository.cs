@@ -66,6 +66,12 @@ namespace EthereumSamurai.MongoDb.Repositories
             _mapper = mapper;
         }
 
+        public async Task DeleteAllForHash(string trHash)
+        {
+            var filter = Builders<Erc20TransferHistoryEntity>.Filter.Eq(x => x.TransactionHash, trHash);
+
+            await _historyCollection.DeleteManyAsync(filter);
+        }
 
         public async Task<IEnumerable<Erc20TransferHistoryModel>> GetAsync(Erc20TransferHistoryQuery query)
         {

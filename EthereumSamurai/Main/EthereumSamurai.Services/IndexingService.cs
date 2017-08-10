@@ -81,6 +81,7 @@ namespace EthereumSamurai.Services
                     await _internalMessageRepository.DeleteAllForHash(trHash);
                     await _addressHistoryRepository.DeleteByHash(trHash);
                     await _erc20ContractRepository.DeleteByHash(trHash);
+                    await _erc20TransferHistoryRepository.DeleteAllForHash(trHash);
                 }
 
                 await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
