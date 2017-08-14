@@ -21,11 +21,11 @@ namespace EthereumSamurai.Controllers
 
 
         [Route("getErc20Balance/{address}")]
-        [HttpGet]
+        [HttpPost]
         [ProducesResponseType(typeof(BalanceResponse), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
-        public async Task<IActionResult> GetForAddress([FromRoute] string address, IEnumerable<string> contracts)
+        public async Task<IActionResult> GetForAddress([FromRoute] string address, [FromBody] IEnumerable<string> contracts)
         {
             address   = address.ToLowerInvariant();
             contracts = contracts.Select(x => x.ToLowerInvariant()).Distinct();
