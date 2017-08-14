@@ -210,19 +210,22 @@ namespace EthereumSamurai.Services
             };
             
             var transferLogs = await logs.SendRequestAsync(filter);
-            var transfers    = transferLogs.Select(x => new Erc20TransferHistoryModel
-            {
-                BlockHash         = x.BlockHash,
-                BlockNumber       = (ulong) x.BlockNumber.Value,
-                BlockTimestamp    = (ulong) block.Timestamp.Value,
-                ContractAddress   = x.Address,
-                From              = x.Topics[1].ToString().TrimLeadingZeroes(),
-                LogIndex          = (uint) x.LogIndex.Value,
-                To                = x.Topics[2].ToString().TrimLeadingZeroes(),
-                TransactionHash   = x.TransactionHash,
-                TransactionIndex  = (uint) x.TransactionIndex.Value,
-                TransferAmount    = x.Data.HexToBigInteger(false)
-            }).ToList();
+            var transfers    = transferLogs
+                .Where(x => x.Topics.Length == 3)
+                .Select(x => new Erc20TransferHistoryModel
+                {
+                    BlockHash         = x.BlockHash,
+                    BlockNumber       = (ulong) x.BlockNumber.Value,
+                    BlockTimestamp    = (ulong) block.Timestamp.Value,
+                    ContractAddress   = x.Address,
+                    From              = x.Topics[1].ToString().TrimLeadingZeroes(),
+                    LogIndex          = (uint) x.LogIndex.Value,
+                    To                = x.Topics[2].ToString().TrimLeadingZeroes(),
+                    TransactionHash   = x.TransactionHash,
+                    TransactionIndex  = (uint) x.TransactionIndex.Value,
+                    TransferAmount    = x.Data.HexToBigInteger(false)
+                })
+                .ToList();
 
             #endregion
 
