@@ -68,8 +68,11 @@ namespace EthereumSamurai.Indexer.Settings
             }
 
             // Balances indexer
-            jobs.Add(_erc20BalanceIndexingJobFactory.GetJob(_indexerInstanceSettings.BalancesStartBlock));
-
+            if (_indexerInstanceSettings.IndexBalances)
+            {
+                jobs.Add(_erc20BalanceIndexingJobFactory.GetJob(_indexerInstanceSettings.BalancesStartBlock));
+            }
+            
             return jobs;
         }
     }

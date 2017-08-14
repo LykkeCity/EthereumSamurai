@@ -4,6 +4,8 @@
     {
         public ulong BalancesStartBlock { get; set; }
 
+        public bool IndexBalances { get; set; }
+
         public string IndexerId { get; set; }
 
         public ulong StartBlock { get; set; }
