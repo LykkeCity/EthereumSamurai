@@ -4,6 +4,7 @@ using System.Text;
 
 namespace EthereumSamurai.Models.Indexing
 {
+    [Obsolete]
     public class BlockSyncedInfoModel
     {
         public BlockSyncedInfoModel(string indexerId, ulong number)

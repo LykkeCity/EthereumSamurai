@@ -2,7 +2,8 @@
 
 namespace EthereumSamurai.MongoDb.Entities
 {
-    public class Erc20BalanceEntity
+    [BsonIgnoreExtraElements]
+    public class Erc20BalanceHistoryEntity
     {
         [BsonElement]
         public string AssetHolderAddress { get; set; }

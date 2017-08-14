@@ -23,8 +23,10 @@ namespace EthereumSamurai.Services
             collection.AddSingleton<IDebug, DebugDecorator>();
             collection.AddSingleton<IInternalMessageService, InternalMessageService>();
             collection.AddSingleton<IAddressHistoryService, AddressHistoryService>();
+
             #region Erc20
 
+            collection.AddSingleton<IErc20BalanceService, Erc20BalanceService>();
             collection.AddSingleton<IErc20Detector, Erc20Detector>();
 
             #endregion

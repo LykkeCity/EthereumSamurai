@@ -4,9 +4,9 @@ namespace EthereumSamurai.Core.Models
 {
     public interface IIndexingSettings
     {
-        string IndexerId { get; set; }
-
         BigInteger From { get; set; }
+
+        string IndexerId { get; set; }
 
         BigInteger? To { get; set; }
     }

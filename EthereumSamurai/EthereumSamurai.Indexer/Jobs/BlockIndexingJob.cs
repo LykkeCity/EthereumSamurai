@@ -1,40 +1,49 @@
-﻿using EthereumSamurai.Core.Models;
+﻿using System;
+using System.Numerics;
+using System.Threading;
+using System.Threading.Tasks;
+using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Indexer.Utils;
 using EthereumSamurai.Models;
-using EthereumSamurai.Models.Blockchain;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace EthereumSamurai.Indexer.Jobs
 {
     public class BlockIndexingJob : IJob
     {
-        private readonly IRpcBlockReader _rpcBlockReader;
-        private readonly IIndexingService _indexingService;
+        private readonly IBlockService     _blockService;
+        private readonly IIndexingService  _indexingService;
         private readonly IIndexingSettings _indexingSettings;
-        private readonly ILog _logger;
-        private readonly IBlockService _blockService;
+        private readonly ILog              _logger;
+        private readonly IRpcBlockReader   _rpcBlockReader;
+
         private bool _firstRun;
 
-        public BlockIndexingJob(IRpcBlockReader rpcBlockReader,
-            IIndexingService indexingService,
+
+
+        public BlockIndexingJob(
+            IBlockService     blockService,
+            IIndexingService  indexingService,
             IIndexingSettings indexingSettings,
-            ILog logger,
-            IBlockService blockService)
+            ILog              logger,
+            IRpcBlockReader   rpcBlockReader)
         {
-            _blockService = blockService;
-            _logger = logger;
-            _rpcBlockReader = rpcBlockReader;
-            _indexingService = indexingService;
+            _blockService     = blockService;
+            _firstRun         = true;
+            _indexingService  = indexingService;
             _indexingSettings = indexingSettings;
-            _firstRun = true;
+            _logger           = logger;
+            _rpcBlockReader   = rpcBlockReader;
         }
+
+
+
+        public string Id 
+            => nameof(BlockIndexingJob);
+
+        public int Version
+            => 1;
+
 
         public Task RunAsync()
         {
@@ -45,84 +54,131 @@ namespace EthereumSamurai.Indexer.Jobs
         {
             return Task.Factory.StartNew(async () =>
             {
-                string indexerId = _indexingSettings.IndexerId;
-                BigInteger currentBlockNumber = _indexingSettings.From;
-                Func<BigInteger, bool> checkDelegate = GetCheckDelegate(cancellationToken);
-                BigInteger? lastSyncedNumber = await _indexingService.GetLastBlockForIndexerAsync(indexerId);
-                currentBlockNumber = lastSyncedNumber.HasValue && lastSyncedNumber.Value > currentBlockNumber ? lastSyncedNumber.Value : currentBlockNumber;
-                BigInteger lastProcessedBlockNumber = await IndexBlocksAsync(indexerId, currentBlockNumber, checkDelegate);
-                await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                    $"Indexing {indexerId} completed. LastProcessed - {lastProcessedBlockNumber - 1}", DateTime.UtcNow);
 
-            }).Unwrap();
+                var indexerId          = _indexingSettings.IndexerId;
+                var currentBlockNumber = _indexingSettings.From;
+                var checkDelegate      = GetCheckDelegate(cancellationToken);
+                var lastSyncedNumber   = await _indexingService.GetLastBlockForIndexerAsync(indexerId);
+
+                currentBlockNumber = lastSyncedNumber.HasValue && (lastSyncedNumber.Value > currentBlockNumber)
+                                 ? lastSyncedNumber.Value
+                                 : currentBlockNumber;
+
+                var lastProcessedBlockNumber = await IndexBlocksAsync(indexerId, currentBlockNumber, checkDelegate);
+
+                await _logger.WriteInfoAsync
+                (
+                    "BlockIndexingJob",
+                    "RunAsync",
+                    indexerId,
+                    $"Indexing {indexerId} completed. LastProcessed - {lastProcessedBlockNumber - 1}",
+                    DateTime.UtcNow
+                );
+
+            }, cancellationToken).Unwrap();
         }
 
-        private async Task<BigInteger> IndexBlocksAsync(string indexerId, BigInteger currentBlockNumber, Func<BigInteger, bool> checkDelegate)
+        private Func<BigInteger, bool> GetCheckDelegate(CancellationToken cancellationToken)
+        {
+            Func<BigInteger, bool> checkDelegate;
+
+            if (_indexingSettings.To == null)
+            {
+                checkDelegate = number => !cancellationToken.IsCancellationRequested;
+            }
+            else
+            {
+                checkDelegate = number => !cancellationToken.IsCancellationRequested && number <= _indexingSettings.To;
+            }
+            
+            return checkDelegate;
+        }
+
+        private async Task<BigInteger> IndexBlocksAsync(string indexerId, BigInteger currentBlockNumber,
+            Func<BigInteger, bool> checkDelegate)
         {
             try
             {
                 if (_firstRun && _indexingSettings.From == currentBlockNumber)
                 {
-                    await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                        $"Indexing begins from block-{currentBlockNumber}", DateTime.UtcNow);
+                    await _logger.WriteInfoAsync
+                    (
+                        "BlockIndexingJob",
+                        "RunAsync",
+                        indexerId,
+                        $"Indexing begins from block-{currentBlockNumber}",
+                        DateTime.UtcNow
+                    );
 
-                    BlockContent blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                    BlockContext blockContext = new BlockContext(indexerId, blockContent);
+                    var blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                    var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
 
                     await _indexingService.IndexBlockAsync(blockContext);
+
                     currentBlockNumber++;
+
                     _firstRun = false;
                 }
-                //avg 400 ms per 1 block(on local machine)
-                int iterationVector = 0;
+                
+                var iterationVector = 0;
+
                 while (checkDelegate(currentBlockNumber))
                 {
                     BlockContent blockContent = null;
-                    int transactionCount = 0;
-                    await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                        $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}", DateTime.UtcNow);
+
+                    var transactionCount = 0;
+
+                    await _logger.WriteInfoAsync
+                    (
+                        "BlockIndexingJob",
+                        "RunAsync",
+                        indexerId,
+                        $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}",
+                        DateTime.UtcNow
+                    );
+
                     await RetryPolicy.ExecuteAsync(async () =>
                     {
+
                         blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                        BlockContext blockContext = new BlockContext(indexerId, blockContent);
+
+                        var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
+                        var blockExists  = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
+
                         transactionCount = blockContent.Transactions.Count;
-                        bool blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
-                        iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
+                        iterationVector  = blockExists ? 1 : -1; //That is how we deal with forks
 
                         await _indexingService.IndexBlockAsync(blockContext);
+
                     }, 5, 100);
 
-                    await _logger.WriteInfoAsync("BlockIndexingJob", "RunAsync", indexerId,
-                       $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}", DateTime.UtcNow);
+                    await _logger.WriteInfoAsync
+                    (
+                        "BlockIndexingJob",
+                        "RunAsync",
+                        indexerId,
+                        $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}",
+                        DateTime.UtcNow
+                    );
 
                     currentBlockNumber += iterationVector;
                 }
             }
             catch (Exception e)
             {
-                await _logger.WriteErrorAsync("BlockIndexingJob", "RunAsync", $"Indexing failed for block-{currentBlockNumber}", e, DateTime.UtcNow);
+                await _logger.WriteErrorAsync
+                (
+                    "BlockIndexingJob",
+                    "RunAsync",
+                    $"Indexing failed for block-{currentBlockNumber}",
+                    e,
+                    DateTime.UtcNow
+                );
+
                 throw;
             }
 
             return currentBlockNumber;
-        }
-
-        private Func<BigInteger, bool> GetCheckDelegate(CancellationToken cancellationToken)
-        {
-            Func<BigInteger, bool> checkDelegate;
-            if (_indexingSettings.To == null)
-            {
-                checkDelegate = (number) => { return (!cancellationToken.IsCancellationRequested); };
-            }
-            else
-            {
-                checkDelegate = (number) =>
-                {
-                    return (!cancellationToken.IsCancellationRequested && number <= _indexingSettings.To);
-                };
-            }
-
-            return checkDelegate;
         }
     }
 }

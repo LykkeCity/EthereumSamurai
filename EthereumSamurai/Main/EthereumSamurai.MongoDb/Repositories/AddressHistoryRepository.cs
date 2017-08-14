@@ -1,25 +1,23 @@
-﻿using EthereumSamurai.Core.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using EthereumSamurai.Models.Blockchain;
-using EthereumSamurai.Models.Query;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using MongoDB.Driver;
-using EthereumSamurai.Core.Settings;
-using EthereumSamurai.MongoDb.Entities;
 using EthereumSamurai.Core;
-using System.Linq;
+using EthereumSamurai.Core.Repositories;
+using EthereumSamurai.Core.Settings;
+using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
+using EthereumSamurai.MongoDb.Entities;
+using MongoDB.Driver;
 
 namespace EthereumSamurai.MongoDb.Repositories
 {
     public class AddressHistoryRepository : IAddressHistoryRepository
     {
-        private readonly IBaseSettings _baseSettings;
-        private readonly IMongoDatabase _database;
+        private readonly IBaseSettings                          _baseSettings;
         private readonly IMongoCollection<AddressHistoryEntity> _collection;
-        private readonly IMapper _mapper;
+        private readonly IMongoDatabase                         _database;
+        private readonly IMapper                                _mapper;
 
         public AddressHistoryRepository(IBaseSettings baseSettings, IMongoDatabase database, IMapper mapper)
         {
@@ -29,14 +27,28 @@ namespace EthereumSamurai.MongoDb.Repositories
 
             _collection.Indexes.CreateMany(new[]
             {
-                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionHash)),
-                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.BlockNumber)),
-                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.From)),
-                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.To)),
-                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Combine(
+                new CreateIndexModel<AddressHistoryEntity>
+                (
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionHash)
+                ),
+                new CreateIndexModel<AddressHistoryEntity>
+                (
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.BlockNumber)
+                ),
+                new CreateIndexModel<AddressHistoryEntity>
+                (
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.From)
+                ),
+                new CreateIndexModel<AddressHistoryEntity>
+                (
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.To)
+                ),
+                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Combine
+                (
                     Builders<AddressHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber),
                     Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionIndex),
-                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.MessageIndex)))
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.MessageIndex))
+                )
             });
 
             _mapper = mapper;
@@ -44,81 +56,74 @@ namespace EthereumSamurai.MongoDb.Repositories
 
         public async Task DeleteByHash(string hash)
         {
-            await _collection.DeleteManyAsync((x) => x.TransactionHash == hash);
+            await _collection.DeleteManyAsync(x => x.TransactionHash == hash);
         }
 
         public async Task<IEnumerable<AddressHistoryModel>> GetAsync(AddressHistoryQuery addressHistoryQuery)
         {
-            List<AddressHistoryModel> result;
             var filterBuilder = Builders<AddressHistoryEntity>.Filter;
-            FilterDefinition<AddressHistoryEntity> filter = filterBuilder.Empty;
+            var filter        = filterBuilder.Empty;
+
             if (!string.IsNullOrEmpty(addressHistoryQuery.FromAddress))
             {
-                FilterDefinition<AddressHistoryEntity> filterFrom = filterBuilder.Eq(x => x.From, addressHistoryQuery.FromAddress);
-                filter = filter & filterFrom;
+                filter &= filterBuilder.Eq(x => x.From, addressHistoryQuery.FromAddress);
             }
 
             if (!string.IsNullOrEmpty(addressHistoryQuery.ToAddress))
             {
-                FilterDefinition<AddressHistoryEntity> filterTo = filterBuilder.Eq(x => x.To, addressHistoryQuery.ToAddress);
+                var filterTo = filterBuilder.Eq(x => x.To, addressHistoryQuery.ToAddress);
 
-                filter = addressHistoryQuery.FromAddress == addressHistoryQuery.ToAddress ? filter | filterTo : filter & filterTo;
+                filter = addressHistoryQuery.FromAddress == addressHistoryQuery.ToAddress
+                    ? filter | filterTo
+                    : filter & filterTo;
             }
-
+            
             if (addressHistoryQuery.StartBlock.HasValue)
             {
-                ulong unixTime = addressHistoryQuery.StartBlock.Value;
-                FilterDefinition<AddressHistoryEntity> filterStartBlock = filterBuilder.Gte(x => x.BlockNumber, unixTime);
-                filter = filter & filterStartBlock;
+                var unixTime = addressHistoryQuery.StartBlock.Value;
+
+                filter &= filterBuilder.Gte(x => x.BlockNumber, unixTime);
             }
 
             if (addressHistoryQuery.StopBlock.HasValue)
             {
-                ulong unixTime = addressHistoryQuery.StartBlock.Value;
-                FilterDefinition<AddressHistoryEntity> filterEndBlock = filterBuilder.Lte(x => x.BlockNumber, unixTime);
-                filter = filter & filterEndBlock;
+                var unixTime = addressHistoryQuery.StopBlock.Value;
+                
+                filter &= filterBuilder.Lte(x => x.BlockNumber, unixTime);
             }
 
-            var sort = Builders<AddressHistoryEntity>.Sort.Combine(
-                 Builders<AddressHistoryEntity>.Sort.Descending(x => x.BlockNumber),
-                  Builders<AddressHistoryEntity>.Sort.Ascending(x => x.TransactionIndex),
-                  Builders<AddressHistoryEntity>.Sort.Ascending(x => x.MessageIndex)
-                );
+            var sort = Builders<AddressHistoryEntity>.Sort.Combine
+            (
+                Builders<AddressHistoryEntity>.Sort.Descending(x => x.BlockNumber),
+                Builders<AddressHistoryEntity>.Sort.Ascending(x => x.TransactionIndex),
+                Builders<AddressHistoryEntity>.Sort.Ascending(x => x.MessageIndex)
+            );
 
-            MongoDB.Driver.IFindFluent<AddressHistoryEntity, AddressHistoryEntity> search = _collection.Find(filter);
-            result = new List<AddressHistoryModel>();
+            var search = _collection.Find(filter);
+
             search = search.Sort(sort);
 
-            addressHistoryQuery.Start = addressHistoryQuery.Start.HasValue ? addressHistoryQuery.Start : 0;
-            addressHistoryQuery.Count = addressHistoryQuery.Count.HasValue && addressHistoryQuery.Count != 0 ? addressHistoryQuery.Count :
-                (int)await search.CountAsync();
-            result = new List<AddressHistoryModel>(addressHistoryQuery.Count.Value);
+            addressHistoryQuery.Start = addressHistoryQuery.Start ?? 0;
+            addressHistoryQuery.Count = addressHistoryQuery.Count.HasValue && addressHistoryQuery.Count != 0
+                ? addressHistoryQuery.Count
+                : (int) await search.CountAsync();
+
             search = search.Skip(addressHistoryQuery.Start).Limit(addressHistoryQuery.Count);
 
-            await search.ForEachAsync(addressHistoryEntity =>
-            {
-                AddressHistoryModel transactionModel = _mapper.Map<AddressHistoryModel>(addressHistoryEntity);
-                result.Add(transactionModel);
-            });
-
-            return result;
+            return (await search.ToListAsync())
+                .Select(_mapper.Map<AddressHistoryModel>);
         }
 
         public async Task SaveManyForBlockAsync(IEnumerable<AddressHistoryModel> addressHistoryModels, ulong blockNumber)
         {
-            if (addressHistoryModels.Count() == 0)
+            if (!addressHistoryModels.Any())
             {
                 return;
             }
+            
+            var entities = addressHistoryModels.Select(_mapper.Map<AddressHistoryEntity>);
 
-            var entities = new List<AddressHistoryEntity>(addressHistoryModels.Count());
-            foreach (var addressHistory in addressHistoryModels)
-            {
-                AddressHistoryEntity transactionEntity = _mapper.Map<AddressHistoryEntity>(addressHistory);
-                entities.Add(transactionEntity);
-            }
-
-            await _collection.DeleteManyAsync((x) => x.BlockNumber == blockNumber);
+            await _collection.DeleteManyAsync(x => x.BlockNumber == blockNumber);
             await _collection.InsertManyAsync(entities);
         }
     }

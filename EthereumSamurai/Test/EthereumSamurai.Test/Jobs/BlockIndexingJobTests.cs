@@ -35,7 +35,7 @@ namespace EthereumSamurai.UnitTest.Jobs
             };
             var logger = new Mock<ILog>();
 
-            _blockIndexingJob = new BlockIndexingJob(rpcReader, _indexingService, indexingSettings, logger.Object, _blockService);
+            _blockIndexingJob = new BlockIndexingJob(_blockService, _indexingService, indexingSettings, logger.Object, rpcReader);
         }
 
         [TestMethod]

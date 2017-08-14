@@ -6,14 +6,16 @@
 
         #region MongoDB_Collections
 
-        public const string AddressHistoryCollectionName       = "AddressHistoryCollection";
-        public const string BlockCollectionName                = "BlockCollection";
-        public const string BlockSyncedInfoCollectionName      = "BlockSyncedInfoCollectionName";
-        public const string Erc20BalanceCollectionName         = "Erc20BalanceCollection";
-        public const string Erc20TransferHistoryCollectionName = "Erc20TransferHistoryCollection";
-        public const string InternalMessageCollectionName      = "InternalMessageCollection";
-        public const string TransactionCollectionName          = "TransactionCollection";
-        public const string Erc20ContractCollectionName        = "Erc20ContractCollection";
+        public const string AddressHistoryCollectionName         = "AddressHistoryCollection";
+        public const string BlockCollectionName                  = "BlockCollection";
+        public const string BlockIndexationHistoryCollectionName = "BlockIndexationHistoryCollection";
+        public const string BlockSyncedInfoCollectionName        = "BlockSyncedInfoCollectionName";
+        public const string Erc20BalanceCollectionName           = "Erc20BalanceCollection";
+        public const string Erc20BalanceHistoryCollectionName    = "Erc20BalanceHistoryCollection";
+        public const string Erc20TransferHistoryCollectionName   = "Erc20TransferHistoryCollection";
+        public const string InternalMessageCollectionName        = "InternalMessageCollection";
+        public const string TransactionCollectionName            = "TransactionCollection";
+        public const string Erc20ContractCollectionName          = "Erc20ContractCollection";
 
         #endregion
 

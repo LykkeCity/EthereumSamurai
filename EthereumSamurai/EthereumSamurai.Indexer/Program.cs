@@ -1,23 +1,26 @@
-﻿using EthereumSamurai.Common;
-using System;
+﻿using System;
 using System.IO;
+using System.Reflection;
+using EthereumSamurai.Common;
+using Microsoft.Extensions.PlatformAbstractions;
 
 namespace EthereumSamurai.Indexer
 {
-    class Program
+    internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             Console.Clear();
-            Console.Title = "EthereumIndexer - Ver. " + Microsoft.Extensions.PlatformAbstractions.PlatformServices.Default.Application.ApplicationVersion;
+            Console.Title = "EthereumIndexer - Ver. " + PlatformServices.Default.Application.ApplicationVersion;
 
             try
             {
-                FileInfo fi = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location);
+                var fi = new FileInfo(Assembly.GetEntryAssembly().Location);
                 var location = Path.Combine(fi.DirectoryName, "..", "..", "..");
                 var configuration = Config.GetCfgRoot(location);
 
                 var app = new JobApp();
+
                 app.Run(configuration);
             }
             catch (Exception e)
@@ -25,6 +28,7 @@ namespace EthereumSamurai.Indexer
                 Console.WriteLine("Can not start jobs! Exception: " + e.Message);
                 Console.WriteLine("Press any key to exit...");
                 Console.ReadKey();
+
                 return;
             }
 

@@ -10,7 +10,6 @@ using EthereumSamurai.Models;
 using EthereumSamurai.Models.Blockchain;
 using EthereumSamurai.Models.DebugModels;
 using EthereumSamurai.Services.Utils;
-using Nethereum.Hex.HexConvertors;
 using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.Hex.HexTypes;
 using Nethereum.RPC.Eth.DTOs;

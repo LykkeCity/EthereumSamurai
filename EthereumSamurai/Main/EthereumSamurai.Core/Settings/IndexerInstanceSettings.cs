@@ -2,6 +2,8 @@
 {
     public class IndexerInstanceSettings : IIndexerInstanceSettings
     {
+        public ulong BalancesStartBlock { get; set; }
+
         public string IndexerId { get; set; }
 
         public ulong StartBlock { get; set; }
