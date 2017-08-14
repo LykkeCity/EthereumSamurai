@@ -5,6 +5,7 @@ using System.Text;
 
 namespace EthereumSamurai.MongoDb.Entities
 {
+    [Obsolete]
     public class BlockSyncedInfoEntity
     {
         [BsonId]

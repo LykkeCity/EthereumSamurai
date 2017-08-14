@@ -1,13 +1,9 @@
-﻿using EthereumSamurai.Core.Models;
+﻿using System.Collections.Generic;
+using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Indexer.Jobs;
-using EthereumSamurai.MongoDb.Repositories;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace EthereumSamurai.Indexer.Settings
 {
@@ -18,52 +14,61 @@ namespace EthereumSamurai.Indexer.Settings
 
     public class InitalJobAssigner : IInitalJobAssigner
     {
-        private readonly IIndexerInstanceSettings _indexerInstanceSettings;
-        private readonly IBlockRepository _blockRepository;
-        private readonly IRpcBlockReader _rpcBlockReader;
-        private readonly IBlockIndexingJobFactory _factory;
-        private readonly ILog _logger;
+        private readonly IErc20BalanceIndexingJobFactory _erc20BalanceIndexingJobFactory;
+        private readonly IBlockIndexingJobFactory        _blockIndexingFactory;
+        private readonly IBlockRepository                _blockRepository;
+        private readonly IIndexerInstanceSettings        _indexerInstanceSettings;
+        private readonly ILog                            _logger;
+        private readonly IRpcBlockReader                 _rpcBlockReader;
 
         public InitalJobAssigner(
-            IIndexerInstanceSettings indexerInstanceSettings,
-            IBlockRepository         blockRepository,
-            IRpcBlockReader          rpcBlockReader,
-            IBlockIndexingJobFactory factory,
-            ILog logger)
+            IBlockIndexingJobFactory        blockIndexingFactory,
+            IBlockRepository                blockRepository,
+            IErc20BalanceIndexingJobFactory erc20BalanceIndexingJobFactory,
+            IIndexerInstanceSettings        indexerInstanceSettings,
+            ILog                            logger,
+            IRpcBlockReader                 rpcBlockReader)
         {
-            _indexerInstanceSettings = indexerInstanceSettings;
-            _blockRepository = blockRepository;
-            _rpcBlockReader = rpcBlockReader;
-            _factory = factory;
-            _logger = logger;
+            _blockIndexingFactory        = blockIndexingFactory;
+            _blockRepository             = blockRepository;
+            _erc20BalanceIndexingJobFactory = erc20BalanceIndexingJobFactory;
+            _indexerInstanceSettings     = indexerInstanceSettings;
+            _logger                      = logger;
+            _rpcBlockReader              = rpcBlockReader;
         }
 
         public IEnumerable<IJob> GetJobs()
         {
-            List<IJob> jobs = new List<IJob>();
+            var jobs = new List<IJob>();
+            
+            var lastRpcBlock = (ulong) _rpcBlockReader.GetBlockCount().Result;
+            var from         = _indexerInstanceSettings.StartBlock;
+            var to           = _indexerInstanceSettings.StopBlock ?? lastRpcBlock;
+            var partSize     = (to - from) / (ulong) _indexerInstanceSettings.ThreadAmount;
 
-            ulong lastRpcBlock = (ulong)_rpcBlockReader.GetBlockCount().Result;
-            ulong from = _indexerInstanceSettings.StartBlock;
-            ulong to = !_indexerInstanceSettings.StopBlock.HasValue ? lastRpcBlock : _indexerInstanceSettings.StopBlock.Value;
-            ulong partSize = (to - from) / (ulong)_indexerInstanceSettings.ThreadAmount;
-
-            ulong fromBlock;
             ulong? toBlock = from;
-            for (int i = 0; i < _indexerInstanceSettings.ThreadAmount; i++)
+            
+            // Blocks indexers
+            for (var i = 0; i < _indexerInstanceSettings.ThreadAmount; i++)
             {
-                fromBlock = (ulong)toBlock + 1;
+                var fromBlock = (ulong) toBlock + 1;
+
                 toBlock = fromBlock + partSize;
                 toBlock = toBlock < to ? toBlock : _indexerInstanceSettings.StopBlock;
-                string indexerId = $"{_indexerInstanceSettings.IndexerId}_thread_{i}";
-                IJob job = _factory.GetJob(new IndexingSettings()
+
+                var indexerId = $"{_indexerInstanceSettings.IndexerId}_thread_{i}";
+                var job       = _blockIndexingFactory.GetJob(new IndexingSettings
                 {
                     IndexerId = indexerId,
-                    From = fromBlock,
-                    To = toBlock,
+                    From      = fromBlock,
+                    To        = toBlock
                 });
 
                 jobs.Add(job);
             }
+
+            // Balances indexer
+            jobs.Add(_erc20BalanceIndexingJobFactory.GetJob(_indexerInstanceSettings.BalancesStartBlock));
 
             return jobs;
         }

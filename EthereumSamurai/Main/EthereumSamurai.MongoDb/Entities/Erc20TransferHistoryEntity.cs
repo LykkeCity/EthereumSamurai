@@ -2,6 +2,7 @@
 
 namespace EthereumSamurai.MongoDb.Entities
 {
+    [BsonIgnoreExtraElements]
     public class Erc20TransferHistoryEntity
     {
         [BsonElement]
@@ -18,7 +19,7 @@ namespace EthereumSamurai.MongoDb.Entities
 
         [BsonElement]
         public string From { get; set; }
-
+        
         [BsonElement]
         public uint LogIndex { get; set; }
 

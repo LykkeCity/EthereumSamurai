@@ -72,7 +72,7 @@ namespace EthereumSamurai.MongoDb.Repositories
             var filterBuilder = Builders<Erc20TransferHistoryEntity>.Filter;
             var filter        = filterBuilder.Empty;
 
-            if (string.IsNullOrEmpty(query.ContractAddress))
+            if (!string.IsNullOrEmpty(query.ContractAddress))
             {
                 filter &= filterBuilder.Eq(x => x.ContractAddress, query.ContractAddress);
             }
@@ -87,17 +87,17 @@ namespace EthereumSamurai.MongoDb.Repositories
                 filter &= filterBuilder.Lte(x => x.BlockNumber, query.ToBlockNumber.Value);
             }
 
-            if (string.IsNullOrEmpty(query.TransactionHash))
+            if (!string.IsNullOrEmpty(query.TransactionHash))
             {
                 filter &= filterBuilder.Eq(x => x.TransactionHash, query.TransactionHash);
             }
 
-            if (string.IsNullOrEmpty(query.TransfereeAddress))
+            if (!string.IsNullOrEmpty(query.TransfereeAddress))
             {
                 filter &= filterBuilder.Eq(x => x.To, query.TransfereeAddress);
             }
 
-            if (string.IsNullOrEmpty(query.TransferorAddress))
+            if (!string.IsNullOrEmpty(query.TransferorAddress))
             {
                 filter &= filterBuilder.Eq(x => x.From, query.TransferorAddress);
             }
@@ -123,16 +123,11 @@ namespace EthereumSamurai.MongoDb.Repositories
             {
                 throw new InvalidOperationException("All transfers should be part of the same block.");
             }
-
-            // TODO: Prevent pending balance updates for block
-            // TODO: Undo processed balance updates for block
-
+            
             await _historyCollection.DeleteManyAsync(x => x.BlockNumber == blockNumber);
 
             if (blockTransferHistory.Any())
             {
-                // TODO: Schedule new balance updates for block
-                
                 await _historyCollection.InsertManyAsync
                 (
                     blockTransferHistory.Select(_mapper.Map<Erc20TransferHistoryEntity>)

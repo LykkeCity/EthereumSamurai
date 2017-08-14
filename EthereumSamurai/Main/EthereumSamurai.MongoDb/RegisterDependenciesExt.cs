@@ -18,15 +18,16 @@ namespace EthereumSamurai.MongoDb
             collection.AddSingleton(mongoClient.GetDatabase("EthereumIndexer"));
 
             #region Repositories
-
-            collection.AddSingleton<IAddressHistoryRepository,       AddressHistoryRepository>();
-            collection.AddSingleton<IBlockRepository,                BlockRepository>();
-            collection.AddSingleton<IBlockSyncedInfoRepository,      BlockSyncedInfoRepository>();
-            collection.AddSingleton<IErc20BalanceRepository,         Erc20BalanceRepository>();
-            collection.AddSingleton<IErc20ContractRepository,        Erc20ContractRepository>();
-            collection.AddSingleton<IErc20TransferHistoryRepository, Erc20TransferHistoryRepository>();
-            collection.AddSingleton<IInternalMessageRepository,      InternalMessageRepository>();
-            collection.AddSingleton<ITransactionRepository,          TransactionRepository>();
+            
+            collection.AddSingleton<IAddressHistoryRepository,         AddressHistoryRepository>();
+            collection.AddSingleton<IBlockIndexationHistoryRepository, BlockIndexationHistoryRepository>();
+            collection.AddSingleton<IBlockRepository,                  BlockRepository>();
+            collection.AddSingleton<IBlockSyncedInfoRepository,        BlockSyncedInfoRepository>();
+            collection.AddSingleton<IErc20BalanceRepository,           Erc20BalanceRepository>();
+            collection.AddSingleton<IErc20ContractRepository,          Erc20ContractRepository>();
+            collection.AddSingleton<IErc20TransferHistoryRepository,   Erc20TransferHistoryRepository>();
+            collection.AddSingleton<IInternalMessageRepository,        InternalMessageRepository>();
+            collection.AddSingleton<ITransactionRepository,            TransactionRepository>();
 
             #endregion
 

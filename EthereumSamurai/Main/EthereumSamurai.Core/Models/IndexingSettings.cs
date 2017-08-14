@@ -6,8 +6,8 @@ namespace EthereumSamurai.Core.Models
     {
         public BigInteger From { get; set; }
 
-        public BigInteger? To { get; set; }
-
         public string IndexerId { get; set; }
+
+        public BigInteger? To { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using EthereumSamurai.Core.Repositories;
+﻿using System;
+using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Models;
 using System.Numerics;
@@ -8,32 +9,35 @@ namespace EthereumSamurai.Services
 {
     public class IndexingService : IIndexingService
     {
-        private readonly IAddressHistoryRepository       _addressHistoryRepository;
-        private readonly IBlockRepository                _blockRepository;
-        private readonly IBlockSyncedInfoRepository      _blockSyncedInfoRepository;
-        private readonly IErc20ContractRepository        _erc20ContractRepository;
-        private readonly IErc20TransferHistoryRepository _erc20TransferHistoryRepository;
-        private readonly IInternalMessageRepository      _internalMessageRepository;
-        private readonly ITransactionRepository          _transactionRepository;
+        private readonly IAddressHistoryRepository         _addressHistoryRepository;
+        private readonly IBlockIndexationHistoryRepository _blockIndexationHistoryRepository;
+        private readonly IBlockRepository                  _blockRepository;
+        private readonly IBlockSyncedInfoRepository        _blockSyncedInfoRepository;
+        private readonly IErc20ContractRepository          _erc20ContractRepository;
+        private readonly IErc20TransferHistoryRepository   _erc20TransferHistoryRepository;
+        private readonly IInternalMessageRepository        _internalMessageRepository;
+        private readonly ITransactionRepository            _transactionRepository;
 
 
 
         public IndexingService(
-            IBlockRepository                blockRepository,
-            ITransactionRepository          transactionRepository,
-            IBlockSyncedInfoRepository      blockSyncedInfoRepository,
-            IInternalMessageRepository      internalMessageRepository,
-            IAddressHistoryRepository       addressHistoryRepository,
-            IErc20ContractRepository        erc20ContractRepository,
-            IErc20TransferHistoryRepository erc20TransferHistoryRepository)
+            IAddressHistoryRepository         addressHistoryRepository,
+            IBlockIndexationHistoryRepository blockIndexationHistoryRepository,
+            IBlockRepository                  blockRepository,
+            IBlockSyncedInfoRepository        blockSyncedInfoRepository,
+            IErc20ContractRepository          erc20ContractRepository,
+            IErc20TransferHistoryRepository   erc20TransferHistoryRepository,
+            IInternalMessageRepository        internalMessageRepository,
+            ITransactionRepository            transactionRepository)
         {
-            _blockRepository                = blockRepository;
-            _transactionRepository          = transactionRepository;
-            _blockSyncedInfoRepository      = blockSyncedInfoRepository;
-            _internalMessageRepository      = internalMessageRepository;
-            _addressHistoryRepository       = addressHistoryRepository;
-            _erc20ContractRepository        = erc20ContractRepository;
-            _erc20TransferHistoryRepository = erc20TransferHistoryRepository;
+            _addressHistoryRepository         = addressHistoryRepository;
+            _blockIndexationHistoryRepository = blockIndexationHistoryRepository;
+            _blockRepository                  = blockRepository;
+            _blockSyncedInfoRepository        = blockSyncedInfoRepository;
+            _erc20ContractRepository          = erc20ContractRepository;
+            _erc20TransferHistoryRepository   = erc20TransferHistoryRepository;
+            _internalMessageRepository        = internalMessageRepository;
+            _transactionRepository            = transactionRepository;
         }
 
         public Task<BigInteger> GetLastBlockAsync()
@@ -90,8 +94,10 @@ namespace EthereumSamurai.Services
             await _erc20TransferHistoryRepository.SaveForBlockAsync(transfers, blockNumber);
 
             //Indexer fingerPrint
-            var blockSyncedInfoModel = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
+            await _blockIndexationHistoryRepository.MarkBlockAsIndexed(blockNumber, blockContext.JobVersion);
 
+            var blockSyncedInfoModel   = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
+            
             await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);
         }
     }
