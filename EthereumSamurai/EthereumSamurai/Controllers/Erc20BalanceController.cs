@@ -22,7 +22,7 @@ namespace EthereumSamurai.Controllers
 
         [Route("getErc20Balance/{address}")]
         [HttpPost]
-        [ProducesResponseType(typeof(BalanceResponse), 200)]
+        [ProducesResponseType(typeof(Erc20BalanceResponse), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress([FromRoute] string address, [FromBody] IEnumerable<string> contracts)
