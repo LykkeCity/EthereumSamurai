@@ -6,6 +6,8 @@
 
         bool IndexBalances { get; set; }
 
+        bool IndexBlocks { get; set; }
+
         string IndexerId { get; set; }
 
         ulong StartBlock { get; set; }

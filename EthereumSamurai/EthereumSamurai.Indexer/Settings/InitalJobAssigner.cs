@@ -40,33 +40,37 @@ namespace EthereumSamurai.Indexer.Settings
         public IEnumerable<IJob> GetJobs()
         {
             var jobs = new List<IJob>();
-            
-            var lastRpcBlock = (ulong) _rpcBlockReader.GetBlockCount().Result;
-            var from         = _indexerInstanceSettings.StartBlock;
-            var to           = _indexerInstanceSettings.StopBlock ?? lastRpcBlock;
-            var partSize     = (to - from) / (ulong) _indexerInstanceSettings.ThreadAmount;
 
-            ulong? toBlock = from;
-            
             // Blocks indexers
-            for (var i = 0; i < _indexerInstanceSettings.ThreadAmount; i++)
+            if (_indexerInstanceSettings.IndexBlocks)
             {
-                var fromBlock = (ulong) toBlock + 1;
+                var lastRpcBlock = (ulong) _rpcBlockReader.GetBlockCount().Result;
+                var from         = _indexerInstanceSettings.StartBlock;
+                var to           = _indexerInstanceSettings.StopBlock ?? lastRpcBlock;
+                var partSize     = (to - from) / (ulong) _indexerInstanceSettings.ThreadAmount;
 
-                toBlock = fromBlock + partSize;
-                toBlock = toBlock < to ? toBlock : _indexerInstanceSettings.StopBlock;
-
-                var indexerId = $"{_indexerInstanceSettings.IndexerId}_thread_{i}";
-                var job       = _blockIndexingFactory.GetJob(new IndexingSettings
+                ulong? toBlock = from;
+                
+                
+                for (var i = 0; i < _indexerInstanceSettings.ThreadAmount; i++)
                 {
-                    IndexerId = indexerId,
-                    From      = fromBlock,
-                    To        = toBlock
-                });
+                    var fromBlock = (ulong) toBlock + 1;
 
-                jobs.Add(job);
+                    toBlock = fromBlock + partSize;
+                    toBlock = toBlock < to ? toBlock : _indexerInstanceSettings.StopBlock;
+
+                    var indexerId = $"{_indexerInstanceSettings.IndexerId}_thread_{i}";
+                    var job       = _blockIndexingFactory.GetJob(new IndexingSettings
+                    {
+                        IndexerId = indexerId,
+                        From      = fromBlock,
+                        To        = toBlock
+                    });
+
+                    jobs.Add(job);
+                }
             }
-
+            
             // Balances indexer
             if (_indexerInstanceSettings.IndexBalances)
             {
