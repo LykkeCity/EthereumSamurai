@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using EthereumSamurai.Core.Services;
-using EthereumSamurai.Models.Query;
-using EthereumSamurai.Models.Blockchain;
 using AutoMapper;
-using EthereumSamurai.Responses;
-using EthereumSamurai.Requests;
+using EthereumSamurai.Core.Services;
 using EthereumSamurai.Filters;
+using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
+using EthereumSamurai.Requests;
+using EthereumSamurai.Responses;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Controllers
 {
@@ -17,13 +16,15 @@ namespace EthereumSamurai.Controllers
     [Produces("application/json")]
     public class AddressHistoryController : Controller
     {
-        private readonly IMapper _mapper;
         private readonly IAddressHistoryService _addressHistoryService;
+        private readonly IMapper _mapper;
 
-        public AddressHistoryController(IAddressHistoryService addressHistoryService, IMapper mapper)
+        public AddressHistoryController(
+            IAddressHistoryService addressHistoryService,
+            IMapper mapper)
         {
             _addressHistoryService = addressHistoryService;
-            _mapper = mapper;
+            _mapper                = mapper;
         }
 
         [Route("{address}")]
@@ -33,34 +34,27 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress(GetAddressInternalMessageHistoryRequest request)
         {
-            string address = request.address.ToLower();
-            var transactionQuery = new AddressHistoryQuery()
+            var address          = request.Address.ToLowerInvariant();
+            var transactionQuery = new AddressHistoryQuery
             {
                 FromAddress = address,
-                ToAddress = address,
-                StartBlock = request.StartBlock,
-                StopBlock = request.StopBlock,
-                Start = request.Start,
-                Count = request.Count
+                ToAddress   = address,
+                StartBlock  = request.StartBlock,
+                StopBlock   = request.StopBlock,
+                Start       = request.Start,
+                Count       = request.Count
             };
 
-            List<AddressHistoryModel> messages = (await _addressHistoryService.GetAsync(transactionQuery)).ToList();
-           
+            var messages = (await _addressHistoryService.GetAsync(transactionQuery)).ToList();
+
             return ProcessResponse(messages);
         }
 
-        private IActionResult ProcessResponse(List<AddressHistoryModel> messages)
+        private IActionResult ProcessResponse(IEnumerable<AddressHistoryModel> messages)
         {
-            List<AddressHistoryResponse> response = new List<AddressHistoryResponse>(messages.Count);
-            messages.ForEach(transaction =>
+            return new JsonResult(new FilteredAddressHistoryResponse
             {
-                AddressHistoryResponse trResponse = _mapper.Map<AddressHistoryResponse>(transaction);
-                response.Add(trResponse);
-            });
-
-            return new JsonResult(new FilteredAddressHistoryResponse()
-            {
-                History = response
+                History = messages.Select(_mapper.Map<AddressHistoryResponse>).ToList()
             });
         }
     }

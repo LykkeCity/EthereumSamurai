@@ -1,4 +1,6 @@
-﻿using AutoMapper;
+﻿//TODO: Cleanup code
+
+using AutoMapper;
 using EthereumSamurai.Models.Blockchain;
 using EthereumSamurai.Responses;
 using System;

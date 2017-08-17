@@ -1,11 +1,7 @@
-﻿using EthereumSamurai.Core.Services;
+﻿using System;
+using EthereumSamurai.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace EthereumSamurai.Filters
 {
@@ -18,45 +14,50 @@ namespace EthereumSamurai.Filters
             _logger = logger;
         }
 
+        public void Dispose()
+        {
+
+        }
+
         public void OnException(ExceptionContext context)
         {
+            var action     = context.RouteData.Values["action"];
             var controller = context.RouteData.Values["controller"];
-            var action = context.RouteData.Values["action"];
+            var httpCode   = 500;
 
-            int httpCode = 500;
-            ApiException ex;
+            var type    = ExceptionType.None;
+            var message = "Internal server error. Try again.";
 
-            ExceptionType type = ExceptionType.None;
-            string message = "Internal server error. Try again.";
-            ClientSideException clientSideException = context.Exception as ClientSideException;
-            if (clientSideException != null)
+            if (context.Exception is ClientSideException clientSideException)
             {
-                type = clientSideException.ExceptionType;
+                type     = clientSideException.ExceptionType;
                 httpCode = 400;
-                message = clientSideException.Message;
+                message  = clientSideException.Message;
             }
 
-            _logger.WriteErrorAsync("GlobalExceptionFilter", "OnException", $"Controller: {controller}, action: {action}", context.Exception, DateTime.UtcNow);
+            _logger.WriteErrorAsync
+            (
+                "GlobalExceptionFilter",
+                "OnException",
+                $"Controller: {controller}, action: {action}",
+                context.Exception,
+                DateTime.UtcNow
+            );
 
-            ex = new ApiException
+            var ex = new ApiException
             {
                 Error = new ApiError
                 {
-                    Code = type,
+                    Code    = type,
                     Message = message
                 }
             };
 
             context.Result = new ObjectResult(ex)
             {
-                StatusCode = httpCode,
+                StatusCode   = httpCode,
                 DeclaredType = typeof(ApiException)
             };
-        }
-
-        public void Dispose()
-        {
-
         }
     }
 
@@ -73,15 +74,16 @@ namespace EthereumSamurai.Filters
 
     public class ClientSideException : Exception
     {
-        public ExceptionType ExceptionType { get; private set; }
-
         public ClientSideException(ExceptionType type) : this(type, "")
-        { }
+        {
+        }
 
         public ClientSideException(ExceptionType type, string message) : base(message)
         {
             ExceptionType = type;
         }
+
+        public ExceptionType ExceptionType { get; }
     }
 
     public enum ExceptionType

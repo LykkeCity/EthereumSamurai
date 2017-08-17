@@ -1,9 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
-using System.Threading.Tasks;
+﻿using System.Runtime.Serialization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Requests
 {
@@ -11,11 +7,11 @@ namespace EthereumSamurai.Requests
     public class PagingBaseRequest
     {
         [FromQuery]
-        [DataMember(Name = "start")]
-        public int Start { get; set; }
-
-        [FromQuery]
         [DataMember(Name = "count")]
         public int Count { get; set; }
+
+        [FromQuery]
+        [DataMember(Name = "start")]
+        public int Start { get; set; }
     }
 }

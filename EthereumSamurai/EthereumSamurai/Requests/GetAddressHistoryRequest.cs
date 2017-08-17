@@ -1,10 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Runtime.Serialization;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Requests
 {
@@ -13,7 +9,7 @@ namespace EthereumSamurai.Requests
     {
         [FromRoute]
         [Required]
-        [DataMember(Name ="address")]
+        [DataMember(Name = "address")]
         public string Address { get; set; }
     }
 }

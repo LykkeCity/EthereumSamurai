@@ -1,7 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace EthereumSamurai.Common
 {
@@ -11,8 +8,9 @@ namespace EthereumSamurai.Common
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(location)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", true, true)
                 .AddEnvironmentVariables();
+
             var configuration = builder.Build();
 
             return configuration;
