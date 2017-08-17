@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using EthereumSamurai.Core.Services;
-using EthereumSamurai.Models.Query;
-using EthereumSamurai.Models.Blockchain;
 using AutoMapper;
-using EthereumSamurai.Responses;
-using EthereumSamurai.Requests;
+using EthereumSamurai.Core.Services;
 using EthereumSamurai.Filters;
+using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
+using EthereumSamurai.Requests;
+using EthereumSamurai.Responses;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Controllers
 {
@@ -17,13 +16,15 @@ namespace EthereumSamurai.Controllers
     [Produces("application/json")]
     public class TransactionController : Controller
     {
-        private readonly ITransactionService _transactionService;
         private readonly IMapper _mapper;
+        private readonly ITransactionService _transactionService;
 
-        public TransactionController(ITransactionService transactionService, IMapper mapper)
+        public TransactionController(
+            ITransactionService transactionService,
+            IMapper mapper)
         {
             _transactionService = transactionService;
-            _mapper = mapper;
+            _mapper             = mapper;
         }
 
         [Route("txHash/{transactionHash}")]
@@ -33,8 +34,8 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress([FromRoute] string transactionHash)
         {
-            TransactionModel transaction = await _transactionService.GetAsync(transactionHash);
-            TransactionResponse trResponse = _mapper.Map<TransactionResponse>(transaction);
+            var transaction = await _transactionService.GetAsync(transactionHash);
+            var trResponse = _mapper.Map<TransactionResponse>(transaction);
 
             return new JsonResult(trResponse);
         }
@@ -46,17 +47,17 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress(GetAddressHistoryRequest request)
         {
-            string address = request.Address.ToLower();
-            var transactionQuery = new TransactionQuery()
+            var address = request.Address.ToLower();
+            var transactionQuery = new TransactionQuery
             {
                 FromAddress = address,
-                ToAddress = address,
-                Start = request.Start,
-                Count = request.Count
+                ToAddress   = address,
+                Start       = request.Start,
+                Count       = request.Count
             };
 
-            List<TransactionModel> transactions = (await _transactionService.GetAsync(transactionQuery)).ToList();
-           
+            var transactions = (await _transactionService.GetAsync(transactionQuery)).ToList();
+
             return ProcessResponse(transactions);
         }
 
@@ -67,7 +68,7 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForBlockNumber([FromRoute] ulong blockNumber)
         {
-            List<TransactionModel> transactions = (await _transactionService.GetForBlockNumberAsync(blockNumber)).ToList();
+            var transactions = (await _transactionService.GetForBlockNumberAsync(blockNumber)).ToList();
 
             return ProcessResponse(transactions);
         }
@@ -79,23 +80,16 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForBlockNumber([FromRoute] string blockHash)
         {
-            List<TransactionModel> transactions = (await _transactionService.GetForBlockHashAsync(blockHash)).ToList();
+            var transactions = (await _transactionService.GetForBlockHashAsync(blockHash)).ToList();
 
             return ProcessResponse(transactions);
         }
 
-        private IActionResult ProcessResponse(List<TransactionModel> transactions)
+        private IActionResult ProcessResponse(IEnumerable<TransactionModel> transactions)
         {
-            List<TransactionResponse> response = new List<TransactionResponse>(transactions.Count);
-            transactions.ForEach(transaction =>
+            return new JsonResult(new FilteredTransactionsResponse
             {
-                TransactionResponse trResponse = _mapper.Map<TransactionResponse>(transaction);
-                response.Add(trResponse);
-            });
-
-            return new JsonResult(new FilteredTransactionsResponse()
-            {
-                Transactions = response
+                Transactions = transactions.Select(_mapper.Map<TransactionResponse>).ToList()
             });
         }
     }

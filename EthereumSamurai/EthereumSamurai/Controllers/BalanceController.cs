@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using System.Threading.Tasks;
 using EthereumSamurai.Core.Services;
-using EthereumSamurai.Models.Query;
-using EthereumSamurai.Models.Blockchain;
-using AutoMapper;
-using EthereumSamurai.Responses;
-using EthereumSamurai.Requests;
 using EthereumSamurai.Filters;
-using System.Numerics;
+using EthereumSamurai.Responses;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Controllers
 {
@@ -32,10 +24,9 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress([FromRoute] string address)
         {
-            address = address.ToLower();
-            BigInteger balance = await _balanceService.GetBalanceAsync(address);
+            var balance = await _balanceService.GetBalanceAsync(address.ToLowerInvariant());
 
-            return new JsonResult(new BalanceResponse()
+            return new JsonResult(new BalanceResponse
             {
                 Amount = balance.ToString()
             });

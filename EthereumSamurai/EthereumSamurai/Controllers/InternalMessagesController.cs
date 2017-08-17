@@ -1,15 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using EthereumSamurai.Core.Services;
-using EthereumSamurai.Models.Query;
-using EthereumSamurai.Models.Blockchain;
 using AutoMapper;
-using EthereumSamurai.Responses;
-using EthereumSamurai.Requests;
+using EthereumSamurai.Core.Services;
 using EthereumSamurai.Filters;
+using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
+using EthereumSamurai.Requests;
+using EthereumSamurai.Responses;
+using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Controllers
 {
@@ -17,13 +16,15 @@ namespace EthereumSamurai.Controllers
     [Produces("application/json")]
     public class InternalMessagesController : Controller
     {
-        private readonly IMapper _mapper;
         private readonly IInternalMessageService _internalMessageService;
+        private readonly IMapper                 _mapper;
 
-        public InternalMessagesController(IInternalMessageService internalMessageService, IMapper mapper)
+        public InternalMessagesController(
+            IInternalMessageService internalMessageService,
+            IMapper mapper)
         {
             _internalMessageService = internalMessageService;
-            _mapper = mapper;
+            _mapper                 = mapper;
         }
 
         [Route("txHash/{transactionHash}")]
@@ -33,7 +34,7 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress([FromRoute] string transactionHash)
         {
-            List<InternalMessageModel> messages = (await _internalMessageService.GetAsync(transactionHash)).ToList();
+            var messages = (await _internalMessageService.GetAsync(transactionHash)).ToList();
 
             return ProcessResponse(messages);
         }
@@ -45,34 +46,27 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress(GetAddressInternalMessageHistoryRequest request)
         {
-            string address = request.address.ToLower();
-            var transactionQuery = new InternalMessageQuery()
+            var address = request.Address.ToLower();
+            var transactionQuery = new InternalMessageQuery
             {
                 FromAddress = address,
-                ToAddress = address,
-                StartBlock = request.StartBlock,
-                StopBlock = request.StopBlock,
-                Start = request.Start,
-                Count = request.Count
+                ToAddress   = address,
+                StartBlock  = request.StartBlock,
+                StopBlock   = request.StopBlock,
+                Start       = request.Start,
+                Count       = request.Count
             };
 
-            List<InternalMessageModel> messages = (await _internalMessageService.GetAsync(transactionQuery)).ToList();
-           
+            var messages = (await _internalMessageService.GetAsync(transactionQuery)).ToList();
+
             return ProcessResponse(messages);
         }
 
-        private IActionResult ProcessResponse(List<InternalMessageModel> messages)
+        private IActionResult ProcessResponse(IEnumerable<InternalMessageModel> messages)
         {
-            List<InternalMessageResponse> response = new List<InternalMessageResponse>(messages.Count);
-            messages.ForEach(transaction =>
+            return new JsonResult(new FilteredInternalMessageResponse
             {
-                InternalMessageResponse trResponse = _mapper.Map<InternalMessageResponse>(transaction);
-                response.Add(trResponse);
-            });
-
-            return new JsonResult(new FilteredInternalMessageResponse()
-            {
-                Messages = response
+                Messages = messages.Select(_mapper.Map<InternalMessageResponse>).ToList()
             });
         }
     }
