@@ -48,6 +48,15 @@ namespace EthereumSamurai.Indexer.Jobs
                         if (nextBlockToIndex.HasValue)
                         {
                             await _indexingService.IndexBlockAsync(nextBlockToIndex.Value, Version);
+
+                            await _logger.WriteInfoAsync
+                            (
+                                nameof(Erc20BalanceIndexingJob),
+                                nameof(RunAsync),
+                                "Block balances indexed",
+                                $"Indexed balances of block {nextBlockToIndex}.",
+                                DateTime.UtcNow
+                            );
                         }
                         else
                         {
