@@ -65,7 +65,7 @@ namespace EthereumSamurai.MongoDb.Repositories
 
             await _collection.UpdateManyAsync
             (
-                x => x.BlockNumber > blockNumber,
+                x => x.BalancesIndexerVersion != null && x.BlockNumber > blockNumber,
                 Builders<BlockIndexationHistoryEntity>
                     .Update
                     .Set(x => x.BalancesIndexerVersion, null)

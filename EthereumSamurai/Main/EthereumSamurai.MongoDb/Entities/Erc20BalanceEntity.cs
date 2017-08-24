@@ -2,6 +2,7 @@
 
 namespace EthereumSamurai.MongoDb.Entities
 {
+    [BsonIgnoreExtraElements]
     public class Erc20BalanceEntity
     {
         [BsonElement]
