@@ -77,8 +77,20 @@ namespace EthereumSamurai.MongoDb.Repositories
                 entities.Add(transactionEntity);
             }
 
-            await _collection.DeleteManyAsync((x) => x.DeploymentBlockNumber == blockNumber);
-            await _collection.InsertManyAsync(entities);
+            try
+            {
+                await _collection.DeleteManyAsync((x) => x.DeploymentBlockNumber == blockNumber);
+                await _collection.InsertManyAsync(entities);
+            }
+            catch(Exception e)
+            {
+                foreach (var item in entities)
+                {
+                    await _collection.DeleteOneAsync((x) => x.Address == item.Address);
+                }
+
+                await _collection.InsertManyAsync(entities);
+            }
         }
 
         public async Task DeleteByHash(string trHash)
