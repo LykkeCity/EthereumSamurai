@@ -170,7 +170,7 @@ namespace EthereumSamurai.Services
                         contractInfoMap[contractAddress] = Tuple.Create(x.TransactionHash, x.FromAddress);
 
                         return contractAddress;
-                    }));
+                    })).Distinct();
 
             var erc20Contracts = new List<Erc20ContractModel>();
 
