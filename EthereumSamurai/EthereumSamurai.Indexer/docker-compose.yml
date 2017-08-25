@@ -9,3 +9,6 @@ services:
      - IndexerInstanceSettings__ThreadAmount=${ThreadAmount}
      - IndexerInstanceSettings__StartBlock=${StartBlock}
      - IndexerInstanceSettings__StopBlock=${StopBlock}
+     - IndexerInstanceSettings__BalancesStartBlock=${BalancesStartBlock}
+     - IndexerInstanceSettings__IndexBalances=${IndexBalances}
+     - IndexerInstanceSettings__IndexBlocks=${IndexBlocks}
