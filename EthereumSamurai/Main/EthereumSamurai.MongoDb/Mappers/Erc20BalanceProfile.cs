@@ -9,6 +9,9 @@ namespace EthereumSamurai.MongoDb.Mappers
     {
         public Erc20BalanceProfile()
         {
+            CreateMap<Erc20BalanceEntity, Erc20BalanceModel>()
+                .ForMember(dest => dest.Balance, opt => opt.MapFrom(src => BigInteger.Parse(src.Balance)));
+
             CreateMap<Erc20BalanceHistoryEntity, Erc20BalanceModel>()
                 .ForMember(dest => dest.Balance, opt => opt.MapFrom(src => BigInteger.Parse(src.Balance)));
 
@@ -19,6 +22,8 @@ namespace EthereumSamurai.MongoDb.Mappers
             CreateMap<Erc20BalanceModel, Erc20BalanceHistoryEntity>()
                 .ForMember(dest => dest.Balance, opt => opt.MapFrom(src => src.Balance.ToString()))
                 .ForMember(dest => dest.BlockNumber, opt => opt.Ignore());
+
+            
         }
     }
 }
