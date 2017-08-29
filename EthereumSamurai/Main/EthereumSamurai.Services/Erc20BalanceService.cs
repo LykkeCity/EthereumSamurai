@@ -49,7 +49,7 @@ namespace EthereumSamurai.Services
             
             var deposits        = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.To,   TransferAmount = x.TransferAmount });
             var withdrawals     = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.From, TransferAmount = x.TransferAmount * -1 });
-            var balanceChanges  = from transfer in deposits.Union(withdrawals)
+            var balanceChanges  = from transfer in deposits.Concat(withdrawals)
                                  group transfer
                                     by new { transfer.ContractAddress, transfer.AssetHolder }
                                   into g
