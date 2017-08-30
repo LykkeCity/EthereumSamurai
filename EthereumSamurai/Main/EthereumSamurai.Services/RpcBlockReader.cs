@@ -218,9 +218,9 @@ namespace EthereumSamurai.Services
                     BlockNumber       = (ulong) x.BlockNumber.Value,
                     BlockTimestamp    = (ulong) block.Timestamp.Value,
                     ContractAddress   = x.Address,
-                    From              = x.Topics[1].ToString().TrimLeadingZeroes(),
+                    From              = x.GetAddressFromTopic(1),
                     LogIndex          = (uint) x.LogIndex.Value,
-                    To                = x.Topics[2].ToString().TrimLeadingZeroes(),
+                    To                = x.GetAddressFromTopic(2),
                     TransactionHash   = x.TransactionHash,
                     TransactionIndex  = (uint) x.TransactionIndex.Value,
                     TransferAmount    = x.Data.HexToBigInteger(false)
