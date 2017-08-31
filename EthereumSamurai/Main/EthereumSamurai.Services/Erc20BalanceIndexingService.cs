@@ -14,17 +14,19 @@ namespace EthereumSamurai.Services
         private readonly IErc20BalanceRepository           _balanceRepository;
         private readonly IBlockIndexationHistoryRepository _blockIndexationHistoryRepository;
         private readonly IErc20TransferHistoryRepository   _transferHistoryRepository;
-
+        private readonly IIndexingRabbitNotifier           _indexingRabbitNotifier;
 
 
         public Erc20BalanceIndexingService(
             IErc20BalanceRepository           balanceRepository,
             IBlockIndexationHistoryRepository blockIndexationHistoryRepository,
-            IErc20TransferHistoryRepository   transferHistoryRepository)
+            IErc20TransferHistoryRepository   transferHistoryRepository,
+            IIndexingRabbitNotifier indexingRabbitNotifier)
         {
             _balanceRepository                = balanceRepository;
             _blockIndexationHistoryRepository = blockIndexationHistoryRepository;
             _transferHistoryRepository        = transferHistoryRepository;
+            _indexingRabbitNotifier           = indexingRabbitNotifier;
         }
         
 
@@ -80,6 +82,11 @@ namespace EthereumSamurai.Services
 
             await _balanceRepository.SaveForBlockAsync(newBalanceHistories, blockNumber);
             await _blockIndexationHistoryRepository.MarkBalancesAsIndexed(blockNumber, jobVersion);
+            await _indexingRabbitNotifier.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitIndexingMessage()
+            {
+                BlockNumber = blockNumber,
+                IndexingMessageType =EthereumSamurai.Models.Messages.IndexingMessageType.ErcBalances
+            });
         }
     }
 }
