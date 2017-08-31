@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Filters;
+using EthereumSamurai.Models.Query;
+using EthereumSamurai.Requests;
 using EthereumSamurai.Responses;
 using Microsoft.AspNetCore.Mvc;
 
@@ -20,22 +22,49 @@ namespace EthereumSamurai.Controllers
         }
 
 
-        [Route("getErc20Balance/{address}")]
+        [Route("getErc20Balance")]
         [HttpPost]
-        [ProducesResponseType(typeof(Erc20BalanceResponse), 200)]
+        [ProducesResponseType(typeof(IEnumerable<Erc20BalanceResponse>), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
-        public async Task<IActionResult> GetForAddress([FromRoute] string address,
-            [FromBody] IEnumerable<string> contracts)
+        public async Task<IActionResult> Get([FromBody] GetErc20BalanceRequest request, [FromQuery] int? start, [FromQuery] int? count)
         {
-            address   = address.ToLowerInvariant();
-            contracts = contracts.Select(x => x.ToLowerInvariant()).Distinct();
+            var query = new Erc20BalanceQuery
+            {
+                AssetHolder = request.AssetHolder?.ToLowerInvariant(),
+                BlockNumber = request.BlockNumber,
+                Contracts   = request.Contracts?.Select(x => x.ToLowerInvariant()).Distinct(),
+                Count       = count,
+                Start       = start
+            };
 
-            var balances = (await _balanceService.GetBalances(address, contracts))
+            return await GetAsync(query);
+        }
+
+        [Route("getErc20Balance/{address}")]
+        [HttpPost]
+        [ProducesResponseType(typeof(IEnumerable<Erc20BalanceResponse>), 200)]
+        [ProducesResponseType(typeof(ApiException), 400)]
+        [ProducesResponseType(typeof(ApiException), 500)]
+        public async Task<IActionResult> GetForAddress([FromRoute] string address, [FromBody] IEnumerable<string> contracts)
+        {
+            var query = new Erc20BalanceQuery
+            {
+                AssetHolder = address.ToLowerInvariant(),
+                Contracts   = contracts?.Select(x => x.ToLowerInvariant()).Distinct()
+            };
+
+            return await GetAsync(query);
+        }
+
+        private async Task<IActionResult> GetAsync(Erc20BalanceQuery query)
+        {
+            var balances = (await _balanceService.GetAsync(query))
                 .Select(x => new Erc20BalanceResponse
                 {
                     AssetHolderAddress = x.AssetHolderAddress,
                     Balance            = x.Balance.ToString(),
+                    BlockNumber        = x.BlockNumber,
                     ContractAddress    = x.ContractAddress
                 })
                 .ToList();

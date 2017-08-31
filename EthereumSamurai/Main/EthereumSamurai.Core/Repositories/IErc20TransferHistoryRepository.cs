@@ -10,6 +10,7 @@ namespace EthereumSamurai.Core.Repositories
         Task<IEnumerable<Erc20TransferHistoryModel>> GetAsync(Erc20TransferHistoryQuery query);
 
         Task SaveForBlockAsync(IEnumerable<Erc20TransferHistoryModel> blockTransferHistory, ulong blockNumber);
+
         Task DeleteAllForHash(string trHash);
     }
 }

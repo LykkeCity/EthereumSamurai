@@ -29,9 +29,9 @@ namespace EthereumSamurai.Services
 
 
 
-        public async Task<IEnumerable<Erc20BalanceModel>> GetBalances(string assetHolderAddress, IEnumerable<string> contractAddresses)
+        public async Task<IEnumerable<Erc20BalanceModel>> GetAsync(Erc20BalanceQuery query)
         {
-            return await _balanceRepository.GetAsync(assetHolderAddress, contractAddresses);
+            return await _balanceRepository.GetAsync(query);
         }
 
         public async Task<ulong?> GetNextBlockToIndexAsync(ulong startFrom)
@@ -43,8 +43,7 @@ namespace EthereumSamurai.Services
         {
             var blockTransfers = await _transferHistoryRepository.GetAsync(new Erc20TransferHistoryQuery
             {
-                FromBlockNumber = blockNumber,
-                ToBlockNumber   = blockNumber
+                BlockNumber = blockNumber
             });
             
             var deposits        = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.To,   TransferAmount = x.TransferAmount });

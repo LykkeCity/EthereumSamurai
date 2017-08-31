@@ -7,6 +7,8 @@ namespace EthereumSamurai.Models.Blockchain
         public string AssetHolderAddress { get; set; }
 
         public BigInteger Balance { get; set; }
+
+        public ulong BlockNumber { get; set; }
         
         public string ContractAddress { get; set; }
     }
