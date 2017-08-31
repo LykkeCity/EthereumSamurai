@@ -17,8 +17,7 @@ namespace EthereumSamurai.Services
         private readonly IErc20TransferHistoryRepository   _erc20TransferHistoryRepository;
         private readonly IInternalMessageRepository        _internalMessageRepository;
         private readonly ITransactionRepository            _transactionRepository;
-
-
+        private readonly IIndexingRabbitNotifier           _indexingRabbitNotifier;
 
         public IndexingService(
             IAddressHistoryRepository         addressHistoryRepository,
@@ -28,7 +27,8 @@ namespace EthereumSamurai.Services
             IErc20ContractRepository          erc20ContractRepository,
             IErc20TransferHistoryRepository   erc20TransferHistoryRepository,
             IInternalMessageRepository        internalMessageRepository,
-            ITransactionRepository            transactionRepository)
+            ITransactionRepository            transactionRepository,
+            IIndexingRabbitNotifier           indexingRabbitNotifier)
         {
             _addressHistoryRepository         = addressHistoryRepository;
             _blockIndexationHistoryRepository = blockIndexationHistoryRepository;
@@ -38,6 +38,7 @@ namespace EthereumSamurai.Services
             _erc20TransferHistoryRepository   = erc20TransferHistoryRepository;
             _internalMessageRepository        = internalMessageRepository;
             _transactionRepository            = transactionRepository;
+            _indexingRabbitNotifier           = indexingRabbitNotifier;
         }
 
         public Task<BigInteger> GetLastBlockAsync()
@@ -100,6 +101,11 @@ namespace EthereumSamurai.Services
             var blockSyncedInfoModel   = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
             
             await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);
+            await _indexingRabbitNotifier.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitIndexingMessage()
+            {
+                BlockNumber = blockNumber,
+                IndexingMessageType = EthereumSamurai.Models.Messages.IndexingMessageType.Block
+            });
         }
     }
 }

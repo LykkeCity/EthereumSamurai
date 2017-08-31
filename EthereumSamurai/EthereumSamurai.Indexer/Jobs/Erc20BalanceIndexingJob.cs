@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using EthereumSamurai.Core.Services;
+using Common.Log;
 
 namespace EthereumSamurai.Indexer.Jobs
 {

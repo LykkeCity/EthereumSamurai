@@ -13,6 +13,7 @@ using System.Reflection;
 using EthereumSamurai.Mappers;
 using EthereumSamurai.Filters;
 using EthereumSamurai.Core.Services;
+using Common.Log;
 
 namespace EthereumSamurai
 {

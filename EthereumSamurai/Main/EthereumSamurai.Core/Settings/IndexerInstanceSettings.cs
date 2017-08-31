@@ -15,5 +15,7 @@
         public ulong? StopBlock { get; set; }
 
         public int ThreadAmount { get; set; }
+
+        public bool SendEventsToRabbit { get; set; }
     }
 }
