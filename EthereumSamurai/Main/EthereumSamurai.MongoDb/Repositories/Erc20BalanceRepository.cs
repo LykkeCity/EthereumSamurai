@@ -6,6 +6,7 @@ using EthereumSamurai.Core;
 using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models.Blockchain;
+using EthereumSamurai.Models.Query;
 using EthereumSamurai.MongoDb.Entities;
 using MongoDB.Driver;
 
@@ -29,20 +30,21 @@ namespace EthereumSamurai.MongoDb.Repositories
             {
                 new CreateIndexModel<Erc20BalanceHistoryEntity>
                 (
-                    Builders<Erc20BalanceHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber)
-                ), 
+                    Builders<Erc20BalanceHistoryEntity>.IndexKeys.Combine
+                    (
+                        Builders<Erc20BalanceHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber),
+                        Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.AssetHolderAddress),
+                        Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
+                    )
+                ),
                 new CreateIndexModel<Erc20BalanceHistoryEntity>
                 (
                     Builders<Erc20BalanceHistoryEntity>.IndexKeys.Combine
                     (
-                        Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.AssetHolderAddress),
+                        Builders<Erc20BalanceHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber),
                         Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
                     )
-                )
-            });
-
-            _historyCollection.Indexes.CreateMany(new[]
-            {
+                ),
                 new CreateIndexModel<Erc20BalanceHistoryEntity>
                 (
                     Builders<Erc20BalanceHistoryEntity>.IndexKeys.Combine
@@ -51,19 +53,41 @@ namespace EthereumSamurai.MongoDb.Repositories
                         Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress),
                         Builders<Erc20BalanceHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber)
                     )
+                ),
+                new CreateIndexModel<Erc20BalanceHistoryEntity>
+                (
+                    Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
                 )
             });
         }
 
-        public async Task<IEnumerable<Erc20BalanceModel>> GetAsync(string assetHolderAddress, IEnumerable<string> contractAddresses)
+        public async Task<IEnumerable<Erc20BalanceModel>> GetAsync(Erc20BalanceQuery query)
         {
             var filterBuilder = Builders<Erc20BalanceEntity>.Filter;
             var filter = filterBuilder.Empty;
 
-            filter &= filterBuilder.Eq(x => x.AssetHolderAddress, assetHolderAddress);
-            filter &= filterBuilder.In(x => x.ContractAddress,    contractAddresses.ToList());
+            if (query.BlockNumber.HasValue)
+            {
+                filter &= filterBuilder.Eq(x => x.BlockNumber, query.BlockNumber.Value);
+            }
 
-            return (await _balanceCollection.Find(filter).ToListAsync())
+            if (!string.IsNullOrEmpty(query.AssetHolder))
+            {
+                filter &= filterBuilder.Eq(x => x.AssetHolderAddress, query.AssetHolder);
+            }
+            
+            if (query.Contracts != null && query.Contracts.Any())
+            {
+                filter &= filterBuilder.In(x => x.ContractAddress, query.Contracts.ToList());
+            }
+            
+            return (await _balanceCollection.Find(filter)
+                .SortByDescending(x => x.BlockNumber)
+                .ThenBy(x => x.ContractAddress)
+                .ThenBy(x => x.AssetHolderAddress)
+                .Skip(query.Start)
+                .Limit(query.Count)
+                .ToListAsync())
                 .Select(_mapper.Map<Erc20BalanceModel>);
         }
 
