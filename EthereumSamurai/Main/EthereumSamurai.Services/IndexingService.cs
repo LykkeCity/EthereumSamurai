@@ -99,13 +99,14 @@ namespace EthereumSamurai.Services
             await _blockIndexationHistoryRepository.MarkBlockAsIndexed(blockNumber, blockContext.JobVersion);
 
             var blockSyncedInfoModel   = new EthereumSamurai.Models.Indexing.BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number);
-            
-            await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);
+
             await _indexingRabbitNotifier.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitIndexingMessage()
             {
                 BlockNumber = blockNumber,
                 IndexingMessageType = EthereumSamurai.Models.Messages.IndexingMessageType.Block
             });
+
+            await _blockSyncedInfoRepository.SaveAsync(blockSyncedInfoModel);
         }
     }
 }

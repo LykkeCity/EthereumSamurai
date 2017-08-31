@@ -21,7 +21,7 @@ namespace EthereumSamurai.Services
             IErc20BalanceRepository           balanceRepository,
             IBlockIndexationHistoryRepository blockIndexationHistoryRepository,
             IErc20TransferHistoryRepository   transferHistoryRepository,
-            IIndexingRabbitNotifier indexingRabbitNotifier)
+            IIndexingRabbitNotifier           indexingRabbitNotifier)
         {
             _balanceRepository                = balanceRepository;
             _blockIndexationHistoryRepository = blockIndexationHistoryRepository;
@@ -72,8 +72,8 @@ namespace EthereumSamurai.Services
                     balanceHistory = new Erc20BalanceModel
                     {
                         AssetHolderAddress = change.AssetHolderAddress,
-                        Balance = balanceChange,
-                        ContractAddress = change.ContractAddress
+                        Balance            = balanceChange,
+                        ContractAddress    = change.ContractAddress
                     };
                 }
 
@@ -81,12 +81,14 @@ namespace EthereumSamurai.Services
             }
 
             await _balanceRepository.SaveForBlockAsync(newBalanceHistories, blockNumber);
-            await _blockIndexationHistoryRepository.MarkBalancesAsIndexed(blockNumber, jobVersion);
+
             await _indexingRabbitNotifier.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitIndexingMessage()
             {
-                BlockNumber = blockNumber,
+                BlockNumber         = blockNumber,
                 IndexingMessageType =EthereumSamurai.Models.Messages.IndexingMessageType.ErcBalances
             });
+
+            await _blockIndexationHistoryRepository.MarkBalancesAsIndexed(blockNumber, jobVersion);
         }
     }
 }
