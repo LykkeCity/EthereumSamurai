@@ -6,6 +6,7 @@ using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Indexer.Utils;
 using EthereumSamurai.Models;
+using Common.Log;
 
 namespace EthereumSamurai.Indexer.Jobs
 {
