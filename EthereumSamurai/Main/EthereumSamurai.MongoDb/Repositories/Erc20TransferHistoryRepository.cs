@@ -43,24 +43,13 @@ namespace EthereumSamurai.MongoDb.Repositories
                 ),
                 new CreateIndexModel<Erc20TransferHistoryEntity>
                 (
-                    Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.TransactionHash)
-                ),
-                new CreateIndexModel<Erc20TransferHistoryEntity>
-                (
-                    Builders<Erc20TransferHistoryEntity>.IndexKeys.Combine
-                    (
-                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.To),
-                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
-                    )
-                ),
-                new CreateIndexModel<Erc20TransferHistoryEntity>
-                (
                     Builders<Erc20TransferHistoryEntity>.IndexKeys.Combine
                     (
                         Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.From),
+                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.To),
                         Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
                     )
-                ),
+                )
             });
 
             _mapper = mapper;
@@ -78,44 +67,30 @@ namespace EthereumSamurai.MongoDb.Repositories
             var filterBuilder = Builders<Erc20TransferHistoryEntity>.Filter;
             var filter        = filterBuilder.Empty;
 
-            if (!string.IsNullOrEmpty(query.ContractAddress))
+            if (query.BlockNumber.HasValue)
             {
-                filter &= filterBuilder.Eq(x => x.ContractAddress, query.ContractAddress);
+                filter &= filterBuilder.Eq(x => x.BlockNumber, query.BlockNumber.Value);
             }
 
-            if (query.FromBlockNumber.HasValue)
+            if (!string.IsNullOrEmpty(query.AssetHolder))
             {
-                filter &= filterBuilder.Gte(x => x.BlockNumber, query.FromBlockNumber.Value);
+                filter &= filterBuilder.Or
+                (
+                    filterBuilder.Eq(x => x.From, query.AssetHolder),
+                    filterBuilder.Eq(x => x.To, query.AssetHolder)
+                );
             }
 
-            if (query.ToBlockNumber.HasValue)
+            if (query.Contracts != null && query.Contracts.Any())
             {
-                filter &= filterBuilder.Lte(x => x.BlockNumber, query.ToBlockNumber.Value);
+                filter &= filterBuilder.In(x => x.ContractAddress, query.Contracts.ToList());
             }
-
-            if (!string.IsNullOrEmpty(query.TransactionHash))
-            {
-                filter &= filterBuilder.Eq(x => x.TransactionHash, query.TransactionHash);
-            }
-
-            if (!string.IsNullOrEmpty(query.TransfereeAddress))
-            {
-                filter &= filterBuilder.Eq(x => x.To, query.TransfereeAddress);
-            }
-
-            if (!string.IsNullOrEmpty(query.TransferorAddress))
-            {
-                filter &= filterBuilder.Eq(x => x.From, query.TransferorAddress);
-            }
-
-            var sort = Builders<Erc20TransferHistoryEntity>.Sort
-                .Descending(x => x.BlockNumber)
-                .Ascending(x => x.TransactionIndex)
-                .Ascending(x => x.LogIndex);
-
+            
             var entities = await _historyCollection
                 .Find(filter)
-                .Sort(sort)
+                .SortByDescending(x => x.BlockNumber)
+                .ThenBy(x => x.TransactionIndex)
+                .ThenBy(x => x.LogIndex)
                 .Skip(query.Start)
                 .Limit(query.Count)
                 .ToListAsync();

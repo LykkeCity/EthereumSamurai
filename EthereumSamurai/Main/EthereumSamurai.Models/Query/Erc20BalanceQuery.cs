@@ -2,7 +2,7 @@
 
 namespace EthereumSamurai.Models.Query
 {
-    public class Erc20TransferHistoryQuery
+    public class Erc20BalanceQuery
     {
         public string AssetHolder { get; set; }
 

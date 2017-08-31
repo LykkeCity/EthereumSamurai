@@ -11,6 +11,9 @@ namespace EthereumSamurai.Responses
         [DataMember(Name = "amount")]
         public string Balance { get; set; }
 
+        [DataMember(Name = "blockNumber")]
+        public ulong BlockNumber { get; set; }
+
         [DataMember(Name = "contract")]
         public string ContractAddress { get; set; }
     }

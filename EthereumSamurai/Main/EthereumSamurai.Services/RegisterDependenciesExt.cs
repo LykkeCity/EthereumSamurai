@@ -27,7 +27,9 @@ namespace EthereumSamurai.Services
             #region Erc20
 
             collection.AddSingleton<IErc20BalanceService, Erc20BalanceService>();
+            collection.AddSingleton<IErc20BalanceIndexingService, Erc20BalanceIndexingService>();
             collection.AddSingleton<IErc20Detector, Erc20Detector>();
+            collection.AddSingleton<IErc20TransferHistoryService, Erc20TransferHistoryService>();
 
             #endregion
 
