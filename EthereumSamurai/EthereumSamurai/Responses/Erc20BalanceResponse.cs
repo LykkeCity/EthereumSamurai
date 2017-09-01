@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Runtime.Serialization;
 
 namespace EthereumSamurai.Responses
 {
@@ -11,7 +12,7 @@ namespace EthereumSamurai.Responses
         [DataMember(Name = "amount")]
         public string Balance { get; set; }
 
-        [DataMember(Name = "blockNumber")]
+        [DataMember(Name = "blockNumber"), Required]
         public ulong BlockNumber { get; set; }
 
         [DataMember(Name = "contract")]
