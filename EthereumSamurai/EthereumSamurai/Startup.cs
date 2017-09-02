@@ -82,7 +82,7 @@ namespace EthereumSamurai
             app.UseMvc();
 
             app.UseSwagger();
-            app.UseSwaggerUi();
+            app.UseSwaggerUi("swagger/ui/index");
         }
     }
 }
