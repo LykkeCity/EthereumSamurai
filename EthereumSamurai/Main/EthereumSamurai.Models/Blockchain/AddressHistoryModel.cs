@@ -24,5 +24,7 @@ namespace EthereumSamurai.Models.Blockchain
         public int TransactionIndex { get; set; }
 
         public int MessageIndex { get; set; }
+        public BigInteger GasUsed { get; set; }
+        public BigInteger GasPrice { get; set; }
     }
 }

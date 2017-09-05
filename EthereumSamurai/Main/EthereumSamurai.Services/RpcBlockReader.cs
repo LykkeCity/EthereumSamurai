@@ -260,7 +260,9 @@ namespace EthereumSamurai.Services
                     HasError         = transaction.HasError,
                     To               = transaction.To,
                     TransactionHash  = transaction.TransactionHash,
-                    Value            = transaction.Value
+                    Value            = transaction.Value,
+                    GasUsed = transaction.GasUsed,
+                    GasPrice = transaction.GasPrice
                 };
             });
 
@@ -274,7 +276,9 @@ namespace EthereumSamurai.Services
                 From             = message.FromAddress,
                 BlockNumber      = (ulong) message.BlockNumber,
                 BlockTimestamp   = (uint) message.BlockTimestamp,
-                Value            = message.Value
+                Value            = message.Value,
+                GasPrice = 0 ,
+                GasUsed = 0
             }));
 
             return history;

@@ -25,6 +25,8 @@ namespace EthereumSamurai.Mappers
                 addressHistoryEntity.TransactionIndex = addressHistoryModel.TransactionIndex;
                 addressHistoryEntity.BlockNumber = addressHistoryModel.BlockNumber;
                 addressHistoryEntity.Value = addressHistoryModel.Value.ToString();
+                addressHistoryEntity.GasPrice = addressHistoryModel.GasPrice.ToString();
+                addressHistoryEntity.GasUsed = addressHistoryModel.GasUsed.ToString();
                 addressHistoryEntity.BlockTimestamp = addressHistoryModel.BlockTimestamp;
             }).ReverseMap();
         }
