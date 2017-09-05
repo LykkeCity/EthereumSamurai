@@ -51,12 +51,9 @@ namespace EthereumSamurai.RabbitMQ
 
         public void Publish(RabbitMqSubscriptionSettings settings, IModel channel, byte[] data)
         {
-            var basicProperties = channel.CreateBasicProperties();
-            basicProperties.Persistent = true;
-
             channel.BasicPublish(exchange: settings.ExchangeName,
-                     routingKey: _queue,
-                     basicProperties: basicProperties,
+                     routingKey: _queue,//remove
+                     basicProperties: null,
                      body: data);
         }
     }
