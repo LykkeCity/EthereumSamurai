@@ -20,7 +20,7 @@ namespace EthereumSamurai.RabbitMQ
             string exchangeName = exchangePrefix + settings.RabbitMq.ExchangeEthereumSamurai;
             RabbitMqSubscriptionSettings rabbitMqSettings = new RabbitMqSubscriptionSettings
             {
-                ConnectionString = $"amqp://{settings.RabbitMq.Username}:{settings.RabbitMq.Password}@{settings.RabbitMq.Host}:{settings.RabbitMq.Port}",
+                ConnectionString = $"amqp://{settings.RabbitMq.Username}:{settings.RabbitMq.Password}@{settings.RabbitMq.ExternalHost}:{settings.RabbitMq.Port}",
                 ExchangeName = exchangeName
             };
 
