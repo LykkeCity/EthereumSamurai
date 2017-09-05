@@ -34,5 +34,11 @@ namespace EthereumSamurai.MongoDb.Entities
 
         [BsonElement]
         public string Value { get; set; }
+
+        [BsonElement]
+        public string GasUsed { get; set; }
+
+        [BsonElement]
+        public string GasPrice { get; set; }
     }
 }

@@ -31,5 +31,11 @@ namespace EthereumSamurai.Responses
 
         [DataMember(Name = "value")]
         public string Value { get; set; }
+
+        [DataMember(Name = "gasPriced")]
+        public string GasPrice { get; set; }
+
+        [DataMember(Name = "gasUsed")]
+        public string GasUsed { get; set; }
     }
 }
