@@ -12,3 +12,4 @@ services:
      - IndexerInstanceSettings__BalancesStartBlock=${BalancesStartBlock}
      - IndexerInstanceSettings__IndexBalances=${IndexBalances}
      - IndexerInstanceSettings__IndexBlocks=${IndexBlocks}
+     - IndexerInstanceSettings__SendEventsToRabbit=${SendEventsToRabbit}

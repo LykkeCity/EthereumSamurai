@@ -1,4 +1,5 @@
-﻿using EthereumSamurai.Core.Services;
+﻿using Common.Log;
+using EthereumSamurai.Core.Services;
 using EthereumSamurai.Indexer.Jobs;
 using System;
 using System.Collections.Generic;

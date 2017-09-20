@@ -2,20 +2,21 @@
 using System.Threading;
 using System.Threading.Tasks;
 using EthereumSamurai.Core.Services;
+using Common.Log;
 
 namespace EthereumSamurai.Indexer.Jobs
 {
     public class Erc20BalanceIndexingJob : IJob
     {
-        private readonly IErc20BalanceService _indexingService;
-        private readonly ILog                 _logger;
-        private readonly ulong                _startFrom;
+        private readonly IErc20BalanceIndexingService _indexingService;
+        private readonly ILog                         _logger;
+        private readonly ulong                        _startFrom;
 
 
         public Erc20BalanceIndexingJob(
-            IErc20BalanceService indexingService,
-            ILog                 logger,
-            ulong                startFrom)
+            IErc20BalanceIndexingService indexingService,
+            ILog                         logger,
+            ulong                        startFrom)
         {
             _indexingService = indexingService;
             _logger          = logger;

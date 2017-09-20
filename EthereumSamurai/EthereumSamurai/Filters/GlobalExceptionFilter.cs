@@ -2,6 +2,7 @@
 using EthereumSamurai.Core.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using Common.Log;
 
 namespace EthereumSamurai.Filters
 {

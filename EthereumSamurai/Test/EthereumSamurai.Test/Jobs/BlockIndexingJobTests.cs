@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
 using System.Numerics;
 using Moq;
+using Common.Log;
 
 namespace EthereumSamurai.UnitTest.Jobs
 {

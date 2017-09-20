@@ -5,6 +5,7 @@ using EthereumSamurai.MongoDb;
 using EthereumSamurai.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Common.Log;
 
 namespace EthereumSamurai.Common
 {

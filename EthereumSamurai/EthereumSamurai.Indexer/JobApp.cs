@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Common.Log;
 using EthereumSamurai.Common;
 using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Repositories;
@@ -7,6 +8,7 @@ using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Indexer.Dependencies;
 using EthereumSamurai.Indexer.Jobs;
 using EthereumSamurai.Indexer.Settings;
+using EthereumSamurai.RabbitMQ;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -46,7 +48,8 @@ namespace EthereumSamurai.Indexer
                 collection.ConfigureServices(configuration);
                 //Register jobs and settings
                 DependencyConfig.RegisterServices(collection, indexerSettings);
-
+                Services = collection.BuildServiceProvider();
+                RegisterRabbitQueueEx.RegisterRabbitQueue(collection, Services.GetService<IBaseSettings>(), Services.GetService<ILog>());
                 Services = collection.BuildServiceProvider();
                 Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
                 _logger = Services.GetService<ILog>();

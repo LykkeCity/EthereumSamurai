@@ -1,16 +1,17 @@
-﻿using EthereumSamurai.Core.Services;
+﻿using Common.Log;
+using EthereumSamurai.Core.Services;
 
 namespace EthereumSamurai.Indexer.Jobs
 {
     public class Erc20BalanceIndexingJobFactory : IErc20BalanceIndexingJobFactory
     {
-        private readonly IErc20BalanceService _indexingService;
-        private readonly ILog                 _logger;
+        private readonly IErc20BalanceIndexingService _indexingService;
+        private readonly ILog                         _logger;
 
 
         public Erc20BalanceIndexingJobFactory(
-            IErc20BalanceService indexingService,
-            ILog                 logger)
+            IErc20BalanceIndexingService indexingService,
+            ILog                         logger)
         {
             _indexingService = indexingService;
             _logger          = logger;
