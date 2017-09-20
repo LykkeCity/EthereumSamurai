@@ -13,6 +13,7 @@ using System.Reflection;
 using EthereumSamurai.Mappers;
 using EthereumSamurai.Filters;
 using EthereumSamurai.Core.Services;
+using Common.Log;
 
 namespace EthereumSamurai
 {
@@ -81,7 +82,7 @@ namespace EthereumSamurai
             app.UseMvc();
 
             app.UseSwagger();
-            app.UseSwaggerUi();
+            app.UseSwaggerUi("swagger/ui/index");
         }
     }
 }

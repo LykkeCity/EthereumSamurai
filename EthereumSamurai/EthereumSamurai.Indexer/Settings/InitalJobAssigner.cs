@@ -4,6 +4,7 @@ using EthereumSamurai.Core.Repositories;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Indexer.Jobs;
+using Common.Log;
 
 namespace EthereumSamurai.Indexer.Settings
 {

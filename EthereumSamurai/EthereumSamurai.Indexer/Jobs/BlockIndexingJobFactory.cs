@@ -1,4 +1,5 @@
-﻿using EthereumSamurai.Core.Models;
+﻿using Common.Log;
+using EthereumSamurai.Core.Models;
 using EthereumSamurai.Core.Services;
 
 namespace EthereumSamurai.Indexer.Jobs

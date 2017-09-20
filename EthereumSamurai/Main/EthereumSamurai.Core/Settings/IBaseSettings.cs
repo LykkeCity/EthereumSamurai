@@ -5,5 +5,7 @@
         DB DB { get; set; }
 
         string EthereumRpcUrl { get; set; }
+
+        RabbitMq RabbitMq { get; set; }
     }
 }

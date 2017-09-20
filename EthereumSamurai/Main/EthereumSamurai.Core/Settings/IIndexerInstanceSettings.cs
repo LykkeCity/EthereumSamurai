@@ -15,5 +15,7 @@
         ulong? StopBlock { get; set; }
 
         int ThreadAmount { get; set; }
+
+        bool SendEventsToRabbit { get; set; }
     }
 }
