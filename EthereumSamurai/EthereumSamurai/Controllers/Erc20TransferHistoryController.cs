@@ -48,7 +48,9 @@ namespace EthereumSamurai.Controllers
                     To               = x.To,
                     TransactionHash  = x.TransactionHash,
                     TransactionIndex = x.TransactionIndex,
-                    TransferAmount   = x.TransferAmount.ToString()
+                    TransferAmount   = x.TransferAmount.ToString(),
+                    GasUsed          = x.GasUsed,
+                    GasPrice         = x.GasPrice
                 })
                 .ToList();
 
