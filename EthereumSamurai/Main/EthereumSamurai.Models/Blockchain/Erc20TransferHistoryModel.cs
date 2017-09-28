@@ -23,5 +23,9 @@ namespace EthereumSamurai.Models.Blockchain
         public uint TransactionIndex { get; set; }
 
         public BigInteger TransferAmount { get; set; }
+
+        public BigInteger GasUsed { get; set; }
+
+        public BigInteger GasPrice { get; set; }
     }
 }
