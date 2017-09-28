@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Numerics;
 using System.Runtime.Serialization;
 
 namespace EthereumSamurai.Responses
@@ -35,5 +36,11 @@ namespace EthereumSamurai.Responses
 
         [DataMember(Name = "transferAmount")]
         public string TransferAmount { get; set; }
+
+        [DataMember(Name = "gasUsed")]
+        public BigInteger GasUsed { get; internal set; }
+
+        [DataMember(Name = "gasPrice")]
+        public BigInteger GasPrice { get; internal set; }
     }
 }
