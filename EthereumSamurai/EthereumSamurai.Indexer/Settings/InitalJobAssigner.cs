@@ -15,33 +15,36 @@ namespace EthereumSamurai.Indexer.Settings
 
     public class InitalJobAssigner : IInitalJobAssigner
     {
-        private readonly IErc20BalanceIndexingJobFactory _erc20BalanceIndexingJobFactory;
-        private readonly IBlockIndexingJobFactory        _blockIndexingFactory;
-        private readonly IBlockRepository                _blockRepository;
-        private readonly IIndexerInstanceSettings        _indexerInstanceSettings;
-        private readonly ILog                            _logger;
-        private readonly IRpcBlockReader                 _rpcBlockReader;
+        private readonly IErc20BalanceIndexingJobFactory  _erc20BalanceIndexingJobFactory;
+        private readonly IErc20ContractIndexingJobFactory _erc20ContractIndexingJobFactory;
+        private readonly IBlockIndexingJobFactory         _blockIndexingFactory;
+        private readonly IBlockRepository                 _blockRepository;
+        private readonly IIndexerInstanceSettings         _indexerInstanceSettings;
+        private readonly ILog                             _logger;
+        private readonly IRpcBlockReader                  _rpcBlockReader;
 
         public InitalJobAssigner(
-            IBlockIndexingJobFactory        blockIndexingFactory,
-            IBlockRepository                blockRepository,
-            IErc20BalanceIndexingJobFactory erc20BalanceIndexingJobFactory,
-            IIndexerInstanceSettings        indexerInstanceSettings,
-            ILog                            logger,
-            IRpcBlockReader                 rpcBlockReader)
+            IBlockIndexingJobFactory         blockIndexingFactory,
+            IBlockRepository                 blockRepository,
+            IErc20BalanceIndexingJobFactory  erc20BalanceIndexingJobFactory,
+            IErc20ContractIndexingJobFactory erc20ContractIndexingJobFactory,
+            IIndexerInstanceSettings         indexerInstanceSettings,
+            ILog                             logger,
+            IRpcBlockReader                  rpcBlockReader)
         {
-            _blockIndexingFactory        = blockIndexingFactory;
-            _blockRepository             = blockRepository;
-            _erc20BalanceIndexingJobFactory = erc20BalanceIndexingJobFactory;
-            _indexerInstanceSettings     = indexerInstanceSettings;
-            _logger                      = logger;
-            _rpcBlockReader              = rpcBlockReader;
+            _blockIndexingFactory            = blockIndexingFactory;
+            _blockRepository                 = blockRepository;
+            _erc20BalanceIndexingJobFactory  = erc20BalanceIndexingJobFactory;
+            _erc20ContractIndexingJobFactory = erc20ContractIndexingJobFactory;
+            _indexerInstanceSettings         = indexerInstanceSettings;
+            _logger                          = logger;
+            _rpcBlockReader                  = rpcBlockReader;
         }
 
         public IEnumerable<IJob> GetJobs()
         {
             var jobs = new List<IJob>();
-
+            
             // Blocks indexers
             if (_indexerInstanceSettings.IndexBlocks)
             {
@@ -78,6 +81,17 @@ namespace EthereumSamurai.Indexer.Settings
                 jobs.Add(_erc20BalanceIndexingJobFactory.GetJob(_indexerInstanceSettings.BalancesStartBlock));
             }
             
+            // Contracts indexer
+            if (_indexerInstanceSettings.IndexContracts)
+            {
+                for (var i = 0; i < _indexerInstanceSettings.ContractsIndexerThreadAmount; i++)
+                {
+                    var job = _erc20ContractIndexingJobFactory.GetJob();
+
+                    jobs.Add(job);
+                }
+            }
+
             return jobs;
         }
     }

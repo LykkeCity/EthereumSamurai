@@ -40,26 +40,7 @@ namespace EthereumSamurai.Indexer
             _cancellationToken = cancellationToken;
             await WaitAndRetryAll();
         }
-
-        //private async Task RepeatTillCompleted(Task taskToWait)
-        //{
-        //    try
-        //    {
-        //        await taskToWait.ConfigureAwait(false);
-        //        await _logger.WriteInfoAsync("JobRunner", "Wait", "", "Job has been completed", DateTime.UtcNow);
-        //    }
-        //    catch (OperationCanceledException e)
-        //    {
-        //        await _logger.WriteInfoAsync("JobRunner", "Wait", "", "Job has been cancelled", DateTime.UtcNow);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        await _logger.WriteErrorAsync("JobRunner", "Wait", "Error during indexing. Retry", e, DateTime.UtcNow);
-        //        await Task.Delay(1000);
-        //        await RunTasks(_cancellationToken);
-        //    }
-        //}
-
+        
         private Task RunJob(IJob job)
         {
             var runningTask = _taskJobDictionary.Where(x => x.Value == job).Select(y => y.Key).FirstOrDefault();
@@ -113,28 +94,7 @@ namespace EthereumSamurai.Indexer
 
             return _runningTasks.ToList();
         }
-
-        //private async Task WaitAll()
-        //{
-        //    try
-        //    {
-        //        await Task.WhenAll(_runningTasks).ConfigureAwait(false);
-        //        await _logger.WriteInfoAsync("JobRunner", "WaitAll", "", "Jobs has been completed", DateTime.UtcNow);
-        //    }
-        //    catch (OperationCanceledException e)
-        //    {
-        //        await _logger.WriteInfoAsync("JobRunner", "WaitAll", "", "Jobs has been cancelled", DateTime.UtcNow);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        _runningTasks?.ToList().ForEach(task => { _taskCancellationDictionary[task].Cancel(); });
-        //        await _logger.WriteErrorAsync("JobRunner", "WaitAll", "Error during indexing. Retry", e,
-        //            DateTime.UtcNow);
-        //        await Task.Delay(1000);
-        //        await RunTasks(_cancellationToken);
-        //    }
-        //}
-
+        
         private async Task WaitAndRetryAll()
         {
             IEnumerable<Task> currentlyRunning;
