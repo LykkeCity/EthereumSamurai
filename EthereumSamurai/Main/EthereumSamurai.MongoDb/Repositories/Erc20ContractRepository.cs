@@ -49,11 +49,11 @@ namespace EthereumSamurai.MongoDb.Repositories
             var filterBuilder = Builders<Erc20ContractEntity>.Filter;
             var filter        = filterBuilder.Empty;
 
-            if (string.IsNullOrEmpty(query.Address))
+            if (!string.IsNullOrEmpty(query.Address))
             {
                 filter &= filterBuilder.Eq(x => x.Address, query.Address);
             }
-            else
+            else if (!string.IsNullOrEmpty(query.NameOrSymbol))
             {
                 filter &= filterBuilder.Or
                 (
@@ -61,7 +61,7 @@ namespace EthereumSamurai.MongoDb.Repositories
                     filterBuilder.Regex(x => x.TokenName, query.NameOrSymbol)
                 );
             }
-
+            
             return (await _collection.Find(filter)
                 .SortBy(x => x.TokenSymbol)
                 .ThenBy(x => x.TokenName)

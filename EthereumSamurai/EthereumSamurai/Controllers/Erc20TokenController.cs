@@ -24,7 +24,8 @@ namespace EthereumSamurai.Controllers
             _contractService = contractService;
         }
 
-        [Route("{address}")]
+        [Route("{contractAddress}")]
+        [HttpGet]
         [ProducesResponseType(typeof(Erc20TokenResponse), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
@@ -37,8 +38,8 @@ namespace EthereumSamurai.Controllers
 
             return new JsonResult(tokens.FirstOrDefault());
         }
-
-
+        
+        [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<Erc20TokenResponse>), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
@@ -51,7 +52,7 @@ namespace EthereumSamurai.Controllers
                 Start        = request.Start
             });
 
-            return new JsonResult(tokens.FirstOrDefault());
+            return new JsonResult(tokens);
         }
 
         private async Task<IEnumerable<Erc20TokenResponse>> QueryServiceAsync(Erc20ContractQuery query)
