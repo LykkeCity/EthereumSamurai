@@ -86,10 +86,10 @@ namespace EthereumSamurai.MongoDb.Repositories
 
         public async Task<TransactionModel> GetAsync(string transactionHash)
         {
-            var filter = Builders<TransactionEntity>.Filter.Eq("_id", transactionHash);
-            IAsyncCursor<TransactionEntity> cursor = await _collection.FindAsync(filter);
-            TransactionEntity transactionEntity = cursor.FirstOrDefault();
-            TransactionModel transactionModel = _mapper.Map<TransactionModel>(transactionEntity);
+            var filter            = Builders<TransactionEntity>.Filter.Eq("_id", transactionHash);
+            var cursor            = await _collection.FindAsync(filter);
+            var transactionEntity = cursor.FirstOrDefault();
+            var transactionModel  = transactionEntity != null ? _mapper.Map<TransactionModel>(transactionEntity) : null;
 
             return transactionModel;
         }

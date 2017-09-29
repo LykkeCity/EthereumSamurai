@@ -9,7 +9,7 @@ namespace EthereumSamurai.Models
 
         public BlockModel BlockModel { get; set; }
 
-        public List<Erc20ContractModel> CreatedErc20Contracts { get; set; }
+        public List<DeployedContractModel> DeployedContracts { get; set; }
 
         public List<InternalMessageModel> InternalMessages { get; set; }
 

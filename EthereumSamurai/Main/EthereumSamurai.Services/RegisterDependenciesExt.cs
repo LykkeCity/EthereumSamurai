@@ -29,6 +29,8 @@ namespace EthereumSamurai.Services
 
             collection.AddSingleton<IErc20BalanceService, Erc20BalanceService>();
             collection.AddSingleton<IErc20BalanceIndexingService, Erc20BalanceIndexingService>();
+            collection.AddSingleton<IErc20ContractService, Erc20ContractService>();
+            collection.AddSingleton<IErc20ContractIndexingService, Erc20ContractIndexingService>();
             collection.AddSingleton<IErc20Detector, Erc20Detector>();
             collection.AddSingleton<IErc20TransferHistoryService, Erc20TransferHistoryService>();
 
