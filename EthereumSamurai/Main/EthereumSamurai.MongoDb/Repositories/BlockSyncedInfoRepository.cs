@@ -8,6 +8,7 @@ using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models.Indexing;
 using EthereumSamurai.MongoDb.Entities;
 using MongoDB.Driver;
+using System.Linq;
 
 namespace EthereumSamurai.MongoDb.Repositories
 {
