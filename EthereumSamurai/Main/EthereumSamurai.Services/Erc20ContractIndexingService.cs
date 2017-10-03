@@ -6,34 +6,38 @@ using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Services.Erc20;
 using EthereumSamurai.Models.Blockchain;
 using Nethereum.Contracts;
+using EthereumSamurai.Core.Settings;
 
 namespace EthereumSamurai.Services
 {
     public class Erc20ContractIndexingService : IErc20ContractIndexingService
     {
         private const string MetadataAbi = @"[{""constant"":true,""inputs"":[],""name"":""name"",""outputs"":[{""name"":"""",""type"":""string""}],""payable"":false,""type"":""function""},{""constant"":true,""inputs"":[],""name"":""totalSupply"",""outputs"":[{""name"":""totalSupply"",""type"":""uint256""}],""payable"":false,""type"":""function""},{""constant"":true,""inputs"":[],""name"":""decimals"",""outputs"":[{""name"":"""",""type"":""uint8""}],""payable"":false,""type"":""function""},{""constant"":true,""inputs"":[],""name"":""symbol"",""outputs"":[{""name"":"""",""type"":""string""}],""payable"":false,""type"":""function""}]";
-
+        private readonly IBaseSettings _settings;
+        private readonly IIndexingRabbitNotifier _rabbitQueuePublisher;
         private readonly IErc20ContractRepository    _erc20ContractRepository;
         private readonly IErc20Detector              _erc20Detector;
         private readonly IErc20ContractIndexingQueue _indexingQueue;
         private readonly ITransactionRepository      _transactionRepository;
         private readonly IWeb3                       _web3;
 
-
         public Erc20ContractIndexingService(
             IErc20ContractRepository erc20ContractRepository,
             IErc20Detector erc20Detector,
             IErc20ContractIndexingQueue indexingQueue,
             ITransactionRepository transactionRepository,
-            IWeb3 web3)
+            IWeb3 web3,
+            IIndexingRabbitNotifier rabbitQueuePublisher,
+            IBaseSettings settings)
         {
+            _settings = settings;
+            _rabbitQueuePublisher    = rabbitQueuePublisher;
             _erc20ContractRepository = erc20ContractRepository;
             _erc20Detector           = erc20Detector;
             _indexingQueue           = indexingQueue;
             _transactionRepository   = transactionRepository;
             _web3                    = web3;
         }
-
 
         public async Task<DeployedContractModel> GetNextContractToIndexAsync()
         {
@@ -88,6 +92,21 @@ namespace EthereumSamurai.Services
                 }
 
                 await _erc20ContractRepository.SaveAsync(erc20Contract);
+
+                await _rabbitQueuePublisher.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitContractIndexingMessage()
+                {
+                    Address = erc20Contract.Address,
+                    BlockHash = erc20Contract.BlockHash,
+                    BlockNumber = (ulong)erc20Contract.BlockNumber,
+                    BlockTimestamp = (int)erc20Contract.BlockTimestamp,
+                    DeployerAddress = erc20Contract.DeployerAddress,
+                    IndexingMessageType = EthereumSamurai.Models.Messages.IndexingMessageType.ErcContract,
+                    TokenDecimals = erc20Contract.TokenDecimals,
+                    TokenName = erc20Contract.TokenName,
+                    TokenSymbol = erc20Contract.TokenSymbol,
+                    TokenTotalSupply = erc20Contract.TokenTotalSupply.ToString(),
+                    TransactionHash = erc20Contract.TransactionHash
+                });
             }
         }
 

@@ -62,7 +62,7 @@ namespace EthereumSamurai.RabbitMQ
 
                         return contract;
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
                         _channel.BasicNack(message.DeliveryTag, false, false);
 

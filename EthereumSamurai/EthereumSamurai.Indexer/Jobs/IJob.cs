@@ -9,8 +9,6 @@ namespace EthereumSamurai.Indexer.Jobs
 
         int Version { get; }
 
-
-
         Task RunAsync();
 
         Task RunAsync(CancellationToken cancellationToken);
