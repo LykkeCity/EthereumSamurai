@@ -2,9 +2,6 @@
 using EthereumSamurai.Core.Settings;
 using Lykke.RabbitMqBroker.Publisher;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Lykke.RabbitMqBroker.Subscriber;
 using RabbitMQ.Client;
 using Common.Log;
@@ -15,23 +12,25 @@ namespace EthereumSamurai.RabbitMQ
 {
     public static class RegisterRabbitQueueEx
     {
-        public static void RegisterRabbitQueue(this IServiceCollection services, IBaseSettings settings, ILog logger, string exchangePrefix = "")
+        public static void RegisterRabbitQueues(this IServiceCollection services, IBaseSettings settings, ILog logger, string exchangePrefix = "")
         {
-            string exchangeName = exchangePrefix + settings.RabbitMq.ExchangeEthereumSamurai;
-            RabbitMqSubscriptionSettings rabbitMqSettings = new RabbitMqSubscriptionSettings
-            {
-                ConnectionString = $"amqp://{settings.RabbitMq.Username}:{settings.RabbitMq.Password}@{settings.RabbitMq.ExternalHost}:{settings.RabbitMq.Port}",
-                ExchangeName = exchangeName
-            };
+            //string exchangeName = exchangePrefix + settings.RabbitMq.ExchangeEthereumSamurai;
+            //RabbitMqSubscriptionSettings rabbitMqSettings = new RabbitMqSubscriptionSettings
+            //{
+            //    ConnectionString = $"amqp://{settings.RabbitMq.Username}:{settings.RabbitMq.Password}@{settings.RabbitMq.ExternalHost}:{settings.RabbitMq.Port}",
+            //    ExchangeName = exchangeName
+            //};
 
-            RabbitMqPublisher<string> publisher = new RabbitMqPublisher<string>(rabbitMqSettings)
-                .SetSerializer(new BytesSerializer())
-                .SetPublishStrategy(new PublishStrategy(settings.RabbitMq.RoutingKey))
-                .SetLogger(logger)
-                .Start();
+            //RabbitMqPublisher<string> publisher = new RabbitMqPublisher<string>(rabbitMqSettings)
+            //    .SetSerializer(new BytesSerializer())
+            //    .SetPublishStrategy(new PublishStrategy(settings.RabbitMq.RoutingKey))
+            //    .SetLogger(logger)
+            //    .Start();
 
-            services.AddSingleton<IMessageProducer<string>>(publisher);
+            //services.AddSingleton<IMessageProducer<string>>(publisher);
+            services.AddSingleton<IChannelFactory, ChannelFactory>();
             services.AddSingleton<IRabbitQueuePublisher, RabbitQueuePublisher>();
+            services.AddSingleton<IErc20ContractIndexingQueue, Erc20IndexingQueue>();
         }
     }
 

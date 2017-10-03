@@ -9,17 +9,32 @@ namespace EthereumSamurai.MongoDb.Entities
     {
         [BsonId]
         public string Address { get; set; }
-        [BsonElement]
-        public string TokenName { get; set; }
-        [BsonElement]
-        public string DeployerAddress { get; set; }
-        [BsonElement]
-        public ulong DeploymentBlockNumber { get; set; }
-        [BsonElement]
-        public string DeploymentBlockHash { get; set; }
-        [BsonElement]
-        public string DeploymentTranactionHash { get; set; }
+
         [BsonElement]
         public uint BlockTimestamp { get; set; }
+
+        [BsonElement]
+        public string DeployerAddress { get; set; }
+
+        [BsonElement]
+        public ulong DeploymentBlockNumber { get; set; }
+
+        [BsonElement]
+        public string DeploymentBlockHash { get; set; }
+
+        [BsonElement]
+        public string DeploymentTranactionHash { get; set; }
+
+        [BsonElement]
+        public uint? TokenDecimals { get; set; }
+
+        [BsonElement]
+        public string TokenName { get; set; }
+
+        [BsonElement]
+        public string TokenSymbol { get; set; }
+
+        [BsonElement]
+        public string TokenTotalSupply { get; set; }
     }
 }
