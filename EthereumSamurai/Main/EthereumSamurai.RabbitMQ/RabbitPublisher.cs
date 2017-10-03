@@ -5,27 +5,64 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using EthereumSamurai.Models.Messages;
+using RabbitMQ.Client;
+using EthereumSamurai.Core.Settings;
+using RabbitMQ.Client.Exceptions;
 
 namespace EthereumSamurai.RabbitMQ
 {
     public class RabbitQueuePublisher : IRabbitQueuePublisher
     {
-        private IMessageProducer<string> _publisher;
+        private readonly IBaseSettings _settings;
+        private readonly IModel _channel;
 
-        public RabbitQueuePublisher(IMessageProducer<string> publisher)
+        public RabbitQueuePublisher(IChannelFactory channelFactory, IBaseSettings settings)
         {
-            _publisher = publisher;
-        }
-
-        public async Task PublshEventAsync(string rabbitEvent)
-        {
-            await _publisher.ProduceAsync(rabbitEvent);
+            _settings = settings;
+            _channel = channelFactory.GetChannel();
+            _channel.ExchangeDeclare(exchange: _settings.RabbitMq.ExchangeEthereumSamuraiErcContracts, type: "fanout", durable: true);
+            _channel.ExchangeDeclare(exchange: _settings.RabbitMq.ExchangeEthereumSamuraiBlocks, type: "fanout", durable: true);
+            _channel.ExchangeDeclare(exchange: _settings.RabbitMq.ExchangeEthereumSamuraiErcTransfer, type: "fanout", durable: true);
         }
 
         public async Task PublshEventAsync(RabbitIndexingMessage rabbitEvent)
         {
-            string message = Newtonsoft.Json.JsonConvert.SerializeObject(rabbitEvent);
-            await _publisher.ProduceAsync(message);
+            var notificationJson = Newtonsoft.Json.JsonConvert.SerializeObject(rabbitEvent);
+            var notification = Encoding.UTF8.GetBytes(notificationJson);
+
+            try
+            {
+                string exchangeForEvent;
+                
+                switch (rabbitEvent.IndexingMessageType)
+                {
+                    case IndexingMessageType.Block:
+                        exchangeForEvent = _settings.RabbitMq.ExchangeEthereumSamuraiBlocks;
+                        break;
+
+                    case IndexingMessageType.ErcBalances:
+                        exchangeForEvent = _settings.RabbitMq.ExchangeEthereumSamuraiErcTransfer;
+                        break;
+
+                    case IndexingMessageType.ErcContract:
+                        exchangeForEvent = _settings.RabbitMq.ExchangeEthereumSamuraiErcContracts;
+                        break;
+
+                    default:
+                        throw new NotSupportedException("Such Event is not supported yet");
+                }
+                _channel.BasicPublish
+                (
+                    exchange: exchangeForEvent,
+                    routingKey: _settings.RabbitMq.RoutingKey,
+                    body: notification
+                );
+            }
+            catch (AlreadyClosedException e) when (e.ShutdownReason?.ReplyCode == 404)
+            {
+                //TODO:
+                throw;
+            }
         }
     }
 }

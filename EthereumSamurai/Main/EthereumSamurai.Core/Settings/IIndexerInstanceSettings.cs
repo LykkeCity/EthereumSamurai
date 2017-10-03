@@ -17,5 +17,9 @@
         int ThreadAmount { get; set; }
 
         bool SendEventsToRabbit { get; set; }
+
+        bool IndexContracts { get; set; }
+
+        int ContractsIndexerThreadAmount { get; set; }
     }
 }

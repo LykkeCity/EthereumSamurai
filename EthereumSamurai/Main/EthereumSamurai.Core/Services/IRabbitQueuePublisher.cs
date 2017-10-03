@@ -8,7 +8,6 @@ namespace EthereumSamurai.Core.Services
 {
     public interface IRabbitQueuePublisher
     {
-        Task PublshEventAsync(string rabbitEvent);
         Task PublshEventAsync(RabbitIndexingMessage rabbitEvent);
     }
 }

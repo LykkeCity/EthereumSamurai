@@ -49,7 +49,7 @@ namespace EthereumSamurai.Indexer
                 //Register jobs and settings
                 DependencyConfig.RegisterServices(collection, indexerSettings);
                 Services = collection.BuildServiceProvider();
-                RegisterRabbitQueueEx.RegisterRabbitQueue(collection, Services.GetService<IBaseSettings>(), Services.GetService<ILog>());
+                RegisterRabbitQueueEx.RegisterRabbitQueues(collection, Services.GetService<IBaseSettings>(), Services.GetService<ILog>());
                 Services = collection.BuildServiceProvider();
                 Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
                 _logger = Services.GetService<ILog>();

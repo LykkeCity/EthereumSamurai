@@ -16,7 +16,9 @@
         public int Port { get; set; }
         public string Username { get; set; }
         public string Password { get; set; }
-        public string ExchangeEthereumSamurai { get; set; }
+        public string ExchangeEthereumSamuraiBlocks { get; set; }
+        public string ExchangeEthereumSamuraiErcTransfer { get; set; }
+        public string ExchangeEthereumSamuraiErcContracts { get; set; }
         public string RoutingKey { get; set; }
     }
 }

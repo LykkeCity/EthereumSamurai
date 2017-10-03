@@ -4,8 +4,6 @@ using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using EthereumSamurai.Core.Services;
-using EthereumSamurai.Core.Services.Erc20;
-using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models;
 using EthereumSamurai.Models.Blockchain;
 using EthereumSamurai.Models.DebugModels;
@@ -19,17 +17,15 @@ namespace EthereumSamurai.Services
 {
     public class RpcBlockReader : IRpcBlockReader
     {
-        private readonly IBaseSettings _bitcoinIndexerSettings;
         private readonly IWeb3 _client;
         private readonly IDebug _debug;
-        private readonly IErc20Detector _erc20Detector;
 
-        public RpcBlockReader(IBaseSettings bitcoinIndexerSettings, IWeb3 web3, IErc20Detector erc20Detector, IDebug debug)
+        public RpcBlockReader(
+            IWeb3 web3,
+            IDebug debug)
         {
-            _bitcoinIndexerSettings = bitcoinIndexerSettings;
             _client = web3;
-            _debug = debug;
-            _erc20Detector = erc20Detector;
+            _debug  = debug;
         }
 
         //just the tip
@@ -42,41 +38,42 @@ namespace EthereumSamurai.Services
 
         public async Task<BlockContent> ReadBlockAsync(BigInteger blockHeight)
         {
-            var block = await _client.Eth.Blocks.GetBlockWithTransactionsByNumber
+            var block = await _client.Eth.Blocks
+                .GetBlockWithTransactionsByNumber
                 .SendRequestAsync(new HexBigInteger(blockHeight));
 
             var logs = new EthGetLogs(_client.Client);
 
             #region Block
 
-            var blockHash = block.BlockHash;
+            var blockHash  = block.BlockHash;
             var blockModel = new BlockModel
             {
                 TransactionsCount = block.Transactions.Length,
-                BlockHash = blockHash,
-                Difficulty = block.Difficulty,
-                ExtraData = block.ExtraData,
-                GasLimit = block.GasLimit,
-                GasUsed = block.GasUsed,
-                LogsBloom = block.LogsBloom,
-                Miner = block.Miner,
-                Nonce = block.Nonce,
-                Number = block.Number,
-                ParentHash = block.ParentHash,
-                ReceiptsRoot = block.ReceiptsRoot,
-                Sha3Uncles = block.Sha3Uncles,
-                Size = block.Size,
-                StateRoot = block.StateRoot,
-                Timestamp = block.Timestamp,
-                TotalDifficulty = block.TotalDifficulty,
-                TransactionsRoot = block.TransactionsRoot
+                BlockHash         = blockHash,
+                Difficulty        = block.Difficulty,
+                ExtraData         = block.ExtraData,
+                GasLimit          = block.GasLimit,
+                GasUsed           = block.GasUsed,
+                LogsBloom         = block.LogsBloom,
+                Miner             = block.Miner,
+                Nonce             = block.Nonce,
+                Number            = block.Number,
+                ParentHash        = block.ParentHash,
+                ReceiptsRoot      = block.ReceiptsRoot,
+                Sha3Uncles        = block.Sha3Uncles,
+                Size              = block.Size,
+                StateRoot         = block.StateRoot,
+                Timestamp         = block.Timestamp,
+                TotalDifficulty   = block.TotalDifficulty,
+                TransactionsRoot  = block.TransactionsRoot
             };
 
             #endregion
 
             #region Transactions
 
-            var internalMessages = new List<InternalMessageModel>();
+            var internalMessages  = new List<InternalMessageModel>();
             var blockTransactions = new Dictionary<string, TransactionModel>(block.Transactions.Length);
 
             foreach (var transaction in block.Transactions)
@@ -105,15 +102,15 @@ namespace EthereumSamurai.Services
                         (
                             traceResult.Transfers.Select(x => new InternalMessageModel
                             {
-                                BlockNumber = block.Number.Value,
-                                Depth = x.Depth,
-                                FromAddress = x.FromAddress,
-                                MessageIndex = x.MessageIndex,
-                                ToAddress = x.ToAddress,
+                                BlockNumber     = block.Number.Value,
+                                Depth           = x.Depth,
+                                FromAddress     = x.FromAddress,
+                                MessageIndex    = x.MessageIndex,
+                                ToAddress       = x.ToAddress,
                                 TransactionHash = x.TransactionHash,
-                                Value = x.Value,
-                                Type = (InternalMessageModelType)x.Type,
-                                BlockTimestamp = blockModel.Timestamp
+                                Value           = x.Value,
+                                Type            = (InternalMessageModelType)x.Type,
+                                BlockTimestamp  = blockModel.Timestamp
                             })
                         );
                     }
@@ -126,21 +123,21 @@ namespace EthereumSamurai.Services
 
                 var transactionModel = new TransactionModel
                 {
-                    BlockTimestamp = block.Timestamp,
-                    BlockHash = transaction.BlockHash,
-                    BlockNumber = transaction.BlockNumber,
-                    From = transaction.From,
-                    Gas = transaction.Gas,
-                    GasPrice = transaction.GasPrice,
-                    Input = transaction.Input,
-                    Nonce = transaction.Nonce,
-                    To = transaction.To,
-                    TransactionHash = transaction.TransactionHash,
+                    BlockTimestamp   = block.Timestamp,
+                    BlockHash        = transaction.BlockHash,
+                    BlockNumber      = transaction.BlockNumber,
+                    From             = transaction.From,
+                    Gas              = transaction.Gas,
+                    GasPrice         = transaction.GasPrice,
+                    Input            = transaction.Input,
+                    Nonce            = transaction.Nonce,
+                    To               = transaction.To,
+                    TransactionHash  = transaction.TransactionHash,
                     TransactionIndex = transaction.TransactionIndex,
-                    Value = transaction.Value,
-                    GasUsed = transactionReciept.GasUsed.Value,
-                    ContractAddress = transactionReciept.ContractAddress,
-                    HasError = traceResult?.HasError ?? false
+                    Value            = transaction.Value,
+                    GasUsed          = transactionReciept.GasUsed.Value,
+                    ContractAddress  = transactionReciept.ContractAddress,
+                    HasError         = traceResult?.HasError ?? false
                 };
 
                 blockTransactions[transaction.TransactionHash] = transactionModel;
@@ -152,48 +149,36 @@ namespace EthereumSamurai.Services
 
             #region Contracts
 
-            var contractInfoMap = new Dictionary<string, Tuple<string, string>>();
-            var deployedContracts = blockTransactions
-                .Where(x => x.Value.ContractAddress != null)
-                .Select(x =>
-                    {
-                        var transation = x.Value;
-                        var contractAddress = transation.ContractAddress;
+            var deployedContracts = new List<DeployedContractModel>();
 
-                        contractInfoMap[contractAddress] = Tuple.Create(transation.TransactionHash, transation.From);
-
-                        return contractAddress;
-                    })
-                .Concat(internalMessages.Where(x => x.Type == InternalMessageModelType.CREATION).Select(x =>
-                    {
-                        var contractAddress = x.ToAddress;
-
-                        contractInfoMap[contractAddress] = Tuple.Create(x.TransactionHash, x.FromAddress);
-
-                        return contractAddress;
-                    })).Distinct();
-
-            var erc20Contracts = new List<Erc20ContractModel>();
-
-            foreach (var contractAddress in deployedContracts)
+            foreach (var transaction in blockTransactions.Select(x => x.Value).Where(x => x.ContractAddress != null))
             {
-                var isCompatible = await _erc20Detector.IsContractErc20Compatible(contractAddress);
-                if (isCompatible)
+                deployedContracts.Add(new DeployedContractModel
                 {
-                    var tuple = contractInfoMap[contractAddress];
-
-                    erc20Contracts.Add(new Erc20ContractModel
-                    {
-                        Address = contractAddress,
-                        BlockHash = blockHash,
-                        BlockNumber = block.Number.Value,
-                        BlockTimestamp = block.Timestamp.Value,
-                        DeployerAddress = tuple.Item2,
-                        TokenName = "",
-                        TransactionHash = tuple.Item1
-                    });
-                }
+                    Address         = transaction.ContractAddress,
+                    BlockHash       = blockHash,
+                    BlockNumber     = block.Number.Value.ToString(),
+                    BlockTimestamp  = block.Timestamp.Value.ToString(),
+                    DeployerAddress = transaction.From,
+                    TransactionHash = transaction.TransactionHash
+                });
             }
+
+            foreach (var message in internalMessages.Where(x => x.Type == InternalMessageModelType.CREATION))
+            {
+                deployedContracts.Add(new DeployedContractModel
+                {
+                    Address         = message.ToAddress,
+                    BlockHash       = blockHash,
+                    BlockNumber     = block.Number.Value.ToString(),
+                    BlockTimestamp  = block.Timestamp.Value.ToString(),
+                    DeployerAddress = message.FromAddress,
+                    TransactionHash = message.TransactionHash
+                });
+            }
+
+            // Select contracts with distinct addresses
+            deployedContracts = deployedContracts.GroupBy(x => x.Address).Select(x => x.First()).ToList();
 
             #endregion
 
@@ -241,55 +226,56 @@ namespace EthereumSamurai.Services
 
             return new BlockContent
             {
-                AddressHistory = addressHistory,
-                BlockModel = blockModel,
-                CreatedErc20Contracts = erc20Contracts,
-                InternalMessages = internalMessages,
-                Transactions = blockTransactions?.Select(x => x.Value).ToList(),
-                Transfers = transfers
+                AddressHistory    = addressHistory,
+                BlockModel        = blockModel,
+                DeployedContracts = deployedContracts,
+                InternalMessages  = internalMessages,
+                Transactions      = blockTransactions?.Select(x => x.Value).ToList(),
+                Transfers         = transfers
             };
         }
 
-        private static IEnumerable<AddressHistoryModel> ExtractAddressHistory(List<InternalMessageModel> internalMessages,
+        private static IEnumerable<AddressHistoryModel> ExtractAddressHistory(
+            List<InternalMessageModel> internalMessages,
             IEnumerable<TransactionModel> blockTransactions)
         {
             var trHashIndexDictionary = new Dictionary<string, int>();
             var history = blockTransactions.Select(transaction =>
+            {
+                var index  = (int)transaction.TransactionIndex;
+                var trHash = transaction.TransactionHash;
+
+                trHashIndexDictionary[trHash] = index;
+
+                return new AddressHistoryModel
                 {
-                    var index = (int)transaction.TransactionIndex;
-                    var trHash = transaction.TransactionHash;
-
-                    trHashIndexDictionary[trHash] = index;
-
-                    return new AddressHistoryModel
-                    {
-                        MessageIndex = -1,
-                        TransactionIndex = (int)transaction.TransactionIndex,
-                        BlockNumber = (ulong)transaction.BlockNumber,
-                        BlockTimestamp = (uint)transaction.BlockTimestamp,
-                        From = transaction.From,
-                        HasError = transaction.HasError,
-                        To = transaction.To,
-                        TransactionHash = transaction.TransactionHash,
-                        Value = transaction.Value,
-                        GasUsed = transaction.GasUsed,
-                        GasPrice = transaction.GasPrice
-                    };
-                });
+                    MessageIndex     = -1,
+                    TransactionIndex = (int)transaction.TransactionIndex,
+                    BlockNumber      = (ulong)transaction.BlockNumber,
+                    BlockTimestamp   = (uint)transaction.BlockTimestamp,
+                    From             = transaction.From,
+                    HasError         = transaction.HasError,
+                    To               = transaction.To,
+                    TransactionHash  = transaction.TransactionHash,
+                    Value            = transaction.Value,
+                    GasUsed          = transaction.GasUsed,
+                    GasPrice         = transaction.GasPrice
+                };
+            });
 
             history = history.Concat(internalMessages.Select(message => new AddressHistoryModel
             {
-                MessageIndex = message.MessageIndex,
+                MessageIndex     = message.MessageIndex,
                 TransactionIndex = trHashIndexDictionary[message.TransactionHash],
-                TransactionHash = message.TransactionHash,
-                To = message.ToAddress,
-                HasError = false,
-                From = message.FromAddress,
-                BlockNumber = (ulong)message.BlockNumber,
-                BlockTimestamp = (uint)message.BlockTimestamp,
-                Value = message.Value,
-                GasPrice = 0,
-                GasUsed = 0
+                TransactionHash  = message.TransactionHash,
+                To               = message.ToAddress,
+                HasError         = false,
+                From             = message.FromAddress,
+                BlockNumber      = (ulong)message.BlockNumber,
+                BlockTimestamp   = (uint)message.BlockTimestamp,
+                Value            = message.Value,
+                GasPrice         = 0,
+                GasUsed          = 0
             }));
 
             return history;
