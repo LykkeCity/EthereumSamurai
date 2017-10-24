@@ -29,7 +29,7 @@ namespace EthereumSamurai.Controllers
 
         [Route("txHash/{transactionHash}")]
         [HttpGet]
-        [ProducesResponseType(typeof(TransactionResponse), 200)]
+        [ProducesResponseType(typeof(TransactionFullInfoResponse), 200)]
         [ProducesResponseType(typeof(ApiException), 400)]
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress([FromRoute] string transactionHash)
