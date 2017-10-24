@@ -1,4 +1,6 @@
-﻿using System.Runtime.Serialization;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
 
 namespace EthereumSamurai.Responses
 {
@@ -49,5 +51,15 @@ namespace EthereumSamurai.Responses
 
         [DataMember(Name = "value")]
         public string Value { get; set; }
+    }
+
+    [DataContract]
+    public class TransactionFullInfoResponse
+    {
+        [DataMember]
+        public TransactionResponse Transaction { get; set; }
+
+        [DataMember]
+        public IEnumerable<Erc20TransferHistoryResponse> Erc20Transfers { get; set; }
     }
 }

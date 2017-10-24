@@ -9,6 +9,8 @@ namespace EthereumSamurai.Core.Services
     {
         Task<TransactionModel> GetAsync(string transactionHash);
 
+        Task<TransactionFullInfoModel> GetFullInfoAsync(string transactionHash);
+
         Task<IEnumerable<TransactionModel>> GetAsync(TransactionQuery transactionQuery);
 
         Task<IEnumerable<TransactionModel>> GetForBlockHashAsync(string blockHash);
