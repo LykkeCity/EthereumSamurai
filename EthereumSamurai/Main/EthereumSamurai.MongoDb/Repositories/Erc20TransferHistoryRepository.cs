@@ -67,6 +67,11 @@ namespace EthereumSamurai.MongoDb.Repositories
             var filterBuilder = Builders<Erc20TransferHistoryEntity>.Filter;
             var filter        = filterBuilder.Empty;
 
+            if (!string.IsNullOrEmpty(query.TransactionHash))
+            {
+                filter &= filterBuilder.Eq(x => x.TransactionHash, query.TransactionHash);
+            }
+
             if (query.BlockNumber.HasValue)
             {
                 filter &= filterBuilder.Eq(x => x.BlockNumber, query.BlockNumber.Value);

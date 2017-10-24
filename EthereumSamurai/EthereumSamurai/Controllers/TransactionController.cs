@@ -24,7 +24,7 @@ namespace EthereumSamurai.Controllers
             IMapper mapper)
         {
             _transactionService = transactionService;
-            _mapper             = mapper;
+            _mapper = mapper;
         }
 
         [Route("txHash/{transactionHash}")]
@@ -34,8 +34,13 @@ namespace EthereumSamurai.Controllers
         [ProducesResponseType(typeof(ApiException), 500)]
         public async Task<IActionResult> GetForAddress([FromRoute] string transactionHash)
         {
-            var transaction = await _transactionService.GetAsync(transactionHash);
-            var trResponse = _mapper.Map<TransactionResponse>(transaction);
+            var transaction = await _transactionService.GetFullInfoAsync(transactionHash);
+
+            var trResponse = new TransactionFullInfoResponse()
+            {
+                Erc20Transfers = transaction?.Erc20Transfers.Select(x => _mapper.Map<Erc20TransferHistoryResponse>(x)),
+                Transaction = _mapper.Map<TransactionResponse>(transaction.TransactionModel)
+            };
 
             return new JsonResult(trResponse);
         }
@@ -51,9 +56,9 @@ namespace EthereumSamurai.Controllers
             var transactionQuery = new TransactionQuery
             {
                 FromAddress = address,
-                ToAddress   = address,
-                Start       = request.Start,
-                Count       = request.Count
+                ToAddress = address,
+                Start = request.Start,
+                Count = request.Count
             };
 
             var transactions = (await _transactionService.GetAsync(transactionQuery)).ToList();

@@ -23,4 +23,11 @@ namespace EthereumSamurai.Models.Blockchain
         public string ContractAddress { get; set; }
         public bool HasError { get; set; }
     }
+
+    public class TransactionFullInfoModel
+    {
+        public TransactionModel TransactionModel { get; set; }
+
+        public IEnumerable<Erc20TransferHistoryModel> Erc20Transfers { get; set; }
+    }
 }
