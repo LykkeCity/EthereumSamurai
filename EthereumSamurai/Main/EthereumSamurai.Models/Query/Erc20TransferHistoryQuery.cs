@@ -13,5 +13,6 @@ namespace EthereumSamurai.Models.Query
         public int? Count { get; set; }
 
         public int? Start { get; set; }
+        public string TransactionHash { get; set; }
     }
 }
