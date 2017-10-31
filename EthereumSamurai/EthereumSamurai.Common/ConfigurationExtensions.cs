@@ -43,12 +43,21 @@ namespace EthereumSamurai.Common
         {
             var connectionString = configuration.GetConnectionString("ConnectionString");
 
-            if (string.IsNullOrEmpty(connectionString))
+            SettingsWrapper settings;
+            if (!string.IsNullOrEmpty(connectionString))
             {
-                throw new Exception("Please, provide connection string");
+                settings = GeneralSettingsReader.ReadGeneralSettings<SettingsWrapper>(connectionString);
             }
-            
-            var settings = GeneralSettingsReader.ReadGeneralSettings<SettingsWrapper>(connectionString);
+            else
+            {
+                IConfigurationSection indexerSettingsSection = configuration.GetSection("SettingsWrapper");
+                settings = indexerSettingsSection.Get<SettingsWrapper>();
+            }
+
+            if (settings == null)
+            {
+                throw new Exception("Please, provide connection string or env settings");
+            }
 
             collection.AddSingleton<IBaseSettings>(settings.EthereumIndexer);
 
