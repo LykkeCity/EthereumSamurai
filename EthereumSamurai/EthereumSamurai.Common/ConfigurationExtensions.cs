@@ -58,7 +58,7 @@ namespace EthereumSamurai.Common
             {
                 throw new Exception("Please, provide connection string or env settings");
             }
-
+            
             collection.AddSingleton<IBaseSettings>(settings.EthereumIndexer);
 
             return collection;
