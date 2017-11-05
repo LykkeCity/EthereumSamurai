@@ -43,15 +43,21 @@ namespace EthereumSamurai.Indexer
                 collection.AddSingleton(sp => mapper.CreateMapper());
 
                 #endregion
+                
                 IConfigurationSection indexerSettingsSection = configuration.GetSection("IndexerInstanceSettings");
                 IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
                 collection.ConfigureServices(configuration);
                 //Register jobs and settings
                 DependencyConfig.RegisterServices(collection, indexerSettings);
                 Services = collection.BuildServiceProvider();
-                RegisterRabbitQueueEx.RegisterRabbitQueues(collection, Services.GetService<IBaseSettings>(), Services.GetService<ILog>());
+
+                var baseSettings = Services.GetService<IBaseSettings>();
+                Console.WriteLine($"Geth node configured at {baseSettings.EthereumRpcUrl}");
+
+                RegisterRabbitQueueEx.RegisterRabbitQueues(collection, baseSettings, Services.GetService<ILog>());
                 Services = collection.BuildServiceProvider();
-                Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}-----------");
+                
+                Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} -----------");
                 _logger = Services.GetService<ILog>();
                 RunJobs();
             }
