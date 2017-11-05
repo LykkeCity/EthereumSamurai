@@ -14,6 +14,7 @@ using EthereumSamurai.Mappers;
 using EthereumSamurai.Filters;
 using EthereumSamurai.Core.Services;
 using Common.Log;
+using EthereumSamurai.Core.Settings;
 
 namespace EthereumSamurai
 {
@@ -63,6 +64,8 @@ namespace EthereumSamurai
                     Title = "EthereumSamurai.Api"
                 });
             });
+
+            Console.WriteLine($"Geth node configured at {provider.GetService<IBaseSettings>().EthereumRpcUrl}");
 
             return services.BuildServiceProvider();
         }
