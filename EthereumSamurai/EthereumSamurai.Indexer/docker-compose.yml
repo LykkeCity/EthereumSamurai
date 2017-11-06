@@ -13,3 +13,5 @@ services:
      - IndexerInstanceSettings__IndexBalances=${IndexBalances}
      - IndexerInstanceSettings__IndexBlocks=${IndexBlocks}
      - IndexerInstanceSettings__SendEventsToRabbit=${SendEventsToRabbit}
+     - IndexerInstanceSettings__ContractsIndexerThreadAmount=${ContractsIndexerThreadAmount}
+     - IndexerInstanceSettings__IndexContracts=${IndexContracts}
