@@ -6,15 +6,14 @@ using EthereumSamurai.Core.Services;
 using EthereumSamurai.Core.Services.Erc20;
 using EthereumSamurai.Models.Blockchain;
 using Nethereum.Contracts;
-using EthereumSamurai.Core.Settings;
 
 namespace EthereumSamurai.Services
 {
     public class Erc20ContractIndexingService : IErc20ContractIndexingService
     {
         private const string MetadataAbi = @"[{""constant"":true,""inputs"":[],""name"":""name"",""outputs"":[{""name"":"""",""type"":""string""}],""payable"":false,""type"":""function""},{""constant"":true,""inputs"":[],""name"":""totalSupply"",""outputs"":[{""name"":""totalSupply"",""type"":""uint256""}],""payable"":false,""type"":""function""},{""constant"":true,""inputs"":[],""name"":""decimals"",""outputs"":[{""name"":"""",""type"":""uint8""}],""payable"":false,""type"":""function""},{""constant"":true,""inputs"":[],""name"":""symbol"",""outputs"":[{""name"":"""",""type"":""string""}],""payable"":false,""type"":""function""}]";
-        private readonly IBaseSettings _settings;
-        private readonly IIndexingRabbitNotifier _rabbitQueuePublisher;
+        
+        private readonly IIndexingRabbitNotifier     _rabbitQueuePublisher;
         private readonly IErc20ContractRepository    _erc20ContractRepository;
         private readonly IErc20Detector              _erc20Detector;
         private readonly IErc20ContractIndexingQueue _indexingQueue;
@@ -27,10 +26,8 @@ namespace EthereumSamurai.Services
             IErc20ContractIndexingQueue indexingQueue,
             ITransactionRepository transactionRepository,
             IWeb3 web3,
-            IIndexingRabbitNotifier rabbitQueuePublisher,
-            IBaseSettings settings)
+            IIndexingRabbitNotifier rabbitQueuePublisher)
         {
-            _settings = settings;
             _rabbitQueuePublisher    = rabbitQueuePublisher;
             _erc20ContractRepository = erc20ContractRepository;
             _erc20Detector           = erc20Detector;
@@ -71,26 +68,38 @@ namespace EthereumSamurai.Services
                     TransactionHash = deployedContract.TransactionHash
                 };
 
-                if (TryCallFunction(ethereumContract, "name", out string name))
-                {
-                    erc20Contract.TokenName = name;
-                }
-
-                if (TryCallFunction(ethereumContract, "symbol", out string symbol))
-                {
-                    erc20Contract.TokenSymbol = symbol;
-                }
-
-                if (TryCallFunction(ethereumContract, "decimals", out uint decimals))
-                {
-                    erc20Contract.TokenDecimals = decimals;
-                }
-
-                if (TryCallFunction(ethereumContract, "totalSupply", out BigInteger totalSupply))
-                {
-                    erc20Contract.TokenTotalSupply = totalSupply;
-                }
-
+                await Task.WhenAll
+                (
+                    Task.Run(() =>
+                    {
+                        if (TryCallFunction(ethereumContract, "name", out string name))
+                        {
+                            erc20Contract.TokenName = name;
+                        }
+                    }),
+                    Task.Run(() =>
+                    {
+                        if (TryCallFunction(ethereumContract, "symbol", out string symbol))
+                        {
+                            erc20Contract.TokenSymbol = symbol;
+                        }
+                    }),
+                    Task.Run(() =>
+                    {
+                        if (TryCallFunction(ethereumContract, "decimals", out uint decimals))
+                        {
+                            erc20Contract.TokenDecimals = decimals;
+                        }
+                    }),
+                    Task.Run(() =>
+                    {
+                        if (TryCallFunction(ethereumContract, "totalSupply", out BigInteger totalSupply))
+                        {
+                            erc20Contract.TokenTotalSupply = totalSupply;
+                        }
+                    })
+                );
+                
                 await _erc20ContractRepository.SaveAsync(erc20Contract);
 
                 await _rabbitQueuePublisher.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitContractIndexingMessage()
