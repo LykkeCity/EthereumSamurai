@@ -6,8 +6,14 @@ EthereumSamurai consists of two parts: API and Indexing job.
 API is EthereumSamurai project.
 Indexing job is EthereumSamurai.Indexer project.
 
+## Dependencies
+It depends on: 
+1) MongoDB where all data is stored.
+2) Ethereum go-client is a source of data from blockchain.
+3) RabbitMQ serves to notify external services about indexing events and to process erc20 contracts 
+
 ## Configuration
-Both project should recieve configuration via http request to configuration service(would be changed in the future).
+Both project can recieve configuration via http request to configuration service or via environment variables.
 Configuration Model is described by **IBaseSettings** interface.
 
 To configure indexing job you should pass additional configuration(see appsettings.json in EthereumSamurai.Indexer):
@@ -15,7 +21,8 @@ To configure indexing job you should pass additional configuration(see appsettin
     "IndexerId": "FirstIndexer",
     "ThreadAmount": 4,
     "StartBlock": 0,
-    "StopBlock": null
+    "StopBlock": null,
+    ...
   },
 
 If application exits before indexing is completed you can restart it and it would start indexing from the last synced point(points if ThreadAmount > 1).
@@ -23,6 +30,40 @@ If application exits before indexing is completed you can restart it and it woul
 - **ThreadAmount** - amount of threads for that particular indexer instance.
 - **StartBlock** - block from which indexing starts 
 - **StopBlock** - stop the indexing instance on the block with *BlockNumber == StopBlock*(Leave it null or skip in configuration)
+
+**Example from docker-compose.yml configuration file**
+services:
+
+ jobrunner:
+ 
+   environment:
+   
+     ConnectionStrings__ConnectionString: https://ethereum.samurai,settings.com
+     
+     IndexerInstanceSettings__BalancesStartBlock: '0'
+     
+     IndexerInstanceSettings__ContractsIndexerThreadAmount: '1'
+     
+     IndexerInstanceSettings__IndexBalances: 'true'
+     
+     IndexerInstanceSettings__IndexBlocks: 'true'
+     
+     IndexerInstanceSettings__IndexContracts: 'true'
+     
+     IndexerInstanceSettings__IndexerId: TestIndexer
+     
+     IndexerInstanceSettings__SendEventsToRabbit: 'true'
+     
+     IndexerInstanceSettings__StartBlock: '1'
+     
+     IndexerInstanceSettings__StopBlock: ''
+     
+     IndexerInstanceSettings__ThreadAmount: '1'
+     
+   image: lykkedev/lykke-ethereum-indexer-jobs:test
+   
+version: '2.0'
+
 
 ## Logic behind ThreadAmount
 Example: 
