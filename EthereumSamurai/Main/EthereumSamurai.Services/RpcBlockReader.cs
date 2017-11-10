@@ -81,45 +81,47 @@ namespace EthereumSamurai.Services
                 var transactionReciept =
                     await _client.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(transaction.TransactionHash);
 
-                TraceResultModel traceResult = null;
-                try
-                {
-                    traceResult = await _debug.TraceTransactionAsync
-                    (
-                        transaction.From,
-                        transaction.To,
-                        transactionReciept.ContractAddress,
-                        transaction.Value.Value,
-                        transaction.TransactionHash,
-                        false,
-                        true,
-                        false
-                    );
+                #region Disabled
+                //TraceResultModel traceResult = null;
+                //try
+                //{
+                //    traceResult = await _debug.TraceTransactionAsync
+                //    (
+                //        transaction.From,
+                //        transaction.To,
+                //        transactionReciept.ContractAddress,
+                //        transaction.Value.Value,
+                //        transaction.TransactionHash,
+                //        false,
+                //        true,
+                //        false
+                //    );
 
-                    if (traceResult != null && !traceResult.HasError && traceResult.Transfers != null)
-                    {
-                        internalMessages.AddRange
-                        (
-                            traceResult.Transfers.Select(x => new InternalMessageModel
-                            {
-                                BlockNumber     = block.Number.Value,
-                                Depth           = x.Depth,
-                                FromAddress     = x.FromAddress,
-                                MessageIndex    = x.MessageIndex,
-                                ToAddress       = x.ToAddress,
-                                TransactionHash = x.TransactionHash,
-                                Value           = x.Value,
-                                Type            = (InternalMessageModelType)x.Type,
-                                BlockTimestamp  = blockModel.Timestamp
-                            })
-                        );
-                    }
+                //    if (traceResult != null && !traceResult.HasError && traceResult.Transfers != null)
+                //    {
+                //        internalMessages.AddRange
+                //        (
+                //            traceResult.Transfers.Select(x => new InternalMessageModel
+                //            {
+                //                BlockNumber     = block.Number.Value,
+                //                Depth           = x.Depth,
+                //                FromAddress     = x.FromAddress,
+                //                MessageIndex    = x.MessageIndex,
+                //                ToAddress       = x.ToAddress,
+                //                TransactionHash = x.TransactionHash,
+                //                Value           = x.Value,
+                //                Type            = (InternalMessageModelType)x.Type,
+                //                BlockTimestamp  = blockModel.Timestamp
+                //            })
+                //        );
+                //    }
 
-                }
-                catch (Exception)
-                {
+                //}
+                //catch (Exception)
+                //{
 
-                }
+                //}
+                #endregion Disabled
 
                 var transactionModel = new TransactionModel
                 {
@@ -137,7 +139,7 @@ namespace EthereumSamurai.Services
                     Value            = transaction.Value,
                     GasUsed          = transactionReciept.GasUsed.Value,
                     ContractAddress  = transactionReciept.ContractAddress,
-                    HasError         = traceResult?.HasError ?? false
+                    HasError         = false //disabled:traceResult?.HasError ?? false
                 };
 
                 blockTransactions[transaction.TransactionHash] = transactionModel;
