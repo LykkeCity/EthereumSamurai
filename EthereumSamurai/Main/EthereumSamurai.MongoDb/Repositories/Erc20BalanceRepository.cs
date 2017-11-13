@@ -130,19 +130,19 @@ namespace EthereumSamurai.MongoDb.Repositories
                 .Select(SetBlockNumberToBalanceEntity)
                 .ToList();
 
-            foreach (var balanceEntity in balanceEntities)
+            await Task.WhenAll(balanceEntities.Select(async balanceEntity =>
             {
                 await _balanceCollection.ReplaceOneAsync
                 (
-                    x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress 
-                      && x.ContractAddress    == balanceEntity.ContractAddress,
+                    x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress
+                         && x.ContractAddress == balanceEntity.ContractAddress,
                     balanceEntity,
                     new UpdateOptions
                     {
                         IsUpsert = true
                     }
                 );
-            }
+            }));
 
             // Update balance history
             await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
