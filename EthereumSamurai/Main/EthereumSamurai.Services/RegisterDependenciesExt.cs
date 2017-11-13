@@ -40,7 +40,7 @@ namespace EthereumSamurai.Services
             {
                 var settings = provider.GetService<IBaseSettings>();
 
-                return new Web3(settings.EthereumRpcUrl);
+                return new Web3(settings.ParityRpcUrl);
             });
 
             collection.AddSingleton<DebugApiService>((provider) =>

@@ -20,23 +20,10 @@ using EthereumSamurai.Core.Settings;
 using System.Net.Http;
 using EthereumSamurai.Services.Models.Rpc;
 using System.IO;
+using System.Threading;
 
 namespace EthereumSamurai.Services
 {
-    /*
-     {"id":1,
-     "jsonrpc":"2.0",
-     "method":"debug_traceTransaction",
-     "params":["0x3685d6a6c2c6b27c846fc54b48886e14b3cfde6101973466359474fc27982395",
-     {
-     "disableStorage":true,
-     "disableMemory":true,
-     "disableStack":false,
-     "fullStorage":false
-     }]
-     }
-         */
-
     public class DebugDecorator : IDebug
     {
         private readonly DebugApiService _debugApiService;
@@ -46,70 +33,102 @@ namespace EthereumSamurai.Services
         public DebugDecorator(DebugApiService debugApiService, IBaseSettings settings)
         {
             _settings = settings;
-            _httpClient = new HttpClient();
+            var pipeline = new JsonApiTypeHandler()
+            {
+                InnerHandler = new HttpClientHandler()
+            };
+            _httpClient = new HttpClient(pipeline);
             _debugApiService = debugApiService;
         }
 
+        //ropsten transactions
+        //0x755babb47619dc781c3ad723946b41d12c8f8c01d677c8b5ae36630a0dd91f8b - with internal contract creation
+        //0x1f8d164fef4efb88160d55d59eaab311e0e61b47eaf7364b7dc3108aceb6aa30 - with 3 internal transfers
+        //0x0ddcd11d25e196d591959a98a39c45f138ab44f2006e347d668d09ca70dfdc69 - with error
         public async Task<TraceResultModel> TraceTransactionAsync(string fromAddress, string toAddress, string contractAddress, BigInteger value,
             string transactionHash, bool withMemory, bool withStack, bool withStorage)
         {
-             //Newtonsoft.Json.Linq.JObject jObject =
-             //   await _debugApiService.TraceTransaction.SendRequestAsync(transactionHash, new Nethereum.Geth.RPC.Debug.DTOs.TraceTransactionOptions()
-             //   {
-             //       DisableMemory = !withMemory,
-             //       DisableStack = !withStack,
-             //       DisableStorage = !withStorage
-             //   });
-
+            /*
+             {
+               "method": "trace_transaction",
+               "params": [
+                 "0x45699687953024dc33de48fad5cbbfd9c0b1e9e578e3452c9be33780fa5c5e0d"
+               ],
+               "id": 1,
+               "jsonrpc": "2.0"
+             }
+             */
             CustomRpcRequest request = new CustomRpcRequest()
             {
                 Id = "1",
-                Method = "debug_traceTransaction",
+                Method = "trace_transaction",//"debug_traceTransaction",
                 Params = new List<object>()
                 {
-                    transactionHash,
-                    new Nethereum.Geth.RPC.Debug.DTOs.TraceTransactionOptions()
-                    {
-                        DisableMemory = !withMemory,
-                        DisableStack = !withStack,
-                        DisableStorage = !withStorage
-                    }
+                    transactionHash
                 }
             };
+
             byte[] byteArray = Encoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(request));
             MemoryStream stream = new MemoryStream(byteArray);
-            HttpResponseMessage response = await _httpClient.PostAsync(_settings.EthereumRpcUrl, new StreamContent(stream));
+            HttpResponseMessage response = await _httpClient.PostAsync(_settings.ParityRpcUrl, new StreamContent(stream));
             var responseString = await response.Content.ReadAsStringAsync();
-            TransactionTraceResponse traceResponse = (TransactionTraceResponse)Newtonsoft.Json.JsonConvert.DeserializeObject(responseString, typeof(TransactionTraceResponse));
-            TransactionTrace trace = traceResponse.TransactionTrace;//jObject.ToObject<TransactionTrace>();//
-            if (trace == null)
-            {
-                return null;
-            }
-            TransactionTracer tracer = new TransactionTracer(fromAddress, transactionHash, toAddress, contractAddress, value);
+            ParityTransactionTraceResponse traceResponse = (ParityTransactionTraceResponse)Newtonsoft.Json.JsonConvert.DeserializeObject(responseString, typeof(ParityTransactionTraceResponse));
+            IEnumerable<TransferValueModel> transfers = traceResponse.TransactionTrace.Skip(1)
+                .Where(y => !(y.Action.Value == BigInteger.Zero &&
+                              ExtractMessageType(y) == TransferValueModelType.TRANSFER))
+                .Select((x, counter) =>
+                {
+                    return new TransferValueModel()
+                    {
+                        MessageIndex = counter,
+                        Depth = 0,
+                        FromAddress = x.Action.From,
+                        ToAddress = x.Action.To,
+                        TransactionHash = x.TransactionHash,
+                        Type = ExtractMessageType(x),
+                        Value = x.Action.Value,
+                    };
+                });
 
-            foreach (var log in trace.StructLogs)
-            {
-                await tracer.ProcessLog(log);
-            }
-
-            TraceResult result = tracer.BuildResult();
-
+            string errorMessage = traceResponse.TransactionTrace.FirstOrDefault()?.Error;
             return new TraceResultModel()
             {
-                HasError = result.HasError,
-                Transfers = result.Transfers?.Where(x => x.Type != TransferValueType.TRANSACTION)
-                .Select((x, counter) => new TransferValueModel()
-                {
-                    MessageIndex = counter,
-                    Depth = x.Depth,
-                    FromAddress = x.FromAddress,
-                    ToAddress = x.ToAddress,
-                    TransactionHash = x.TransactionHash,
-                    Type = (TransferValueModelType)x.Type,
-                    Value = x.Value,
-                })
+                HasError = !string.IsNullOrEmpty(errorMessage),
+                Transfers = transfers
             };
+        }
+
+        private TransferValueModelType ExtractMessageType(ParityTransactionTrace transaction)
+        {
+            switch (transaction.Action.CallType)
+            {
+                case "delegatecall":
+                case "call":
+                    return TransferValueModelType.TRANSFER;
+
+                default:
+                    break;
+            }
+
+            if (!string.IsNullOrEmpty(transaction.Result.Address) && transaction.Type == "create")
+            {
+                transaction.Action.To = string.IsNullOrEmpty(transaction.Action.To) ? 
+                    transaction.Result.Address : transaction.Action.To;
+                return TransferValueModelType.CREATION;
+            }
+
+            return TransferValueModelType.TRANSACTION;
+        }
+    }
+
+    internal class JsonApiTypeHandler : DelegatingHandler
+    {
+        protected async override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            request.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            //request.Headers.Add("Content-Type", "application/json");
+
+            return await base.SendAsync(request, cancellationToken);
         }
     }
 }

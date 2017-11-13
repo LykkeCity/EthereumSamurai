@@ -114,7 +114,7 @@ namespace EthereumSamurai.Indexer.Jobs
                     var blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
                     var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
 
-                    await _indexingService.IndexBlockAsync(blockContext);
+                    //await _indexingService.IndexBlockAsync(blockContext);
 
                     currentBlockNumber++;
 
@@ -149,7 +149,7 @@ namespace EthereumSamurai.Indexer.Jobs
                         transactionCount = blockContent.Transactions.Count;
                         iterationVector  = blockExists ? 1 : -1; //That is how we deal with forks
 
-                        await _indexingService.IndexBlockAsync(blockContext);
+                        //await _indexingService.IndexBlockAsync(blockContext);
 
                     }, 5, 100);
 
