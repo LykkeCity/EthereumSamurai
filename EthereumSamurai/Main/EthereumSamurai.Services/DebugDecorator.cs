@@ -73,27 +73,33 @@ namespace EthereumSamurai.Services
             HttpResponseMessage response = await _httpClient.PostAsync(_settings.ParityRpcUrl, new StreamContent(stream));
             var responseString = await response.Content.ReadAsStringAsync();
             ParityTransactionTraceResponse traceResponse = (ParityTransactionTraceResponse)Newtonsoft.Json.JsonConvert.DeserializeObject(responseString, typeof(ParityTransactionTraceResponse));
-            IEnumerable<TransferValueModel> transfers = traceResponse.TransactionTrace.Skip(1)
-                .Where(y => !(y.Action.Value == BigInteger.Zero &&
-                              ExtractMessageType(y) == TransferValueModelType.TRANSFER))
-                .Select((x, counter) =>
-                {
-                    return new TransferValueModel()
-                    {
-                        MessageIndex = counter,
-                        Depth = 0,
-                        FromAddress = x.Action.From,
-                        ToAddress = x.Action.To,
-                        TransactionHash = x.TransactionHash,
-                        Type = ExtractMessageType(x),
-                        Value = x.Action.Value,
-                    };
-                });
-
             string errorMessage = traceResponse.TransactionTrace.FirstOrDefault()?.Error;
+            IEnumerable<TransferValueModel> transfers = null;
+            bool hasError = !string.IsNullOrEmpty(errorMessage);
+
+            if (!hasError)
+            {
+                transfers = traceResponse.TransactionTrace.Skip(1)
+                   .Where(y => !(y.Action.Value == BigInteger.Zero &&
+                                 ExtractMessageType(y) == TransferValueModelType.TRANSFER))
+                   .Select((x, counter) =>
+                   {
+                       return new TransferValueModel()
+                       {
+                           MessageIndex = counter,
+                           Depth = 0,
+                           FromAddress = x.Action.From,
+                           ToAddress = x.Action.To,
+                           TransactionHash = x.TransactionHash,
+                           Type = ExtractMessageType(x),
+                           Value = x.Action.Value,
+                       };
+                   });
+            }
+
             return new TraceResultModel()
             {
-                HasError = !string.IsNullOrEmpty(errorMessage),
+                HasError = hasError,
                 Transfers = transfers
             };
         }
