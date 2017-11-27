@@ -149,7 +149,7 @@ namespace EthereumSamurai.Indexer.Jobs
                         transactionCount = blockContent.Transactions.Count;
                         iterationVector  = blockExists ? 1 : -1; //That is how we deal with forks
 
-                        //await _indexingService.IndexBlockAsync(blockContext);
+                        await _indexingService.IndexBlockAsync(blockContext);
 
                     }, 5, 100);
 
