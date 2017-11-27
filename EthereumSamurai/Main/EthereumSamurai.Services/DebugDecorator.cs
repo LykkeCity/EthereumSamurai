@@ -70,7 +70,7 @@ namespace EthereumSamurai.Services
 
             byte[] byteArray = Encoding.ASCII.GetBytes(Newtonsoft.Json.JsonConvert.SerializeObject(request));
             MemoryStream stream = new MemoryStream(byteArray);
-            HttpResponseMessage response = await _httpClient.PostAsync(_settings.ParityRpcUrl, new StreamContent(stream));
+            HttpResponseMessage response = await _httpClient.PostAsync(_settings.EthereumRpcUrl, new StreamContent(stream));
             var responseString = await response.Content.ReadAsStringAsync();
             ParityTransactionTraceResponse traceResponse = (ParityTransactionTraceResponse)Newtonsoft.Json.JsonConvert.DeserializeObject(responseString, typeof(ParityTransactionTraceResponse));
             string errorMessage = traceResponse.TransactionTrace.FirstOrDefault()?.Error;
