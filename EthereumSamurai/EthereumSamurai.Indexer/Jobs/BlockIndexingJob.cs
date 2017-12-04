@@ -114,7 +114,7 @@ namespace EthereumSamurai.Indexer.Jobs
                     var blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
                     var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
 
-                    await _indexingService.IndexBlockAsync(blockContext);
+                    //await _indexingService.IndexBlockAsync(blockContext);
 
                     currentBlockNumber++;
 
