@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.0" />
+    <PackageReference Include="Nethereum.Geth" Version="2.0.0-rc5" />
+    <PackageReference Include="Nethereum.StandardTokenEIP20" Version="2.0.0-rc5" />
+    <PackageReference Include="Nethereum.Web3" Version="2.0.0-rc5" />
+    <PackageReference Include="System.Net.Http" Version="4.3.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Core\Lykke.Service.EthereumSamurai.Core.csproj" />
+    <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Models\Lykke.Service.EthereumSamurai.Models.csproj" />
+  </ItemGroup>
+
+</Project>
