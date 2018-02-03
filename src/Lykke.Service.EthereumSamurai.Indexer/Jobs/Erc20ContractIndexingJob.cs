@@ -47,9 +47,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
                         await RetryPolicy.ExecuteAsync(async () =>
                         {
-
                             await _indexingService.IndexContractAsync(contract);
-
                         }, 5, 100);
 
                         await _logger.WriteInfoAsync

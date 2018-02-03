@@ -127,7 +127,7 @@ namespace Lykke.Job.EthereumSamurai.Settings
                         To = toBlock
                     };
 
-                    settings.Add(job);
+                    settings.Add(setting);
                 }
             }
 
