@@ -4,6 +4,7 @@ using Akka.DI.AutoFac;
 using Akka.DI.Core;
 using Autofac;
 using Lykke.Job.EthereumSamurai.Jobs;
+using Lykke.Service.EthereumSamurai.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -37,7 +38,7 @@ namespace Lykke.Job.EthereumSamurai
             var propsResolver = new AutoFacDependencyResolver(container, _actorSystem);
         }
 
-        public void Start()
+        public void Start(IEnumerable<IIndexingSettings> settings)
         {
             var props = _actorSystem.DI().Props<BlockIndexingActorDispatcher>();
 
