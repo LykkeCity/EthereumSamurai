@@ -5,6 +5,7 @@ using Lykke.Service.EthereumSamurai.Core.Services;
 using Common.Log;
 using Akka.Actor;
 using Messages = Lykke.Job.EthereumSamurai.Messages;
+using static Akka.Actor.Status;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
@@ -25,6 +26,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
             ReceiveAsync<Messages.Erc20BalanceIndexingActor.IndexBlockMessage>(async (message) =>
             {
+                var sender = Sender;
                 var blockNumber = message.BlockNumber;
                 await _indexingService.IndexBlockAsync(blockNumber, Version);
 
@@ -36,6 +38,8 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     $"Indexed balances of block {blockNumber}.",
                     DateTime.UtcNow
                 );
+
+                sender.Tell(new Success(true));
             });
         }
 
