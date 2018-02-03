@@ -1,6 +1,6 @@
 ﻿using Lykke.Service.EthereumSamurai.Core.Models;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public interface IBlockIndexingJobFactory
     {

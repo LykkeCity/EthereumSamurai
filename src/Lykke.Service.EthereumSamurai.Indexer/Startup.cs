@@ -4,21 +4,22 @@ using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using AzureStorage.Tables;
 using Common.Log;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
+using Lykke.Job.EthereumSamurai.Modules;
 using Lykke.Logs;
-using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Service.EthereumSamurai.Modules;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
+using Microsoft.ApplicationInsights.Extensibility;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Lykke.Service.EthereumSamurai
+namespace Lykke.Job.EthereumSamurai
 {
     public class Startup
     {
@@ -32,8 +33,8 @@ namespace Lykke.Service.EthereumSamurai
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
                 .AddEnvironmentVariables();
-            Configuration = builder.Build();
 
+            Configuration = builder.Build();
             Environment = env;
         }
 
@@ -58,8 +59,10 @@ namespace Lykke.Service.EthereumSamurai
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings.Nested(x => x.EthereumSamuraiService), Log));
+                builder.RegisterModule(new JobModule(appSettings, Log));
+
                 builder.Populate(services);
+
                 ApplicationContainer = builder.Build();
 
                 return new AutofacServiceProvider(ApplicationContainer);
@@ -81,7 +84,7 @@ namespace Lykke.Service.EthereumSamurai
                 }
 
                 app.UseLykkeForwardedHeaders();
-                app.UseLykkeMiddleware("EthereumSamurai", ex => new { Message = "Technical problem" });
+                app.UseLykkeMiddleware("EthereumSamurai", ex => new ErrorResponse {ErrorMessage = "Technical problem"});
 
                 app.UseMvc();
                 app.UseSwagger(c =>
@@ -110,11 +113,9 @@ namespace Lykke.Service.EthereumSamurai
         {
             try
             {
-                // NOTE: Service not yet recieve and process requests here
+                // NOTE: Job not yet recieve and process IsAlive requests here
 
-                await ApplicationContainer.Resolve<IStartupManager>().StartAsync();
-
-                await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Started");
+                await Log.WriteMonitorAsync("", Program.EnvInfo, "Started");
             }
             catch (Exception ex)
             {
@@ -127,9 +128,8 @@ namespace Lykke.Service.EthereumSamurai
         {
             try
             {
-                // NOTE: Service still can recieve and process requests here, so take care about it if you add logic here.
+                // NOTE: Job still can recieve and process IsAlive requests here, so take care about it if you add logic here.
 
-                await ApplicationContainer.Resolve<IShutdownManager>().StopAsync();
             }
             catch (Exception ex)
             {
@@ -145,13 +145,13 @@ namespace Lykke.Service.EthereumSamurai
         {
             try
             {
-                // NOTE: Service can't recieve and process requests here, so you can destroy all resources
-
+                // NOTE: Job can't recieve and process IsAlive requests here, so you can destroy all resources
+                
                 if (Log != null)
                 {
-                    await Log.WriteMonitorAsync("", $"Env: {Program.EnvInfo}", "Terminating");
+                    await Log.WriteMonitorAsync("", Program.EnvInfo, "Terminating");
                 }
-
+                
                 ApplicationContainer.Dispose();
             }
             catch (Exception ex)
@@ -172,40 +172,41 @@ namespace Lykke.Service.EthereumSamurai
 
             aggregateLogger.AddLog(consoleLogger);
 
-            var dbLogConnectionStringManager = settings.Nested(x => x.EthereumSamuraiService.Db.LogsConnString);
-            var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
+            //TODO: Log issues in MONGODB
+            //var dbLogConnectionStringManager = settings.Nested(x => x..Db.LogsConnString);
+            //var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
 
-            if (string.IsNullOrEmpty(dbLogConnectionString))
-            {
-                consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
-                return aggregateLogger;
-            }
+            //if (string.IsNullOrEmpty(dbLogConnectionString))
+            //{
+            //    consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
+            //    return aggregateLogger;
+            //}
 
-            if (dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}"))
-                throw new InvalidOperationException($"LogsConnString {dbLogConnectionString} is not filled in settings");
+            //if (dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}"))
+            //    throw new InvalidOperationException($"LogsConnString {dbLogConnectionString} is not filled in settings");
 
-            var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
-                AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "EthereumSamuraiLog", consoleLogger),
-                consoleLogger);
+            //var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
+            //    AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "EthereumSamuraiLog", consoleLogger),
+            //    consoleLogger);
 
-            // Creating slack notification service, which logs own azure queue processing messages to aggregate log
-            var slackService = services.UseSlackNotificationsSenderViaAzureQueue(new AzureQueueIntegration.AzureQueueSettings
-            {
-                ConnectionString = settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-                QueueName = settings.CurrentValue.SlackNotifications.AzureQueue.QueueName
-            }, aggregateLogger);
+            //// Creating slack notification service, which logs own azure queue processing messages to aggregate log
+            //var slackService = services.UseSlackNotificationsSenderViaAzureQueue(new AzureQueueIntegration.AzureQueueSettings
+            //{
+            //    ConnectionString = settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
+            //    QueueName = settings.CurrentValue.SlackNotifications.AzureQueue.QueueName
+            //}, aggregateLogger);
 
-            var slackNotificationsManager = new LykkeLogToAzureSlackNotificationsManager(slackService, consoleLogger);
+            //var slackNotificationsManager = new LykkeLogToAzureSlackNotificationsManager(slackService, consoleLogger);
 
-            // Creating azure storage logger, which logs own messages to concole log
-            var azureStorageLogger = new LykkeLogToAzureStorage(
-                persistenceManager,
-                slackNotificationsManager,
-                consoleLogger);
+            //// Creating azure storage logger, which logs own messages to concole log
+            //var azureStorageLogger = new LykkeLogToAzureStorage(
+            //    persistenceManager,
+            //    slackNotificationsManager,
+            //    consoleLogger);
 
-            azureStorageLogger.Start();
+            //azureStorageLogger.Start();
 
-            aggregateLogger.AddLog(azureStorageLogger);
+            //aggregateLogger.AddLog(azureStorageLogger);
 
             return aggregateLogger;
         }

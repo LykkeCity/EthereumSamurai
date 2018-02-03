@@ -2,7 +2,7 @@
 using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Services;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public class BlockIndexingJobFactory : IBlockIndexingJobFactory
     {

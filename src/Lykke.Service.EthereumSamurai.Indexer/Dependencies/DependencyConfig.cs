@@ -1,9 +1,9 @@
 ﻿using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Service.EthereumSamurai.Indexer.Jobs;
-using Lykke.Service.EthereumSamurai.Indexer.Settings;
+using Lykke.Job.EthereumSamurai.Jobs;
+using Lykke.Job.EthereumSamurai.Settings;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Dependencies
+namespace Lykke.Job.EthereumSamurai.Dependencies
 {
     public static class DependencyConfig
     {

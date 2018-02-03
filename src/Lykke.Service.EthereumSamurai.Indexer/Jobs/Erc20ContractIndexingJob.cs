@@ -3,9 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Service.EthereumSamurai.Indexer.Utils;
+using Lykke.Job.EthereumSamurai.Utils;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public class Erc20ContractIndexingJob : IJob
     {

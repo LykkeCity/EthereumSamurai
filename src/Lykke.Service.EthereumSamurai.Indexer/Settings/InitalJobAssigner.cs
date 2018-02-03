@@ -3,14 +3,16 @@ using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Repositories;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Service.EthereumSamurai.Indexer.Jobs;
+using Lykke.Job.EthereumSamurai.Jobs;
 using Common.Log;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Settings
+namespace Lykke.Job.EthereumSamurai.Settings
 {
     public interface IInitalJobAssigner
     {
         IEnumerable<IJob> GetJobs();
+
+        IEnumerable<IIndexingSettings> GetBlockIndexingSettings();
     }
 
     public class InitalJobAssigner : IInitalJobAssigner
@@ -93,6 +95,43 @@ namespace Lykke.Service.EthereumSamurai.Indexer.Settings
             }
 
             return jobs;
+        }
+
+        public IEnumerable<IIndexingSettings> GetBlockIndexingSettings()
+        {
+            var settings = new List<IIndexingSettings>();
+
+            // Blocks indexers
+            if (_indexerInstanceSettings.IndexBlocks)
+            {
+                var lastRpcBlock = (ulong)_rpcBlockReader.GetBlockCount().Result;
+                var from = _indexerInstanceSettings.StartBlock;
+                var to = _indexerInstanceSettings.StopBlock ?? lastRpcBlock;
+                var partSize = (to - from) / (ulong)_indexerInstanceSettings.ThreadAmount;
+
+                ulong? toBlock = from;
+
+
+                for (var i = 0; i < _indexerInstanceSettings.ThreadAmount; i++)
+                {
+                    var fromBlock = (ulong)toBlock + 1;
+
+                    toBlock = fromBlock + partSize;
+                    toBlock = toBlock < to ? toBlock : _indexerInstanceSettings.StopBlock;
+
+                    var indexerId = $"{_indexerInstanceSettings.IndexerId}_thread_{i}";
+                    var setting = new IndexingSettings
+                    {
+                        IndexerId = indexerId,
+                        From = fromBlock,
+                        To = toBlock
+                    };
+
+                    settings.Add(job);
+                }
+            }
+
+            return settings;
         }
     }
 }
