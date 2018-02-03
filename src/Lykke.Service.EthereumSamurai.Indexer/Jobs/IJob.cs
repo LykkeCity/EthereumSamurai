@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public interface IJob
     {

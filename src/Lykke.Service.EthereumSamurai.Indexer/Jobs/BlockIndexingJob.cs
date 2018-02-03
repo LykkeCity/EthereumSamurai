@@ -4,11 +4,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Service.EthereumSamurai.Indexer.Utils;
+using Lykke.Job.EthereumSamurai.Utils;
 using Lykke.Service.EthereumSamurai.Models;
 using Common.Log;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public class BlockIndexingJob : IJob
     {

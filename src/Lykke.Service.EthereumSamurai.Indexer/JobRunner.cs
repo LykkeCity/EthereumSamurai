@@ -1,13 +1,13 @@
 ﻿using Common.Log;
 using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Service.EthereumSamurai.Indexer.Jobs;
+using Lykke.Job.EthereumSamurai.Jobs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Lykke.Service.EthereumSamurai.Indexer
+namespace Lykke.Job.EthereumSamurai
 {
     public class JobRunner
     {
