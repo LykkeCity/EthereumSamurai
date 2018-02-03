@@ -5,9 +5,9 @@ using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Repositories;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Service.EthereumSamurai.Indexer.Dependencies;
-using Lykke.Service.EthereumSamurai.Indexer.Jobs;
-using Lykke.Service.EthereumSamurai.Indexer.Settings;
+using Lykke.Job.EthereumSamurai.Dependencies;
+using Lykke.Job.EthereumSamurai.Jobs;
+using Lykke.Job.EthereumSamurai.Settings;
 using Lykke.Service.EthereumSamurai.RabbitMQ;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,7 +20,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Lykke.Service.EthereumSamurai.Indexer
+namespace Lykke.Job.EthereumSamurai
 {
     public class JobApp
     {
@@ -38,7 +38,7 @@ namespace Lykke.Service.EthereumSamurai.Indexer
                 //Add automapper
                 var mapper = new MapperConfiguration(cfg =>
                 {
-                    cfg.AddProfiles(typeof(MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
+                    cfg.AddProfiles(typeof(Service.EthereumSamurai.MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
                 });
                 collection.AddSingleton(sp => mapper.CreateMapper());
 

@@ -1,5 +1,5 @@
 FROM microsoft/aspnetcore:2.0.0
-ENTRYPOINT ["dotnet", "EthereumSamurai.dll"]
+ENTRYPOINT ["dotnet", "Lykke.Service.EthereumSamurai.dll"]
 ARG source=.
 WORKDIR /app
 COPY $source .

@@ -1,5 +1,5 @@
 FROM microsoft/dotnet:2-sdk
-ENTRYPOINT ["dotnet", "EthereumSamurai.Indexer.dll"]
+ENTRYPOINT ["dotnet", "Lykke.Job.EthereumSamurai.dll"]
 ARG source=.
 WORKDIR /app
 COPY $source .

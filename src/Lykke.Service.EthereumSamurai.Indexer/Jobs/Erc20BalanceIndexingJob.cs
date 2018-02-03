@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Common.Log;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public class Erc20BalanceIndexingJob : IJob
     {

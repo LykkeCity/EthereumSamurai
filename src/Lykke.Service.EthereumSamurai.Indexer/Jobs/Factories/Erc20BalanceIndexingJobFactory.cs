@@ -1,7 +1,7 @@
 ﻿using Common.Log;
 using Lykke.Service.EthereumSamurai.Core.Services;
 
-namespace Lykke.Service.EthereumSamurai.Indexer.Jobs
+namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public class Erc20BalanceIndexingJobFactory : IErc20BalanceIndexingJobFactory
     {

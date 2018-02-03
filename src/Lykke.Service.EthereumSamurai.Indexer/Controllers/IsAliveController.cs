@@ -1,12 +1,12 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Net;
+using Lykke.Common.Api.Contract.Responses;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Models;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Lykke.Service.EthereumSamurai.Controllers
+namespace Lykke.Job.EthereumSamurai.Controllers
 {
     // NOTE: See https://lykkex.atlassian.net/wiki/spaces/LKEWALLET/pages/35755585/Add+your+app+to+Monitoring
     [Route("api/[controller]")]
@@ -32,9 +32,10 @@ namespace Lykke.Service.EthereumSamurai.Controllers
             var healthViloationMessage = _healthService.GetHealthViolationMessage();
             if (healthViloationMessage != null)
             {
-                return StatusCode(
-                    (int)HttpStatusCode.InternalServerError,
-                    ErrorResponse.Create($"Service is unhealthy: {healthViloationMessage}"));
+                return StatusCode((int)HttpStatusCode.InternalServerError, new ErrorResponse
+                {
+                    ErrorMessage = $"Job is unhealthy: {healthViloationMessage}"
+                });
             }
 
             // NOTE: Feel free to extend IsAliveResponse, to display job-specific indicators

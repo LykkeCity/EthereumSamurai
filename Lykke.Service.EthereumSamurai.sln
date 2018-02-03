@@ -23,9 +23,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamur
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamurai.Common", "src\Lykke.Service.EthereumSamurai.Common\Lykke.Service.EthereumSamurai.Common.csproj", "{128FB3DD-A22B-4489-9A20-F32BEA528D98}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamurai.Indexer", "src\Lykke.Service.EthereumSamurai.Indexer\Lykke.Service.EthereumSamurai.Indexer.csproj", "{B628955C-0F8C-440F-A6E4-3908FCA301F9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Job.EthereumSamurai", "src\Lykke.Service.EthereumSamurai.Indexer\Lykke.Job.EthereumSamurai.csproj", "{B628955C-0F8C-440F-A6E4-3908FCA301F9}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamurai.Template", "src\Lykke.Service.EthereumSamurai.Template\Lykke.Service.EthereumSamurai.Template.csproj", "{F09E3ACB-1ACE-444D-A138-AEE3E7D85C76}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Client", "4. Client", "{2EFF31FF-84FD-4BBA-8171-0C7F36D6F141}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamurai.Client", "client\Lykke.Service.EthereumSamurai.Client\Lykke.Service.EthereumSamurai.Client.csproj", "{2E32F8DE-7F20-44A2-966E-01DEF4490290}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,10 +67,10 @@ Global
 		{B628955C-0F8C-440F-A6E4-3908FCA301F9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B628955C-0F8C-440F-A6E4-3908FCA301F9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B628955C-0F8C-440F-A6E4-3908FCA301F9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F09E3ACB-1ACE-444D-A138-AEE3E7D85C76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F09E3ACB-1ACE-444D-A138-AEE3E7D85C76}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F09E3ACB-1ACE-444D-A138-AEE3E7D85C76}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F09E3ACB-1ACE-444D-A138-AEE3E7D85C76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -79,6 +81,7 @@ Global
 		{1C42419D-6616-46C6-A161-8C4F854512A8} = {D5B7A94D-4868-4CF2-9D42-1207BBBA9BE1}
 		{88505262-96C5-4887-8100-CC2180AB225B} = {D5B7A94D-4868-4CF2-9D42-1207BBBA9BE1}
 		{53189241-8C68-434E-890A-ADE6BC61BDCD} = {E0CC9E4A-0E98-48AD-A507-30658F53AD00}
+		{2E32F8DE-7F20-44A2-966E-01DEF4490290} = {2EFF31FF-84FD-4BBA-8171-0C7F36D6F141}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E3529BAF-F89F-47A1-9E9A-B0CDE9E8487F}
