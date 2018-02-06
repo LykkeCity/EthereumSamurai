@@ -12,6 +12,7 @@ using Lykke.Job.EthereumSamurai.Messages;
 using static Lykke.Job.EthereumSamurai.Messages.BlockIndexingActor;
 using Messages = Lykke.Job.EthereumSamurai.Messages;
 using static Akka.Actor.Status;
+using Akka.Pattern;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
@@ -31,16 +32,21 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         public BlockIndexingActor(
             IBlockService blockService,
             IIndexingService indexingService,
-            IIndexingSettings indexingSettings,
             ILog logger,
             IRpcBlockReader rpcBlockReader)
         {
             _blockService = blockService;
             _firstRun = true;
             _indexingService = indexingService;
-            _indexingSettings = indexingSettings;
             _logger = logger;
             _rpcBlockReader = rpcBlockReader;
+            //var breaker = new CircuitBreaker(
+            //    maxFailures: -1,
+            //    callTimeout: TimeSpan.FromMinutes(5),
+            //    resetTimeout: TimeSpan.FromMinutes(1))
+            //.OnOpen(NotifyMeOnOpen);
+
+            FirstRun();
         }
 
         #region FirstRun
@@ -52,31 +58,28 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                 var indexerId = message.IndexerId;
                 var currentBlockNumber = message.BlockNumber;
 
-                if (_firstRun && _indexingSettings.From == currentBlockNumber)
-                {
-                    await _logger.WriteInfoAsync
-                    (
-                        "BlockIndexingJob",
-                        "RunAsync",
-                        indexerId,
-                        $"Indexing begins from block-{currentBlockNumber}",
-                        DateTime.UtcNow
-                    );
+                await _logger.WriteInfoAsync
+                (
+                    "BlockIndexingJob",
+                    "RunAsync",
+                    indexerId,
+                    $"Indexing begins from block-{currentBlockNumber}",
+                    DateTime.UtcNow
+                );
 
-                    var blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                    var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
+                var blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
 
-                    await _indexingService.IndexBlockAsync(blockContext);
+                await _indexingService.IndexBlockAsync(blockContext);
 
-                    currentBlockNumber++;
+                currentBlockNumber++;
 
-                    _firstRun = false;
+                _firstRun = false;
 
-                    //After first run
-                    Sender.Tell(Messages.Common.CreateIndexedBlockNumberMessage(indexerId, message.BlockNumber, currentBlockNumber));
+                //After first run
+                Sender.Tell(Messages.Common.CreateIndexedBlockNumberMessage(indexerId, message.BlockNumber, currentBlockNumber));
 
-                    Become(NormalState);
-                }
+                Become(NormalState);
             });
         }
 
