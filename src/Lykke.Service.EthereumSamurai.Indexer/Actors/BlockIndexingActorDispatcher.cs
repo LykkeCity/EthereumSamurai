@@ -19,11 +19,8 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public partial class BlockIndexingActorDispatcher : ReceiveActor
     {
-        private readonly IBlockService _blockService;
-        private readonly IIndexingService _indexingService;
         private readonly IEnumerable<IIndexingSettings> _indexingSettings;
         private readonly ILog _logger;
-        private readonly IRpcBlockReader _rpcBlockReader;
         private readonly IDictionary<string, IActorRef> _blockIndexingActors;
         private readonly IDictionary<string, IIndexingSettings> _indexerSettingsDict;
         private bool _firstRun;
@@ -32,23 +29,17 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         public int Version => 1;
 
         public BlockIndexingActorDispatcher(
-            IBlockService blockService,
-            IIndexingService indexingService,
             IEnumerable<IIndexingSettings> indexingSettings,
             ILog logger,
-            IRpcBlockReader rpcBlockReader,
             IBlockIndexingActorFactory blockIndexingActorFactory)
         {
-            _blockService = blockService;
             _firstRun = true;
-            _indexingService = indexingService;
             _indexingSettings = indexingSettings;
             _logger = logger;
-            _rpcBlockReader = rpcBlockReader;
             _blockIndexingActors = new Dictionary<string, IActorRef>();
             _indexerSettingsDict = new Dictionary<string, IIndexingSettings>();
 
-            foreach (var setting in indexingSettings)
+            foreach (var setting in _indexingSettings)
             {
                 var actor = blockIndexingActorFactory.Build(Context, $"BlockIndexingActor_{setting.IndexerId}");
                 _blockIndexingActors.Add(setting.IndexerId, actor);
@@ -57,7 +48,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
             State();
 
-            foreach (var item in indexingSettings)
+            foreach (var item in _indexingSettings)
             {
                 Self.Tell(Messages.Common.CreateIndexedBlockNumberMessage(item.IndexerId, 0, item.From));
             }

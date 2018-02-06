@@ -9,6 +9,7 @@ using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Job.EthereumSamurai.Modules;
 using Lykke.Logs;
+using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.SettingsReader;
 using Lykke.SlackNotification.AzureQueue;
@@ -23,6 +24,8 @@ namespace Lykke.Job.EthereumSamurai
 {
     public class Startup
     {
+        private ActorSystemHost _actorSystemHost;
+
         public IHostingEnvironment Environment { get; }
         public IContainer ApplicationContainer { get; private set; }
         public IConfigurationRoot Configuration { get; }
@@ -32,6 +35,7 @@ namespace Lykke.Job.EthereumSamurai
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
+                .AddJsonFile("appsettings.json", true, true)
                 .AddEnvironmentVariables();
 
             Configuration = builder.Build();
@@ -59,7 +63,8 @@ namespace Lykke.Job.EthereumSamurai
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new JobModule(appSettings, Log));
+                builder.RegisterModule(new JobModule(appSettings, Log, Configuration));
+                builder.RegisterModule(new ActorModule());
 
                 builder.Populate(services);
 
@@ -114,6 +119,10 @@ namespace Lykke.Job.EthereumSamurai
             try
             {
                 // NOTE: Job not yet recieve and process IsAlive requests here
+                _actorSystemHost = new ActorSystemHost();
+                _actorSystemHost.SetDependencyResolver(ApplicationContainer);
+                var blockCount = await ApplicationContainer.Resolve<IRpcBlockReader>().GetBlockCount();
+                _actorSystemHost.Start((ulong)blockCount);
 
                 await Log.WriteMonitorAsync("", Program.EnvInfo, "Started");
             }
@@ -172,41 +181,51 @@ namespace Lykke.Job.EthereumSamurai
 
             aggregateLogger.AddLog(consoleLogger);
 
-            //TODO: Log issues in MONGODB
-            //var dbLogConnectionStringManager = settings.Nested(x => x..Db.LogsConnString);
-            //var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
+            //It is possible to run only with console logger
+            if (!string.IsNullOrEmpty(settings.CurrentValue.EthereumIndexer.DB.LogsConnectionString)
+                && !string.IsNullOrEmpty(settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString))
+            {
 
-            //if (string.IsNullOrEmpty(dbLogConnectionString))
-            //{
-            //    consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
-            //    return aggregateLogger;
-            //}
+                var dbLogConnectionStringManager = settings.Nested(x => x.EthereumIndexer.DB.LogsConnectionString);
+                var dbLogConnectionString = dbLogConnectionStringManager.CurrentValue;
 
-            //if (dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}"))
-            //    throw new InvalidOperationException($"LogsConnString {dbLogConnectionString} is not filled in settings");
+                if (string.IsNullOrEmpty(dbLogConnectionString))
+                {
+                    consoleLogger.WriteWarningAsync(nameof(Startup), nameof(CreateLogWithSlack), "Table loggger is not inited").Wait();
+                    return aggregateLogger;
+                }
 
-            //var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
-            //    AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "EthereumSamuraiLog", consoleLogger),
-            //    consoleLogger);
+                if (dbLogConnectionString.StartsWith("${") && dbLogConnectionString.EndsWith("}"))
+                    throw new InvalidOperationException($"LogsConnString {dbLogConnectionString} is not filled in settings");
 
-            //// Creating slack notification service, which logs own azure queue processing messages to aggregate log
-            //var slackService = services.UseSlackNotificationsSenderViaAzureQueue(new AzureQueueIntegration.AzureQueueSettings
-            //{
-            //    ConnectionString = settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
-            //    QueueName = settings.CurrentValue.SlackNotifications.AzureQueue.QueueName
-            //}, aggregateLogger);
+                var persistenceManager = new LykkeLogToAzureStoragePersistenceManager(
+                    AzureTableStorage<LogEntity>.Create(dbLogConnectionStringManager, "EthereumSamuraiLog", consoleLogger),
+                    consoleLogger);
 
-            //var slackNotificationsManager = new LykkeLogToAzureSlackNotificationsManager(slackService, consoleLogger);
+                if (settings.CurrentValue.SlackNotifications != null)
+                {
 
-            //// Creating azure storage logger, which logs own messages to concole log
-            //var azureStorageLogger = new LykkeLogToAzureStorage(
-            //    persistenceManager,
-            //    slackNotificationsManager,
-            //    consoleLogger);
+                }
 
-            //azureStorageLogger.Start();
+                // Creating slack notification service, which logs own azure queue processing messages to aggregate log
+                var slackService = services.UseSlackNotificationsSenderViaAzureQueue(new AzureQueueIntegration.AzureQueueSettings
+                {
+                    ConnectionString = settings.CurrentValue.SlackNotifications.AzureQueue.ConnectionString,
+                    QueueName = settings.CurrentValue.SlackNotifications.AzureQueue.QueueName
+                }, aggregateLogger);
 
-            //aggregateLogger.AddLog(azureStorageLogger);
+                var slackNotificationsManager = new LykkeLogToAzureSlackNotificationsManager(slackService, consoleLogger);
+
+                // Creating azure storage logger, which logs own messages to concole log
+                var azureStorageLogger = new LykkeLogToAzureStorage(
+                    persistenceManager,
+                    slackNotificationsManager,
+                    consoleLogger);
+
+                azureStorageLogger.Start();
+
+                aggregateLogger.AddLog(azureStorageLogger);
+            }
 
             return aggregateLogger;
         }
