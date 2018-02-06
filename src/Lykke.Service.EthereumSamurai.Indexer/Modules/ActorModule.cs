@@ -9,7 +9,7 @@ using System.Text;
 
 namespace Lykke.Job.EthereumSamurai.Modules
 {
-    public sealed class ActorsModule : Autofac.Module
+    public sealed class ActorModule : Autofac.Module
     {
         protected override void Load(ContainerBuilder builder)
         {
