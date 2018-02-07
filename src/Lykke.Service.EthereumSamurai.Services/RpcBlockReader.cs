@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using Lykke.Service.EthereumSamurai.Core.Exceptions;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Models;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
@@ -36,6 +37,9 @@ namespace Lykke.Service.EthereumSamurai.Services
             return tip.Value;
         }
 
+        /// <param name="blockHeight">block number to read from blockchain</param>
+        /// <exception cref="BlockIsNotYetMinedException"
+        /// <returns>BlockContent</returns>
         public async Task<BlockContent> ReadBlockAsync(BigInteger blockHeight)
         {
             var block = await _client.Eth.Blocks
@@ -45,6 +49,9 @@ namespace Lykke.Service.EthereumSamurai.Services
             var logs = new EthGetLogs(_client.Client);
 
             #region Block
+
+            if (block == null)
+                throw new BlockIsNotYetMinedException(blockHeight);
 
             var blockHash  = block.BlockHash;
             var blockModel = new BlockModel

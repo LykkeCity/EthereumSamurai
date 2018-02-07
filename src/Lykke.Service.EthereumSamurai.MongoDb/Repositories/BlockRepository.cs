@@ -31,7 +31,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             {
                 new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.BlockHash)),
                 new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Descending(x => x.Timestamp)),
-                new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.IsIndexed)),
+                //new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.IsIndexed)),
             });
 
             _mapper = mapper;
@@ -80,13 +80,13 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             return new BigInteger(result?.Number ?? 1);
         }
 
-        public async Task<BigInteger> GetNotSyncedBlocks(int take = 1000)
-        {
-            var sort = Builders<BlockEntity>.Sort.Ascending(x => x.IsIndexed); //build sort object   
-            var query = _collection.Find<BlockEntity>(x => true).Sort(sort).Limit(take);
-            var result = await query.ToListAsync();
+    //    public async Task<IEnumerable<ulong>> GetNotSyncedBlocksNumbers(int take = 1000)
+    //    {
+    //        var sort = Builders<BlockEntity>.Sort.Ascending(x => x.IsIndexed); //build sort object   
+    //        var query = _collection.Find<BlockEntity>(x => true).Sort(sort).Limit(take);
+    //        var result = await query.ToListAsync();
 
-            return result.Where(x => !x.IsIndexed);
-        }
+    //        return result.Where(x => !x.IsIndexed)?.Select(x => x.Number);
+    //    }
     }
 }
