@@ -7,7 +7,7 @@
     <AssemblyName>Lykke.Job.EthereumSamurai</AssemblyName>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup>
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 
