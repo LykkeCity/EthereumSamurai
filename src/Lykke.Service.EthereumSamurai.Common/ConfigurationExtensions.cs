@@ -41,10 +41,7 @@ namespace Lykke.Service.EthereumSamurai.Common
                  IConfigurationRoot configuration)
         {
             IReloadingManager<AppSettings> settings;
-            settings = configuration.LoadSettings<AppSettings>();// GeneralSettingsReader.ReadGeneralSettings<AppSettings>(connectionString);
-
-            //IConfigurationSection indexerSettingsSection = configuration.GetSection("SettingsWrapper");
-            //settings = indexerSettingsSection.Get<AppSettings>();
+            settings = configuration.LoadSettings<AppSettings>();
             
             collection.AddSingleton<IBaseSettings>(settings.CurrentValue.EthereumIndexer);
             collection.AddSingleton(settings);

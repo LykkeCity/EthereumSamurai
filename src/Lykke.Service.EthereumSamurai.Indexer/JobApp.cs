@@ -19,46 +19,26 @@ using System.Runtime.Loader;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Autofac;
 
 namespace Lykke.Job.EthereumSamurai
 {
     public class JobApp
     {
-        public IServiceProvider Services { get; set; }
+        public IContainer Services { get; set; }
         private ILog _logger;
 
-        public async Task Run(IConfigurationRoot configuration)
+        public async Task Run(IContainer container)
         {
             try
             {
-                //var settings = GetSettings(configuration);
-                IServiceCollection collection = new ServiceCollection();
-                #region Automapper
-
-                //Add automapper
-                var mapper = new MapperConfiguration(cfg =>
-                {
-                    cfg.AddProfiles(typeof(Service.EthereumSamurai.MongoDb.RegisterDependenciesExt).GetTypeInfo().Assembly);
-                });
-                collection.AddSingleton(sp => mapper.CreateMapper());
-
-                #endregion
-                
-                IConfigurationSection indexerSettingsSection = configuration.GetSection("IndexerInstanceSettings");
-                IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
-                collection.ConfigureServices(configuration);
-                //Register jobs and settings
-                DependencyConfig.RegisterServices(collection, indexerSettings);
-                Services = collection.BuildServiceProvider();
-
-                var baseSettings = Services.GetService<IBaseSettings>();
+                Services = container;
+                var baseSettings = Services.Resolve<IBaseSettings>();
                 Console.WriteLine($"Geth node configured at {baseSettings.EthereumRpcUrl}");
 
-                RegisterRabbitQueueEx.RegisterRabbitQueues(collection, baseSettings, Services.GetService<ILog>());
-                Services = collection.BuildServiceProvider();
-                
                 Console.WriteLine($"----------- Job is running now {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} -----------");
-                _logger = Services.GetService<ILog>();
+                _logger = Services.Resolve<ILog>();
+
                 RunJobs();
             }
             catch (Exception e)
@@ -75,7 +55,7 @@ namespace Lykke.Job.EthereumSamurai
 
             try
             {
-                IInitalJobAssigner initalJobAssigner = Services.GetService<IInitalJobAssigner>();
+                IInitalJobAssigner initalJobAssigner = Services.Resolve<IInitalJobAssigner>();
                 IEnumerable<IJob> jobs = initalJobAssigner.GetJobs();
 
                 JobRunner runner = new JobRunner(jobs, _logger);

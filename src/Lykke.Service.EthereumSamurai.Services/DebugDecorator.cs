@@ -80,8 +80,12 @@ namespace Lykke.Service.EthereumSamurai.Services
             if (!hasError)
             {
                 transfers = traceResponse.TransactionTrace.Skip(1)
-                   .Where(y => !(y.Action.Value == BigInteger.Zero &&
-                                 ExtractMessageType(y) == TransferValueModelType.TRANSFER))
+                   .Where(y =>
+                   {
+                       var messageType = ExtractMessageType(y);
+                       return messageType != TransferValueModelType.SUICIDE && !(y.Action.Value == BigInteger.Zero &&
+                                    messageType == TransferValueModelType.TRANSFER);
+                   })
                    .Select((x, counter) =>
                    {
                        return new TransferValueModel()
@@ -111,10 +115,15 @@ namespace Lykke.Service.EthereumSamurai.Services
                 case "delegatecall":
                 case "call":
                     return TransferValueModelType.TRANSFER;
+                case "suicide":
+                    return TransferValueModelType.SUICIDE;
 
                 default:
                     break;
             }
+
+            if (transaction.Type == "suicide")
+                return TransferValueModelType.SUICIDE;
 
             if (!string.IsNullOrEmpty(transaction.Result.Address) && transaction.Type == "create")
             {
