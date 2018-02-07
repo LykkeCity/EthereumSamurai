@@ -16,9 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.Development.json">
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>
