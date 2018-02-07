@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections.Generic;
+using System.Numerics;
 using System.Threading.Tasks;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
 
@@ -15,5 +16,7 @@ namespace Lykke.Service.EthereumSamurai.Core.Repositories
         Task<BigInteger> GetSyncedBlocksCountAsync();
 
         Task SaveAsync(BlockModel blockModel);
+
+        Task<IEnumerable<ulong>> GetNotSyncedBlocksNumbers(int take = 1000);
     }
 }
