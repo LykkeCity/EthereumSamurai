@@ -12,7 +12,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb
         {
             var provider    = collection.BuildServiceProvider();
             var settings    = provider.GetService<IBaseSettings>();
-            var mongoClient = new MongoClient(settings.DB.MongoDBConnectionString);
+            var mongoClient = new MongoClient("mongodb://localhost:27017");//settings.DB.MongoDBConnectionString);
 
             collection.AddSingleton(typeof(MongoClient), mongoClient);
             collection.AddSingleton(mongoClient.GetDatabase("EthereumIndexer"));

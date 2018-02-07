@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Lykke.Service.EthereumSamurai.Core.Exceptions;
 
 namespace Lykke.Job.EthereumSamurai
 {
@@ -98,6 +99,7 @@ namespace Lykke.Job.EthereumSamurai
             do
             {
                 currentlyRunning = await RunJobs(_cancellationToken);
+
                 try
                 {
                     Task.WaitAny(currentlyRunning.ToArray(), _cancellationToken);

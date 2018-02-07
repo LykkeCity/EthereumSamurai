@@ -7,6 +7,7 @@ using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Job.EthereumSamurai.Utils;
 using Lykke.Service.EthereumSamurai.Models;
 using Common.Log;
+using Lykke.Service.EthereumSamurai.Core.Exceptions;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
@@ -167,6 +168,9 @@ namespace Lykke.Job.EthereumSamurai.Jobs
             }
             catch (Exception e)
             {
+                if (e is BlockIsNotYetMinedException)
+                    throw;
+
                 await _logger.WriteErrorAsync
                 (
                     "BlockIndexingJob",

@@ -81,7 +81,7 @@ namespace Lykke.Service.EthereumSamurai
 
                 Log = CreateLogWithSlack(services, appSettings);
 
-                builder.RegisterModule(new ServiceModule(appSettings, Log));
+                builder.RegisterModule(new ServiceModule(appSettings, Log, Configuration));
                 builder.Populate(services);
                 ApplicationContainer = builder.Build();
 

@@ -16,7 +16,8 @@ namespace Lykke.Service.EthereumSamurai.Models.DebugModels
     {
         CREATION,
         TRANSACTION,
-        TRANSFER
+        TRANSFER,
+        SUICIDE
     }
 
     public class TransferValueModel

@@ -33,7 +33,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Mappers
                     blockEntity.TotalDifficulty = blockModel.TotalDifficulty.ToString();
                     blockEntity.Number = (ulong)blockModel.Number;
                     blockEntity.Size = blockModel.Size.ToString();
-                    blockEntity.IsIndexed = blockModel.IsIndexed;
+                    //blockEntity.IsIndexed = blockModel.IsIndexed;
                 })
                 .ReverseMap()
                 .AfterMap((blockEntity, blockModel) =>
@@ -44,7 +44,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Mappers
                     blockModel.TotalDifficulty = BigInteger.Parse(blockEntity.TotalDifficulty);
                     blockModel.Number = new BigInteger(blockEntity.Number);
                     blockModel.Size = BigInteger.Parse(blockEntity.Size);
-                    blockModel.IsIndexed = blockEntity.IsIndexed;
+                    //blockModel.IsIndexed = blockEntity.IsIndexed;
                 }).ForAllOtherMembers(opt => opt.Ignore());
         }
     }
