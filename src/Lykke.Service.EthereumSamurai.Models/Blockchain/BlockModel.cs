@@ -25,5 +25,6 @@ namespace Lykke.Service.EthereumSamurai.Models.Blockchain
         public string BlockHash { get; set; }
         public string StateRoot { get; set; }
         public int TransactionsCount { get; set; }
+        public bool IsIndexed { get; set; }
     }
 }
