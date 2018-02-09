@@ -1,80 +1,145 @@
 ﻿using System;
 using System.Numerics;
 using System.Threading;
-using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Models;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Job.EthereumSamurai.Utils;
-using Lykke.Service.EthereumSamurai.Models;
 using Common.Log;
 using Akka.Actor;
-using static Lykke.Job.EthereumSamurai.Messages.BlockIndexingActor;
-using Messages = Lykke.Job.EthereumSamurai.Messages;
-using static Akka.Actor.Status;
 using Lykke.Job.EthereumSamurai.Actors.Factories;
-using System.Collections;
-using System.Collections.Generic;
+using System.Linq;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
+using System.Diagnostics;
+using Lykke.Service.EthereumSamurai.Logger;
+using Lykke.Job.EthereumSamurai.Extensions;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public partial class BlockIndexingActorDispatcher : ReceiveActor
     {
-        private readonly IEnumerable<IIndexingSettings> _indexingSettings;
         private readonly ILog _logger;
-        private readonly IDictionary<string, IActorRef> _blockIndexingActors;
-        private readonly IDictionary<string, IIndexingSettings> _indexerSettingsDict;
+        private readonly IBlockIndexingDispatcherRole _role;
+        private readonly IActorRef _blockIndexingActor;
+        private readonly IActorRef _tipBlockIndexingActor;
         private bool _firstRun;
+        private int _needToProcessCount;
+        private int _currentProcessingCount;
+        private const int _batchIndexTasks = 1000;
 
-        public string Id => nameof(BlockIndexingJob);
+        public string Id => nameof(BlockIndexingActorDispatcher);
         public int Version => 1;
 
         public BlockIndexingActorDispatcher(
-            IEnumerable<IIndexingSettings> indexingSettings,
             ILog logger,
-            IBlockIndexingActorFactory blockIndexingActorFactory)
+            IBlockIndexingActorFactory blockIndexingActorFactory,
+            IBlockIndexingDispatcherRole role)
         {
             _firstRun = true;
-            _indexingSettings = indexingSettings;
             _logger = logger;
-            _blockIndexingActors = new Dictionary<string, IActorRef>();
-            _indexerSettingsDict = new Dictionary<string, IIndexingSettings>();
+            _role = role;
 
-            foreach (var setting in _indexingSettings)
-            {
-                var actor = blockIndexingActorFactory.Build(Context, $"BlockIndexingActor_{setting.IndexerId}");
-                _blockIndexingActors.Add(setting.IndexerId, actor);
-                _indexerSettingsDict.Add(setting.IndexerId, setting);
-            }
+            _blockIndexingActor = blockIndexingActorFactory.Build(Context, $"BlockIndexingActor");
+            _tipBlockIndexingActor = blockIndexingActorFactory.BuildTip(Context, $"TipBlockIndexingActor");
 
-            State();
+            Become(NormalState);
 
-            foreach (var item in _indexingSettings)
-            {
-                Self.Tell(Messages.Common.CreateIndexedBlockNumberMessage(item.IndexerId, 0, item.From));
-            }
+            Self.Tell(Messages.Common.CreateDoIterationMessage());
         }
 
-        #region State
+        #region NormalState
 
-        public void State()
+        public void NormalState()
         {
+            ReceiveAsync<Messages.Common.DoIterationMessage>(async (message) =>
+            {
+                using (var logger = Context.GetLogger(message))
+                {
+                    try
+                    {
+                        if (_firstRun)
+                        {
+                            Stopwatch sw = new Stopwatch();
+                            sw.Start();
+
+                            var jobInfo = await _role.RetreiveJobInfoAsync();
+                            _tipBlockIndexingActor.Tell(Messages.BlockIndexingActor.CreateIndexBlockMessage(jobInfo.TipBlock));
+
+                            await _logger.WriteInfoAsync(nameof(BlockIndexingActorDispatcher),
+                           nameof(Messages.Common.DoIterationMessage), "",
+                           sw.ElapsedMilliseconds.ToString() + " ms");
+
+                            _firstRun = false;
+                        }
+
+                        var numbers = await _role.RetreiveMiddleBlocksToIndex(_batchIndexTasks);
+                        _needToProcessCount = numbers.Count();
+                        _currentProcessingCount = 0;
+
+                        foreach (var nextBlock in numbers)
+                        {
+                            _blockIndexingActor.Tell(Messages.BlockIndexingActor.CreateIndexBlockMessage(nextBlock));
+                        }
+
+                        Become(BusyState);
+                    }
+                    catch (Exception e)
+                    {
+                        await _logger.WriteErrorAsync(nameof(BlockIndexingActorDispatcher), "", e);
+
+                        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(5),
+                            Self, Messages.Common.CreateDoIterationMessage(), Self);
+                    }
+                }
+            });
+
+            ProcessTipActorMessages();
+
             ReceiveAsync<Messages.Common.IndexedBlockNumberMessage>(async (message) =>
             {
-                var nextBlock = message.NextBlock;
-                IIndexingSettings settings = null;
-                IActorRef blockIndexingActor = null;
-                _indexerSettingsDict.TryGetValue(message.IndexerId, out settings);
-                _blockIndexingActors.TryGetValue(message.IndexerId, out blockIndexingActor);
-
-                if (settings == null || blockIndexingActor == null)
-                    return;
-
-                if (settings.To != null && nextBlock > settings.To)
-                    return;
-
-                blockIndexingActor.Tell(Messages.BlockIndexingActor.CreateIndexBlockMessage(message.IndexerId, nextBlock));
+                _currentProcessingCount++;
+                //Skip
             });
         }
+
+        #endregion
+
+        #region BusyState
+
+        public void BusyState()
+        {
+            ReceiveAsync<Messages.Common.DoIterationMessage>(async (message) =>
+            {
+                //Skip
+            });
+
+            ProcessTipActorMessages();
+
+            ReceiveAsync<Messages.Common.IndexedBlockNumberMessage>(async (message) =>
+            {
+                _currentProcessingCount++;
+
+                if (_currentProcessingCount == _needToProcessCount)
+                {
+                    Become(NormalState);
+                    Self.Tell(Messages.Common.CreateDoIterationMessage());
+                }
+            });
+        }
+
+        #endregion
+
+
+        #region TipActor
+
+        private void ProcessTipActorMessages()
+        {
+            Receive<Messages.Common.IndexedTipBlockNumberMessage>((message) =>
+            {
+                _tipBlockIndexingActor.Tell(new Messages.BlockIndexingActor.IndexBlockMessage(message.NextBlock));
+            });
+        }
+
+        #endregion
+
+
+        #region SupervisionStrategy
 
         protected override SupervisorStrategy SupervisorStrategy()
         {
@@ -86,7 +151,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                    switch (ex)
                    {
                        case Exception exception:
-                           return Directive.Resume;
+                           return Directive.Restart;
                        default:
                            return Directive.Escalate;
                    }

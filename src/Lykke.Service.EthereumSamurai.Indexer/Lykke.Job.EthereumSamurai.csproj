@@ -35,9 +35,9 @@
     <PackageReference Include="Microsoft.Extensions.PlatformAbstractions" Version="1.1.0" />
     <PackageReference Include="NETStandard.Library" Version="2.0.0" />
     <PackageReference Include="System.Runtime.Loader" Version="4.3.0" />
-    <PackageReference Include="Lykke.Common" Version="4.3.0" />
+    <PackageReference Include="Lykke.Common" Version="4.4.1" />
     <PackageReference Include="Lykke.Common.ApiLibrary" Version="1.3.0" />
-    <PackageReference Include="Lykke.Logs" Version="3.5.2" />
+    <PackageReference Include="Lykke.Logs" Version="3.6.0" />
     <PackageReference Include="Lykke.SettingsReader" Version="1.1.4" />
     <PackageReference Include="Lykke.SlackNotification.AzureQueue" Version="2.0.1" />
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" Version="2.1.1" />
@@ -57,6 +57,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Common\Lykke.Service.EthereumSamurai.Common.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Core\Lykke.Service.EthereumSamurai.Core.csproj" />
+    <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Logger\Lykke.Service.EthereumSamurai.Logger.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Models\Lykke.Service.EthereumSamurai.Models.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.MongoDb\Lykke.Service.EthereumSamurai.MongoDb.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.RabbitMQ\Lykke.Service.EthereumSamurai.RabbitMQ.csproj" />

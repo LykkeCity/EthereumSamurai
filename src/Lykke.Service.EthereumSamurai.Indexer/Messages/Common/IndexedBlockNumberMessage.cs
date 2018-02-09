@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Numerics;
 using System.Text;
 
@@ -7,23 +8,28 @@ namespace Lykke.Job.EthereumSamurai.Messages
 {
     public static partial class Common
     {
-        public static IndexedBlockNumberMessage CreateIndexedBlockNumberMessage(string indexerId, BigInteger indexedBlock, BigInteger nextBlock)
+        public static IndexedBlockNumberMessage CreateIndexedBlockNumberMessage(BigInteger indexedBlock, BigInteger nextBlock)
         {
-            return new IndexedBlockNumberMessage(indexerId, indexedBlock, nextBlock);
+            return new IndexedBlockNumberMessage(indexedBlock, nextBlock);
         }
 
-        public class IndexedBlockNumberMessage
+        [ImmutableObject(true)]
+        public sealed class IndexedBlockNumberMessage : IIndexedBlockNumberMessage
         {
-            public IndexedBlockNumberMessage(string indexerId, BigInteger indexedBlock, BigInteger nextBlock)
+            public IndexedBlockNumberMessage(BigInteger indexedBlock, BigInteger nextBlock)
             {
                 IndexedBlock = indexedBlock;
                 NextBlock = nextBlock;
-                IndexerId = indexerId;
             }
 
             public BigInteger IndexedBlock { get; private set; }
             public BigInteger NextBlock { get; private set; }
-            public string IndexerId { get; private set; }
+        }
+
+        public interface IIndexedBlockNumberMessage
+        {
+            BigInteger IndexedBlock { get; }
+            BigInteger NextBlock { get; }
         }
     }
 }

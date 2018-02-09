@@ -3,9 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Common.Log;
 using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Job.EthereumSamurai.Utils;
 using Akka.Actor;
 using Messages = Lykke.Job.EthereumSamurai.Messages;
+using Lykke.Service.EthereumSamurai.Core.Utils;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {

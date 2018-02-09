@@ -10,9 +10,7 @@ namespace Lykke.Service.EthereumSamurai.Core.Repositories
     {
         Task ClearAll();
 
-        Task ClearForIndexer(string indexerId);
-
-        Task<BigInteger?> GetLastSyncedBlockForIndexerAsync(string indexerId);
+        Task<BigInteger?> GetLastSyncedBlockAsync();
 
         Task SaveAsync(BlockSyncedInfoModel syncedBlockInfo);
     }

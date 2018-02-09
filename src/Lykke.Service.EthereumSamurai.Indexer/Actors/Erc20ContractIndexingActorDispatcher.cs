@@ -34,7 +34,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                 if (model != null)
                 {
                     await _erc20ContractIndexingActor.Ask(
-                        Messages.Erc20ContractIndexingActor.CreateErc20ContractDeployedMessage(model), TimeSpan.FromSeconds(30));
+                        new Messages.Erc20ContractIndexingActor.Erc20ContractDeployedMessage(model), TimeSpan.FromSeconds(30));
 
                     Self.Tell(Messages.Common.CreateDoIterationMessage());
                 }

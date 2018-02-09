@@ -17,6 +17,8 @@ namespace Lykke.Service.EthereumSamurai.Core.Repositories
 
         Task SaveAsync(BlockModel blockModel);
 
-        //Task<IEnumerable<ulong>> GetNotSyncedBlocksNumbers(int take = 1000);
+        Task<IEnumerable<ulong>> GetNotSyncedBlocksNumbers(int take = 1000);
+
+        Task PutEmptyRangeAsync(BigInteger fromBlockNumber, BigInteger toBlockNumber);
     }
 }

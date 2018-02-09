@@ -4,24 +4,16 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Messages
+namespace Lykke.Job.EthereumSamurai.Messages.Erc20ContractIndexingActor
 {
-    public partial class Erc20ContractIndexingActor
+    [ImmutableObject(true)]
+    public class Erc20ContractDeployedMessage
     {
-        public static Erc20ContractDeployedMessage CreateErc20ContractDeployedMessage(DeployedContractModel deployedContractModel)
+        public Erc20ContractDeployedMessage(DeployedContractModel deployedContractModel)
         {
-            return new Erc20ContractDeployedMessage(deployedContractModel);
+            DeployedContractModel = deployedContractModel;
         }
 
-        [ImmutableObject(true)]
-        public class Erc20ContractDeployedMessage
-        {
-            public Erc20ContractDeployedMessage(DeployedContractModel deployedContractModel)
-            {
-                DeployedContractModel = deployedContractModel;
-            }
-
-            public DeployedContractModel DeployedContractModel { get; private set; }
-        }
+        public DeployedContractModel DeployedContractModel { get; private set; }
     }
 }

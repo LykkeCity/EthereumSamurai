@@ -8,7 +8,7 @@ namespace Lykke.Service.EthereumSamurai.Core.Services
     {
         Task<BigInteger> GetLastBlockAsync();
 
-        Task<BigInteger?> GetLastBlockForIndexerAsync(string indexerId);
+        //Task<BigInteger?> GetLastBlockForIndexerAsync(string indexerId);
 
         Task IndexBlockAsync(BlockContext blockContext);
     }

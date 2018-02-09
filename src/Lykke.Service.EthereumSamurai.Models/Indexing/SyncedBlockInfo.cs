@@ -7,13 +7,11 @@ namespace Lykke.Service.EthereumSamurai.Models.Indexing
     [Obsolete]
     public class BlockSyncedInfoModel
     {
-        public BlockSyncedInfoModel(string indexerId, ulong number)
+        public BlockSyncedInfoModel( ulong number)
         {
-            this.IndexerId = indexerId;
             this.BlockNumber = number;
         }
 
-        public string IndexerId { get; set; }
         public ulong BlockNumber { get; set; }
     }
 }

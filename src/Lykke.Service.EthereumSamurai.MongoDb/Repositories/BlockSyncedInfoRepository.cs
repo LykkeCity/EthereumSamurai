@@ -29,14 +29,6 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             _collection   = database.GetCollection<BlockSyncedInfoEntity>(Constants.BlockSyncedInfoCollectionName);
             _database     = database;
 
-            _collection.Indexes.CreateMany(new[]
-            {
-                new CreateIndexModel<BlockSyncedInfoEntity>
-                (
-                    Builders<BlockSyncedInfoEntity>.IndexKeys.Ascending(x => x.IndexerId)
-                )
-            });
-
             _mapper = mapper;
         }
 
@@ -48,20 +40,11 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             await _collection.DeleteManyAsync(filter);
         }
 
-        public async Task ClearForIndexer(string indexerId)
+        public async Task<BigInteger?> GetLastSyncedBlockAsync()
         {
             var filterBuilder = Builders<BlockSyncedInfoEntity>.Filter;
-            var filter        = filterBuilder.Eq(x => x.IndexerId, indexerId);
-
-            await _collection.DeleteManyAsync(filter);
-        }
-
-        public async Task<BigInteger?> GetLastSyncedBlockForIndexerAsync(string indexerId)
-        {
-            var filterBuilder = Builders<BlockSyncedInfoEntity>.Filter;
-            var filter        = filterBuilder.Eq(x => x.IndexerId, indexerId);
             var sort          = Builders<BlockSyncedInfoEntity>.Sort.Descending(x => x.BlockNumber);
-            var result        = await _collection.Find(filter).Sort(sort).FirstOrDefaultAsync();
+            var result        = await _collection.Find(x => x.BlockNumber != 0).Sort(sort).FirstOrDefaultAsync();
 
             return result != null 
                  ? new BigInteger?(result.BlockNumber)

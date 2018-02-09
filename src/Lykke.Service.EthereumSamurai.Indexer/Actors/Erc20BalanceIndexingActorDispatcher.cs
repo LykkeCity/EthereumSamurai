@@ -34,7 +34,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                 if (nextBlockToIndex.HasValue)
                 {
                     await _erc20BalanceIndexingActor.Ask(
-                        Messages.Erc20BalanceIndexingActor.CreateIndexBlockMessage(nextBlockToIndex.Value), TimeSpan.FromSeconds(30));
+                       new Messages.Erc20BalanceIndexingActor.IndexBlockMessage(nextBlockToIndex.Value), TimeSpan.FromSeconds(30));
                 }
 
                 Self.Tell(Messages.Common.CreateDoIterationMessage());

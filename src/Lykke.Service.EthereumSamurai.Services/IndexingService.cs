@@ -49,12 +49,12 @@ namespace Lykke.Service.EthereumSamurai.Services
             return _blockRepository.GetLastSyncedBlockAsync();
         }
 
-        public async Task<BigInteger?> GetLastBlockForIndexerAsync(string indexerId)
-        {
-            var lastBlock = await _blockSyncedInfoRepository.GetLastSyncedBlockForIndexerAsync(indexerId);
+        //public async Task<BigInteger?> GetLastBlockForIndexerAsync(string indexerId)
+        //{
+        //    var lastBlock = await _blockSyncedInfoRepository.GetLastSyncedBlockForIndexerAsync(indexerId);
 
-            return lastBlock;
-        }
+        //    return lastBlock;
+        //}
 
         public async Task IndexBlockAsync(BlockContext blockContext)
         {
@@ -108,7 +108,7 @@ namespace Lykke.Service.EthereumSamurai.Services
 
             await _blockIndexationHistoryRepository.MarkBlockAsIndexed(blockNumber, blockContext.JobVersion);
             
-            await _blockSyncedInfoRepository.SaveAsync(new BlockSyncedInfoModel(blockContext.IndexerId, (ulong)blockModel.Number));
+            await _blockSyncedInfoRepository.SaveAsync(new BlockSyncedInfoModel((ulong)blockModel.Number));
         }
     }
 }

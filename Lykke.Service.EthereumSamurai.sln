@@ -29,6 +29,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4. Client", "4. Client", "{
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamurai.Client", "client\Lykke.Service.EthereumSamurai.Client\Lykke.Service.EthereumSamurai.Client.csproj", "{2E32F8DE-7F20-44A2-966E-01DEF4490290}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Lykke.Service.EthereumSamurai.Logger", "src\Lykke.Service.EthereumSamurai.Logger\Lykke.Service.EthereumSamurai.Logger.csproj", "{E21354D6-4298-4F22-B94E-C5CFA2BFC6D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E32F8DE-7F20-44A2-966E-01DEF4490290}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E21354D6-4298-4F22-B94E-C5CFA2BFC6D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E21354D6-4298-4F22-B94E-C5CFA2BFC6D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E21354D6-4298-4F22-B94E-C5CFA2BFC6D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E21354D6-4298-4F22-B94E-C5CFA2BFC6D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,6 +88,7 @@ Global
 		{88505262-96C5-4887-8100-CC2180AB225B} = {D5B7A94D-4868-4CF2-9D42-1207BBBA9BE1}
 		{53189241-8C68-434E-890A-ADE6BC61BDCD} = {E0CC9E4A-0E98-48AD-A507-30658F53AD00}
 		{2E32F8DE-7F20-44A2-966E-01DEF4490290} = {2EFF31FF-84FD-4BBA-8171-0C7F36D6F141}
+		{E21354D6-4298-4F22-B94E-C5CFA2BFC6D8} = {D5B7A94D-4868-4CF2-9D42-1207BBBA9BE1}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E3529BAF-F89F-47A1-9E9A-B0CDE9E8487F}

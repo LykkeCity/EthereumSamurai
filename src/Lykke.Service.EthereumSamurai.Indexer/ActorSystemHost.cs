@@ -8,6 +8,7 @@ using Lykke.Job.EthereumSamurai.Actors.Factories;
 using Lykke.Job.EthereumSamurai.Jobs;
 using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Settings;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -26,11 +27,12 @@ namespace Lykke.Job.EthereumSamurai
 
         public ActorSystemHost()
         {
-            //var systemConfig = ConfigurationFactory.FromResource
-            //(
-            //    "Lykke.Service.EthereumClassicApi.Actors.SystemConfig.json",
-            //    typeof(ActorSystemHost).Assembly
-            //);
+            var systemConfig = ConfigurationFactory.FromResource
+            (
+                "Lykke.Job.EthereumSamurai.SystemConfig.json",
+                typeof(ActorSystemHost).Assembly
+            );
+
             _actorSystem = ActorSystem.Create(actorSystemName, Config.Empty);
         }
 
@@ -40,42 +42,17 @@ namespace Lykke.Job.EthereumSamurai
             var propsResolver = new AutoFacDependencyResolver(container, _actorSystem);
         }
 
-        public void Start(ulong currentBlockCount)
+        public void Start()
         {
             var indexerInstanceSettings = _container.Resolve<IIndexerInstanceSettings>();
-            var settings = new List<IIndexingSettings>();
 
             // Blocks indexers
             if (indexerInstanceSettings.IndexBlocks)
             {
-                var lastRpcBlock = currentBlockCount;
-                var from = indexerInstanceSettings.StartBlock;
-                var to = indexerInstanceSettings.StopBlock ?? lastRpcBlock;
-                var partSize = (to - from) / (ulong)indexerInstanceSettings.ThreadAmount;
-
-                ulong? toBlock = from;
-
-
-                for (var i = 0; i < indexerInstanceSettings.ThreadAmount; i++)
-                {
-                    var fromBlock = (ulong)toBlock + 1;
-
-                    toBlock = fromBlock + partSize;
-                    toBlock = toBlock < to ? toBlock : indexerInstanceSettings.StopBlock;
-
-                    var indexerId = $"{indexerInstanceSettings.IndexerId}_thread_{i}";
-                    var setting = new IndexingSettings
-                    {
-                        IndexerId = indexerId,
-                        From = fromBlock,
-                        To = toBlock
-                    };
-
-                    settings.Add(setting);
-                }
-
-                var blockIndexingActorDispatcherProps = Props.Create(() => new BlockIndexingActorDispatcher(settings, 
-                    _container.Resolve<ILog>(), _container.Resolve<IBlockIndexingActorFactory>()));
+                var blockIndexingActorDispatcherProps = Props.Create(() => new BlockIndexingActorDispatcher(
+                    _container.Resolve<ILog>(),
+                    _container.Resolve<IBlockIndexingActorFactory>(),
+                     _container.Resolve<IBlockIndexingDispatcherRole>()));
                 _blockIndexingActorDispatcher = _actorSystem.ActorOf(blockIndexingActorDispatcherProps, "block-indexing-actor-dispatcher");
             }
 

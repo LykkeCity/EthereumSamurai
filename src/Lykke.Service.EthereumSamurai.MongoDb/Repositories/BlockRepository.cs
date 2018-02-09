@@ -31,7 +31,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             {
                 new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.BlockHash)),
                 new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Descending(x => x.Timestamp)),
-                //new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.IsIndexed)),
+                new CreateIndexModel<BlockEntity>(Builders<BlockEntity>.IndexKeys.Ascending(x => x.IsIndexed)),
             });
 
             _mapper = mapper;
@@ -80,13 +80,45 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             return new BigInteger(result?.Number ?? 1);
         }
 
-    //    public async Task<IEnumerable<ulong>> GetNotSyncedBlocksNumbers(int take = 1000)
-    //    {
-    //        var sort = Builders<BlockEntity>.Sort.Ascending(x => x.IsIndexed); //build sort object   
-    //        var query = _collection.Find<BlockEntity>(x => true).Sort(sort).Limit(take);
-    //        var result = await query.ToListAsync();
+        public async Task<IEnumerable<ulong>> GetNotSyncedBlocksNumbers(int take = 1000)
+        {
+            var sort = Builders<BlockEntity>.Sort.Ascending(x => x.IsIndexed); //build sort object   
+            var query = _collection.Find<BlockEntity>(x => true).Sort(sort).Limit(take);
+            var result = await query.ToListAsync();
 
-    //        return result.Where(x => !x.IsIndexed)?.Select(x => x.Number);
-    //    }
+            return result.Where(x => !x.IsIndexed)?.Select(x => x.Number);
+        }
+
+        public async Task PutEmptyBlockAsync(BigInteger blockNumber)
+        {
+            var blockEntity = new BlockEntity()
+            {
+                Number = (ulong)blockNumber,
+                IsIndexed = false,
+            };
+
+            await _collection.InsertOneAsync(blockEntity);
+        }
+
+        public async Task PutEmptyRangeAsync(BigInteger fromBlockNumber, BigInteger toBlockNumber)
+        {
+            List<BlockEntity> list = new List<BlockEntity>((int)(toBlockNumber - fromBlockNumber));
+
+            for (var i = fromBlockNumber; i < toBlockNumber; i++)
+            {
+                var blockEntity = new BlockEntity()
+                {
+                    Number = (ulong)i,
+                    IsIndexed = false,
+                };
+
+                list.Add(blockEntity);
+            }
+
+            var filterBuilder = Builders<BlockEntity>.Filter.Eq(x => x.Number, (ulong)fromBlockNumber);
+
+            await _collection.DeleteOneAsync(filterBuilder);
+            await _collection.InsertManyAsync(list);
+        }
     }
 }

@@ -4,24 +4,16 @@ using System.ComponentModel;
 using System.Numerics;
 using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Messages
+namespace Lykke.Job.EthereumSamurai.Messages.Erc20BalanceIndexingActor
 {
-    public partial class Erc20BalanceIndexingActor
+    [ImmutableObject(true)]
+    public class IndexBlockMessage
     {
-        public static IndexBlockMessage CreateIndexBlockMessage(ulong blockNumber)
-        {
-            return new Erc20BalanceIndexingActor.IndexBlockMessage(blockNumber);
-        }
+        public ulong BlockNumber { get; private set; }
 
-        [ImmutableObject(true)]
-        public class IndexBlockMessage
+        public IndexBlockMessage(ulong blockNumber)
         {
-            public ulong BlockNumber { get; private set; }
-
-            public IndexBlockMessage(ulong blockNumber)
-            {
-                BlockNumber = BlockNumber;
-            }
+            BlockNumber = BlockNumber;
         }
     }
 }

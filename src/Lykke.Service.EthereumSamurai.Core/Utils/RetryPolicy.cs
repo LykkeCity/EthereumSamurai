@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Lykke.Job.EthereumSamurai.Utils
+namespace Lykke.Service.EthereumSamurai.Core.Utils
 {
     public static class RetryPolicy
     {

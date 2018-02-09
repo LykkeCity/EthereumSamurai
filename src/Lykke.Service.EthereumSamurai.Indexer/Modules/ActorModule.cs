@@ -1,7 +1,7 @@
 ﻿using Akka.Actor;
 using Autofac;
 using Lykke.Job.EthereumSamurai.Actors.Factories;
-using Lykke.Job.EthereumSamurai.Roles.Interfaces;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -14,7 +14,7 @@ namespace Lykke.Job.EthereumSamurai.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder
-                .RegisterAssemblyTypes(ThisAssembly)
+                .RegisterAssemblyTypes(typeof(IActorRole).Assembly)
                 .AssignableTo<IActorRole>()
                 .AsImplementedInterfaces()
                 .SingleInstance();
