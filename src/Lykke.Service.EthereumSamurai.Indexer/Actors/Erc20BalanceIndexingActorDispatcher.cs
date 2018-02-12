@@ -28,7 +28,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
             _erc20BalanceIndexingActor = erc20BalanceIndexingActorFactory.Build(Context, "erc20BalanceIndexingActor");
 
-            ReceiveAsync<Messages.Common.DoIterationMessage>(async (message) =>
+            ReceiveAsync<Messages.Erc20BalanceIndexingActorDispatcher.DoIterationMessage>(async (message) =>
             {
                 var nextBlockToIndex = await _indexingService.GetNextBlockToIndexAsync(_startFrom);
                 if (nextBlockToIndex.HasValue)
@@ -39,6 +39,8 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
                 Self.Tell(Messages.Common.CreateDoIterationMessage());
             });
+
+            Self.Tell(Messages.Common.CreateDoIterationMessage());
         }
 
         public string Id
@@ -46,5 +48,26 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
         public int Version
             => 1;
+
+        #region SupervisionStrategy
+
+        protected override SupervisorStrategy SupervisorStrategy()
+        {
+            return new OneForOneStrategy(
+               maxNrOfRetries: -1,
+               withinTimeRange: Timeout.InfiniteTimeSpan,
+               localOnlyDecider: ex =>
+               {
+                   switch (ex)
+                   {
+                       case Exception exception:
+                           return Directive.Restart;
+                       default:
+                           return Directive.Escalate;
+                   }
+               });
+        }
+
+        #endregion
     }
 }

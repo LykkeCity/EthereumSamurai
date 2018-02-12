@@ -14,7 +14,6 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public partial class BlockIndexingActorDispatcher : ReceiveActor
     {
-        private readonly ILog _logger;
         private readonly IBlockIndexingDispatcherRole _role;
         private readonly IActorRef _blockIndexingActor;
         private readonly IActorRef _tipBlockIndexingActor;
@@ -27,12 +26,10 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         public int Version => 1;
 
         public BlockIndexingActorDispatcher(
-            ILog logger,
             IBlockIndexingActorFactory blockIndexingActorFactory,
             IBlockIndexingDispatcherRole role)
         {
             _firstRun = true;
-            _logger = logger;
             _role = role;
 
             _blockIndexingActor = blockIndexingActorFactory.Build(Context, $"BlockIndexingActor");
@@ -55,15 +52,14 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     {
                         if (_firstRun)
                         {
+                            logger.Info($"Start retreiving tasks");
                             Stopwatch sw = new Stopwatch();
                             sw.Start();
 
                             var jobInfo = await _role.RetreiveJobInfoAsync();
                             _tipBlockIndexingActor.Tell(Messages.BlockIndexingActor.CreateIndexBlockMessage(jobInfo.TipBlock));
 
-                            await _logger.WriteInfoAsync(nameof(BlockIndexingActorDispatcher),
-                           nameof(Messages.Common.DoIterationMessage), "",
-                           sw.ElapsedMilliseconds.ToString() + " ms");
+                            logger.Info($"Retreived tasks in {sw.ElapsedMilliseconds} ms");
 
                             _firstRun = false;
                         }
@@ -81,7 +77,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     }
                     catch (Exception e)
                     {
-                        await _logger.WriteErrorAsync(nameof(BlockIndexingActorDispatcher), "", e);
+                        logger.Error(e);
 
                         Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(5),
                             Self, Messages.Common.CreateDoIterationMessage(), Self);
@@ -93,8 +89,6 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
             ReceiveAsync<Messages.Common.IndexedBlockNumberMessage>(async (message) =>
             {
-                _currentProcessingCount++;
-                //Skip
             });
         }
 

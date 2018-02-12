@@ -6,39 +6,33 @@ using Lykke.Service.EthereumSamurai.Core.Services;
 using Akka.Actor;
 using Messages = Lykke.Job.EthereumSamurai.Messages;
 using Lykke.Service.EthereumSamurai.Core.Utils;
+using Lykke.Job.EthereumSamurai.Extensions;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public partial class Erc20ContractIndexingActor : ReceiveActor
     {
         private readonly IErc20ContractIndexingService _indexingService;
-        private readonly ILog _logger;
 
         public Erc20ContractIndexingActor(
-            IErc20ContractIndexingService indexingService,
-            ILog logger)
+            IErc20ContractIndexingService indexingService)
         {
             _indexingService = indexingService;
-            _logger = logger;
 
             ReceiveAsync<Messages.Erc20ContractIndexingActor.Erc20ContractDeployedMessage>(async (message) =>
             {
-                var contractModel = message.DeployedContractModel;
-
-                await RetryPolicy.ExecuteAsync(async () =>
+                using (var logger = Context.GetLogger(message))
                 {
-                    await _indexingService.IndexContractAsync(contractModel);
+                    var contractModel = message.DeployedContractModel;
 
-                }, 5, 100);
+                    await RetryPolicy.ExecuteAsync(async () =>
+                    {
+                        await _indexingService.IndexContractAsync(contractModel);
 
-                await _logger.WriteInfoAsync
-                (
-                    nameof(Erc20ContractIndexingJob),
-                    nameof(ReceiveAsync),
-                    "Contract indexed",
-                    $"Indexed contract as address {contractModel.Address}.",
-                    DateTime.UtcNow
-                );
+                    }, 5, 100);
+
+                    logger.Info($"Indexed contract as address {contractModel.Address}.");
+                }
             });
         }
 

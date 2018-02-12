@@ -4,7 +4,7 @@
     {
         public DB DB { get; set; }
 
-        public string EthereumRpcUrl { get; set; }
+        public string EthereumRpcUrl { get { return "http://104.40.144.206:8000"; } }
         public string ParityRpcUrl { get; set; }
 
         public RabbitMq RabbitMq { get; set; }

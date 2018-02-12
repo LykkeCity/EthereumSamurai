@@ -14,6 +14,7 @@ using static Akka.Actor.Status;
 using Akka.Pattern;
 using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 using Lykke.Service.EthereumSamurai.Core.Exceptions;
+using Lykke.Job.EthereumSamurai.Extensions;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
@@ -26,12 +27,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         public BlockIndexingActor(
             IBlockIndexingRole role)
         {
-            //var breaker = new CircuitBreaker(
-            //    maxFailures: -1,
-            //    callTimeout: TimeSpan.FromMinutes(5),
-            //    resetTimeout: TimeSpan.FromMinutes(1))
-            //.OnOpen(NotifyMeOnOpen);
-
+            _role = role;
             FirstRun();
         }
 
@@ -41,13 +37,17 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             ReceiveAsync<IndexBlockMessage>(async (message) =>
             {
-                var indexed = message.BlockNumber;
-                var nextToIndex = indexed + 1;
+                using (var logger = Context.GetLogger(message))
+                {
+                    var indexed = message.BlockNumber;
+                    var nextToIndex = indexed + 1;
 
-                await _role.IndexBlockAsync(indexed);
-                Sender.Tell(_createMessageDelegate(indexed, nextToIndex));
+                    await _role.IndexBlockAsync(indexed);
+                    logger.Info($"Indexed block {indexed} starting indexing {nextToIndex};");
+                    Sender.Tell(_createMessageDelegate(indexed, nextToIndex));
 
-                Become(NormalState);
+                    Become(NormalState);
+                }
             });
         }
 
@@ -59,22 +59,30 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             ReceiveAsync<IndexBlockMessage>(async (message) =>
             {
-                var indexed = message.BlockNumber;
-                try
+                using (var logger = Context.GetLogger(message))
                 {
-                    var nextBlockToIndex = await _role.IndexBlockAsync(indexed);
-                    Sender.Tell(_createMessageDelegate(indexed, nextBlockToIndex));
-                }
-                catch (BlockIsNotYetMinedException exc)
-                {
-                    //TODO: LOG here;
-                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(20), Self, message, Sender);
+                    var indexed = message.BlockNumber;
+                    try
+                    {
+                        var nextToIndex = await _role.IndexBlockAsync(indexed);
+                        logger.Info($"Indexed block {indexed} starting indexing {nextToIndex};");
+                        Sender.Tell(_createMessageDelegate(indexed, nextToIndex));
+                    }
+                    catch (BlockIsNotYetMinedException exc)
+                    {
+                        //TODO: LOG here;
+                        logger.Info($"Tip Not Yet Mined {indexed}");
+                        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(20), Self, message, Sender);
 
-                    return;
-                }
-                catch (Exception e)
-                {
-                    throw;
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        //unexpected error
+                        logger.Error(e);
+
+                        throw;
+                    }
                 }
             });
         }
@@ -83,11 +91,15 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
         public override void AroundPreRestart(Exception cause, object message)
         {
-            //TODO: Log exception here
-            if (message != null)
-                Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(2), Self, message, Sender);
+            using (var logger = Context.GetLogger(message))
+            {
+                logger.Error(cause);
 
-            base.AroundPreRestart(cause, message);
+                if (message != null)
+                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(2), Self, message, Sender);
+
+                base.AroundPreRestart(cause, message);
+            }
         }
     }
 }

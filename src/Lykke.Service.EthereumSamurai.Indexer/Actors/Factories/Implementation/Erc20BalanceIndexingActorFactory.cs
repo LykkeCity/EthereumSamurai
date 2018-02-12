@@ -1,5 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.DI.Core;
+using Akka.Routing;
 using Lykke.Job.EthereumSamurai.Actors.Factories.Implementation;
 using Lykke.Job.EthereumSamurai.Jobs;
 using System;
@@ -12,9 +13,11 @@ namespace Lykke.Job.EthereumSamurai.Actors.Factories
     {
         public override IActorRef Build(IUntypedActorContext context, string name)
         {
+            var router = new ConsistentHashingPool(8);
+
             return context.ActorOf
             (
-                context.DI().Props<Erc20BalanceIndexingActor>(),
+                context.DI().Props<Erc20BalanceIndexingActor>().WithRouter(router),
                 name
             );
         }

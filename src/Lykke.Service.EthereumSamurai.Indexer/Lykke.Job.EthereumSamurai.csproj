@@ -24,7 +24,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="SystemConfig.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
 

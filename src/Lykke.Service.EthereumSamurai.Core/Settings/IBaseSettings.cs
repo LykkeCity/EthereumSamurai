@@ -4,7 +4,7 @@
     {
         DB DB { get; set; }
 
-        string EthereumRpcUrl { get; set; }
+        string EthereumRpcUrl { get; }
         string ParityRpcUrl { get; set; }
 
         RabbitMq RabbitMq { get; set; }

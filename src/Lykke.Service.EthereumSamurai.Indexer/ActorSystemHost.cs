@@ -8,9 +8,12 @@ using Lykke.Job.EthereumSamurai.Actors.Factories;
 using Lykke.Job.EthereumSamurai.Jobs;
 using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Settings;
+using Lykke.Service.EthereumSamurai.Logger;
 using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,20 +28,27 @@ namespace Lykke.Job.EthereumSamurai
         private IActorRef _erc20ContractIndexingActorDispatcherProps;
         private IContainer _container;
 
-        public ActorSystemHost()
+        public ActorSystemHost(IContainer container)
         {
+            _container = container;
+            LykkeLogger.Configure(container.Resolve<ILog>());
+            //Logs are registered here
             var systemConfig = ConfigurationFactory.FromResource
             (
                 "Lykke.Job.EthereumSamurai.SystemConfig.json",
-                typeof(ActorSystemHost).Assembly
+                Assembly.GetExecutingAssembly()
             );
 
-            _actorSystem = ActorSystem.Create(actorSystemName, Config.Empty);
-        }
+            //var assembly = Assembly.GetExecutingAssembly();
+            //var resourceName = "Lykke.Job.EthereumSamurai.SystemConfig.json";
 
-        public void SetDependencyResolver(IContainer container)
-        {
-            _container = container;
+            //using (Stream stream = assembly.GetManifestResourceStream(resourceName))
+            //using (StreamReader reader = new StreamReader(stream))
+            //{
+            //    string result = reader.ReadToEnd();
+            //}
+
+            _actorSystem = ActorSystem.Create(actorSystemName, systemConfig);
             var propsResolver = new AutoFacDependencyResolver(container, _actorSystem);
         }
 
@@ -50,7 +60,6 @@ namespace Lykke.Job.EthereumSamurai
             if (indexerInstanceSettings.IndexBlocks)
             {
                 var blockIndexingActorDispatcherProps = Props.Create(() => new BlockIndexingActorDispatcher(
-                    _container.Resolve<ILog>(),
                     _container.Resolve<IBlockIndexingActorFactory>(),
                      _container.Resolve<IBlockIndexingDispatcherRole>()));
                 _blockIndexingActorDispatcher = _actorSystem.ActorOf(blockIndexingActorDispatcherProps, "block-indexing-actor-dispatcher");

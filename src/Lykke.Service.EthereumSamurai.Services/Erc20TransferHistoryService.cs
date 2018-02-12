@@ -11,12 +11,10 @@ namespace Lykke.Service.EthereumSamurai.Services
     {
         private readonly IErc20TransferHistoryRepository _transferHistoryRepository;
 
-
         public Erc20TransferHistoryService(IErc20TransferHistoryRepository transferHistoryRepository)
         {
             _transferHistoryRepository = transferHistoryRepository;
         }
-
 
         public async Task<IEnumerable<Erc20TransferHistoryModel>> GetAsync(Erc20TransferHistoryQuery addressHistoryQuery)
         {

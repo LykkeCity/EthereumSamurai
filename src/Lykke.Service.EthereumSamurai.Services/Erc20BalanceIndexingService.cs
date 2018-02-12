@@ -28,12 +28,6 @@ namespace Lykke.Service.EthereumSamurai.Services
             _transferHistoryRepository        = transferHistoryRepository;
             _indexingRabbitNotifier           = indexingRabbitNotifier;
         }
-        
-
-        public async Task<ulong?> GetNextBlockToIndexAsync(ulong startFrom)
-        {
-            return await _blockIndexationHistoryRepository.GetLowestBlockWithNotIndexedBalances(startFrom);
-        }
 
         public async Task IndexBlockAsync(ulong blockNumber, int jobVersion)
         {

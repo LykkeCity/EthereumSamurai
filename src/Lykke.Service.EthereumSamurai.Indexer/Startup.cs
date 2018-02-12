@@ -121,8 +121,7 @@ namespace Lykke.Job.EthereumSamurai
             try
             {
                 // NOTE: Job not yet recieve and process IsAlive requests here
-                _actorSystemHost = new ActorSystemHost();
-                _actorSystemHost.SetDependencyResolver(ApplicationContainer);
+                _actorSystemHost = new ActorSystemHost(ApplicationContainer);
                 _actorSystemHost.Start();
                 //_jobApp = new JobApp();
                 //await _jobApp.Run(ApplicationContainer);
