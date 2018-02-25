@@ -35,11 +35,5 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                 }
             });
         }
-
-        public string Id
-            => nameof(Erc20ContractIndexingJob);
-
-        public int Version
-            => 1;
     }
 }

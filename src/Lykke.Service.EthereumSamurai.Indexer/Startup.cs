@@ -25,7 +25,6 @@ namespace Lykke.Job.EthereumSamurai
     public class Startup
     {
         private ActorSystemHost _actorSystemHost;
-        //private JobApp _jobApp;
         private Task _jobTask;
 
         public IHostingEnvironment Environment { get; }
@@ -123,8 +122,6 @@ namespace Lykke.Job.EthereumSamurai
                 // NOTE: Job not yet recieve and process IsAlive requests here
                 _actorSystemHost = new ActorSystemHost(ApplicationContainer);
                 _actorSystemHost.Start();
-                //_jobApp = new JobApp();
-                //await _jobApp.Run(ApplicationContainer);
 
                 await Log.WriteMonitorAsync("", Program.EnvInfo, "Started");
             }

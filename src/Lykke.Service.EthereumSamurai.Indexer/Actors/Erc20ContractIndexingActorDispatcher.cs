@@ -36,19 +36,13 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     await _erc20ContractIndexingActor.Ask(
                         new Messages.Erc20ContractIndexingActor.Erc20ContractDeployedMessage(model), TimeSpan.FromSeconds(30));
 
-                    Self.Tell(Messages.Common.CreateDoIterationMessage());
+                    Self.Tell(new Messages.Common.DoIterationMessage());
                 }
                 else
                 {
-                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Self, Messages.Common.CreateDoIterationMessage(), Self);
+                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Self, new Messages.Common.DoIterationMessage(), Self);
                 }
             });
         }
-
-        public string Id
-            => nameof(Erc20BalanceIndexingJob);
-
-        public int Version
-            => 1;
     }
 }

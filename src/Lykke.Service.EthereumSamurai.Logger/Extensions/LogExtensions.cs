@@ -46,7 +46,7 @@ namespace Lykke.Service.EthereumSamurai.Logger.Extensions
                         component,
                         "",
                         context,
-                        error.Cause,
+                        error?.Cause ?? new Exception(error.Message.ToString()),
                         dateTime
                     );
 

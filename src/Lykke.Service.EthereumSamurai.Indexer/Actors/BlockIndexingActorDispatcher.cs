@@ -37,7 +37,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
             Become(NormalState);
 
-            Self.Tell(Messages.Common.CreateDoIterationMessage());
+            Self.Tell(new Messages.Common.DoIterationMessage());
         }
 
         #region NormalState
@@ -80,7 +80,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                         logger.Error(e);
 
                         Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(5),
-                            Self, Messages.Common.CreateDoIterationMessage(), Self);
+                            Self, new Messages.Common.DoIterationMessage(), Self);
                     }
                 }
             });
@@ -112,7 +112,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                 if (_currentProcessingCount == _needToProcessCount)
                 {
                     Become(NormalState);
-                    Self.Tell(Messages.Common.CreateDoIterationMessage());
+                    Self.Tell(new Messages.Common.DoIterationMessage());
                 }
             });
         }

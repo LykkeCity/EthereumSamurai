@@ -7,6 +7,7 @@ using Common.Log;
 using Lykke.Job.EthereumSamurai.Actors.Factories;
 using Lykke.Job.EthereumSamurai.Jobs;
 using Lykke.Service.EthereumSamurai.Core.Models;
+using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.Service.EthereumSamurai.Logger;
 using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
@@ -39,15 +40,6 @@ namespace Lykke.Job.EthereumSamurai
                 Assembly.GetExecutingAssembly()
             );
 
-            //var assembly = Assembly.GetExecutingAssembly();
-            //var resourceName = "Lykke.Job.EthereumSamurai.SystemConfig.json";
-
-            //using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            //using (StreamReader reader = new StreamReader(stream))
-            //{
-            //    string result = reader.ReadToEnd();
-            //}
-
             _actorSystem = ActorSystem.Create(actorSystemName, systemConfig);
             var propsResolver = new AutoFacDependencyResolver(container, _actorSystem);
         }
@@ -69,7 +61,11 @@ namespace Lykke.Job.EthereumSamurai
             if (indexerInstanceSettings.IndexBalances)
             {
                 //_indexerInstanceSettings.BalancesStartBlock;
-                var erc20BalanceIndexingActorDispatcherProps = _actorSystem.DI().Props<Erc20BalanceIndexingActorDispatcher>();
+                var erc20BalanceIndexingActorDispatcherProps = Props.Create(() => new Erc20BalanceIndexingActorDispatcher(
+                    _container.Resolve<IErc20BalanceIndexingService>(),
+                     _container.Resolve<IErc20BalanceIndexingActorFactory>(),
+                     indexerInstanceSettings.BalancesStartBlock));
+
                 _erc20BalanceIndexingActorDispatcher = _actorSystem.ActorOf(erc20BalanceIndexingActorDispatcherProps, "erc20-balance-indexing-actor-dispatcher");
             }
 

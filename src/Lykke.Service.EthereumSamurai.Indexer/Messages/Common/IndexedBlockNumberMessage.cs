@@ -4,32 +4,24 @@ using System.ComponentModel;
 using System.Numerics;
 using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Messages
+namespace Lykke.Job.EthereumSamurai.Messages.Common
 {
-    public static partial class Common
+    [ImmutableObject(true)]
+    public sealed class IndexedBlockNumberMessage : IIndexedBlockNumberMessage
     {
-        public static IndexedBlockNumberMessage CreateIndexedBlockNumberMessage(BigInteger indexedBlock, BigInteger nextBlock)
+        public IndexedBlockNumberMessage(BigInteger indexedBlock, BigInteger nextBlock)
         {
-            return new IndexedBlockNumberMessage(indexedBlock, nextBlock);
+            IndexedBlock = indexedBlock;
+            NextBlock = nextBlock;
         }
 
-        [ImmutableObject(true)]
-        public sealed class IndexedBlockNumberMessage : IIndexedBlockNumberMessage
-        {
-            public IndexedBlockNumberMessage(BigInteger indexedBlock, BigInteger nextBlock)
-            {
-                IndexedBlock = indexedBlock;
-                NextBlock = nextBlock;
-            }
+        public BigInteger IndexedBlock { get; private set; }
+        public BigInteger NextBlock { get; private set; }
+    }
 
-            public BigInteger IndexedBlock { get; private set; }
-            public BigInteger NextBlock { get; private set; }
-        }
-
-        public interface IIndexedBlockNumberMessage
-        {
-            BigInteger IndexedBlock { get; }
-            BigInteger NextBlock { get; }
-        }
+    public interface IIndexedBlockNumberMessage
+    {
+        BigInteger IndexedBlock { get; }
+        BigInteger NextBlock { get; }
     }
 }

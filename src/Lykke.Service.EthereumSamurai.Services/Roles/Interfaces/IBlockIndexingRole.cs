@@ -13,6 +13,6 @@ namespace Lykke.Service.EthereumSamurai.Services.Roles.Interfaces
         /// </summary>
         /// <param name="blockNumber"></param>
         /// <returns>Next block to index</returns>
-        Task<(BigInteger, IEnumerable<Erc20BalanceChangeCommand>)> IndexBlockAsync(BigInteger blockNumber)
+        Task<BigInteger> IndexBlockAsync(BigInteger blockNumber);
     }
 }

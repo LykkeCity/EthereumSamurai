@@ -13,7 +13,7 @@ namespace Lykke.Job.EthereumSamurai.Messages.Erc20BalanceIndexingActor
 
         public IndexBlockMessage(ulong blockNumber)
         {
-            BlockNumber = BlockNumber;
+            BlockNumber = blockNumber;
         }
     }
 }

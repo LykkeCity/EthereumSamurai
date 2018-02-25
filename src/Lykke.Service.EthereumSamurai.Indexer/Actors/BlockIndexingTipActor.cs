@@ -21,7 +21,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         public BlockIndexingTipActor(
             IBlockIndexingRole role) : base (role)
         {
-            _createMessageDelegate = Messages.Common.CreateIndexedTipBlockNumberMessage;
+            _createMessageDelegate = (ind, next) => new Messages.Common.IndexedTipBlockNumberMessage(ind, next);
         }
     }
 }

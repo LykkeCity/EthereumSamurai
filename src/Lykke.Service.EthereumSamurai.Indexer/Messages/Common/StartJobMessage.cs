@@ -3,20 +3,12 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Messages
+namespace Lykke.Job.EthereumSamurai.Messages.Common
 {
-    public static partial class Common
+    public class StartJobMessage
     {
-        public static StartJobMessage CreateStartJobMessage()
+        public StartJobMessage()
         {
-            return new StartJobMessage();
-        }
-
-        public class StartJobMessage
-        {
-            public StartJobMessage()
-            {
-            }
         }
     }
 }

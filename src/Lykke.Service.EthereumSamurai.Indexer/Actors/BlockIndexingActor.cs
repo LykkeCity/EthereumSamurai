@@ -22,7 +22,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
     {
         private readonly IBlockIndexingRole _role;
         protected Func<BigInteger, BigInteger, Messages.Common.IIndexedBlockNumberMessage> _createMessageDelegate =
-            Messages.Common.CreateIndexedBlockNumberMessage;
+            (ind, next) => new Messages.Common.IndexedBlockNumberMessage(ind, next);
 
         public BlockIndexingActor(
             IBlockIndexingRole role)

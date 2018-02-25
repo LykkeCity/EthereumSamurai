@@ -13,11 +13,9 @@ namespace Lykke.Job.EthereumSamurai.Actors.Factories
     {
         public override IActorRef Build(IUntypedActorContext context, string name)
         {
-            var router = new ConsistentHashingPool(8);
-
             return context.ActorOf
             (
-                context.DI().Props<Erc20BalanceIndexingActor>().WithRouter(router),
+                context.DI().Props<Erc20BalanceIndexingActor>(),
                 name
             );
         }
