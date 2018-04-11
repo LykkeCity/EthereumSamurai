@@ -62,6 +62,17 @@ namespace EthereumSamurai.MongoDb.Repositories
             return blockModel;
         }
 
+        public async Task<BlockModel> GetForNumberAsync(ulong number)
+        {
+            var filterBuilder = Builders<BlockEntity>.Filter;
+            FilterDefinition<BlockEntity> filter = filterBuilder.Eq(x => x.Number, number);
+
+            BlockEntity blockEntity = await _collection.Find(filter).FirstOrDefaultAsync();
+            BlockModel blockModel = _mapper.Map<BlockModel>(blockEntity);
+
+            return blockModel;
+        }
+
         public async Task<BigInteger> GetSyncedBlocksCountAsync()
         {
             var filterBuilder = Builders<BlockEntity>.Filter;

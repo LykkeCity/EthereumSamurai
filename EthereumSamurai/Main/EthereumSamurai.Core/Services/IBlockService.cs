@@ -8,5 +8,7 @@ namespace EthereumSamurai.Core.Services
         Task<bool> DoesBlockExist(string blockHash);
 
         Task<BlockModel> GetForHashAsync(string blockHash);
+
+        Task<BlockModel> GetForBlockNumberAsync(ulong number);
     }
 }
