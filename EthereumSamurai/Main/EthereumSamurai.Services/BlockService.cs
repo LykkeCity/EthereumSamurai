@@ -18,13 +18,6 @@ namespace EthereumSamurai.Services
             _blockRepository = blockRepository;
         }
 
-        //public async Task<IEnumerable<TransactionModel>> GetAsync(TransactionQuery transactionQuery)
-        //{
-        //    IEnumerable<TransactionModel> transactions = await _transactionRepository.GetAsync(transactionQuery);
-
-        //    return transactions;
-        //}
-
         public async Task<bool> DoesBlockExist(string blockHash)
         {
             bool exists= await _blockRepository.DoesBlockExistAsync(blockHash);
@@ -39,11 +32,11 @@ namespace EthereumSamurai.Services
             return blockModel;
         }
 
-        //public async Task<IEnumerable<TransactionModel>> GetForBlockNumberAsync(ulong blockNumber)
-        //{
-        //    IEnumerable<TransactionModel> transactions = await _transactionRepository.GetForBlockNumberAsync(blockNumber);
+        public async Task<BlockModel> GetForBlockNumberAsync(ulong blockNumber)
+        {
+            BlockModel blockModel = await _blockRepository.GetForNumberAsync(blockNumber);
 
-        //    return transactions;
-        //}
+            return blockModel;
+        }
     }
 }
