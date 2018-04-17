@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Text;
 using EthereumSamurai.Core.Services;
+using System.Threading;
 using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models.Blockchain;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 
 namespace EthereumSamurai.RabbitMQ
 {
@@ -12,52 +14,52 @@ namespace EthereumSamurai.RabbitMQ
     {
         private const string Queue = "lykke.ethereum.indexer.ethereumsamurai.contracts";
 
-        private readonly IModel           _channel;
-        private readonly object           _dequeueLock;
-        private readonly object           _enqueueLock;
-        private readonly IBasicProperties _publishProperties;
+        private IModel _channel;
+        private IBasicProperties _publishProperties;
+        private readonly object _dequeueLock;
+        private readonly object _enqueueLock;
+        private readonly IBaseSettings _settings;
+        private readonly ReaderWriterLockSlim _queueUpdateLock;
+        private DateTime _lastTimeQueueWasCreated;
 
         public Erc20IndexingQueue(IBaseSettings settings)
         {
-            var connectionFactory = new ConnectionFactory
-            {
-                AutomaticRecoveryEnabled = true,
-                HostName                 = settings.RabbitMq.ExternalHost,
-                Port                     = settings.RabbitMq.Port,
-                UserName                 = settings.RabbitMq.Username,
-                Password                 = settings.RabbitMq.Password
-            };
+            _settings = settings;
+            _dequeueLock = new object();
+            _enqueueLock = new object();
+            _queueUpdateLock = new ReaderWriterLockSlim();
+            _lastTimeQueueWasCreated = DateTime.MinValue;
 
-            _channel           = connectionFactory.CreateConnection().CreateModel();
-            _dequeueLock       = new object();
-            _enqueueLock       = new object();
-            _publishProperties = _channel.CreateBasicProperties();
-
-            _publishProperties.Persistent = true;
-
-            _channel.QueueDeclare
-            (
-                queue:      Queue,
-                durable:    true,
-                exclusive:  false,
-                autoDelete: false,
-                arguments:  null
-            );
+            CreateQueue();
         }
 
         public DeployedContractModel Dequeue()
         {
             lock (_dequeueLock)
             {
-                var message = _channel.BasicGet(Queue, false);
+                BasicGetResult message = null;
+
+                try
+                {
+                    message = _channel.BasicGet(Queue, false);
+                }
+                catch (OperationInterruptedException e)
+                {
+                    if (e.ShutdownReason.ReplyCode == 404)
+                    {
+                        CreateQueue();
+                    }
+
+                    throw;
+                }
 
                 if (message != null)
                 {
                     try
                     {
                         var payloadString = Encoding.UTF8.GetString(message.Body);
-                        var contract      = JsonConvert.DeserializeObject<DeployedContractModel>(payloadString);
-                        
+                        var contract = JsonConvert.DeserializeObject<DeployedContractModel>(payloadString);
+
                         _channel.BasicAck(message.DeliveryTag, false);
 
                         return contract;
@@ -80,16 +82,66 @@ namespace EthereumSamurai.RabbitMQ
         {
             lock (_enqueueLock)
             {
-                var payloadString = JsonConvert.SerializeObject(contract);
-                var payloadBytes  = Encoding.UTF8.GetBytes(payloadString);
+                try
+                {
+                    var payloadString = JsonConvert.SerializeObject(contract);
+                    var payloadBytes = Encoding.UTF8.GetBytes(payloadString);
 
-                _channel.BasicPublish
+                    _queueUpdateLock.EnterReadLock();
+
+                    _channel.BasicPublish
+                    (
+                        exchange: string.Empty,
+                        routingKey: Queue,
+                        basicProperties: _publishProperties,
+                        body: payloadBytes
+                    );
+                }
+                finally
+                {
+                    _queueUpdateLock.ExitReadLock();
+                }
+            }
+        }
+
+        public void CreateQueue()
+        {
+            try
+            {
+                _queueUpdateLock.EnterWriteLock();
+
+                if (DateTime.UtcNow - _lastTimeQueueWasCreated < TimeSpan.FromMinutes(5))
+                {
+                    return;
+                }
+
+                var connectionFactory = new ConnectionFactory
+                {
+                    AutomaticRecoveryEnabled = true,
+                    HostName = _settings.RabbitMq.ExternalHost,
+                    Port = _settings.RabbitMq.Port,
+                    UserName = _settings.RabbitMq.Username,
+                    Password = _settings.RabbitMq.Password
+                };
+
+                _channel = connectionFactory.CreateConnection().CreateModel();
+                _publishProperties = _channel.CreateBasicProperties();
+
+                _publishProperties.Persistent = true;
+                _channel.QueueDeclare
                 (
-                    exchange:        string.Empty,
-                    routingKey:      Queue,
-                    basicProperties: _publishProperties,
-                    body:            payloadBytes
+                    queue: Queue,
+                    durable: true,
+                    exclusive: false,
+                    autoDelete: false,
+                    arguments: null
                 );
+
+                _lastTimeQueueWasCreated = DateTime.UtcNow;
+            }
+            finally
+            {
+                _queueUpdateLock.ExitWriteLock();
             }
         }
     }
