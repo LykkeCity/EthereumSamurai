@@ -1,4 +1,5 @@
 ﻿using EthereumSamurai.Core.Repositories;
+using System;
 using EthereumSamurai.Core.Services;
 using EthereumSamurai.Models;
 using System.Numerics;
@@ -75,7 +76,7 @@ namespace EthereumSamurai.Services
             {
                 await _transactionRepository.SaveManyForBlockAsync(transactions, blockNumber);
             }
-            catch
+            catch (Exception e)
             {
                 foreach (var transaction in transactions)
                 {
