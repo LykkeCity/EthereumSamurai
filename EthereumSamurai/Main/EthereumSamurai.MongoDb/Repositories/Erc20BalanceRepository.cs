@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AutoMapper;
 using EthereumSamurai.Core;
 using EthereumSamurai.Core.Repositories;
-using EthereumSamurai.Core.Settings;
 using EthereumSamurai.Models.Blockchain;
 using EthereumSamurai.Models.Query;
 using EthereumSamurai.MongoDb.Entities;
@@ -14,17 +13,51 @@ namespace EthereumSamurai.MongoDb.Repositories
 {
     public class Erc20BalanceRepository : IErc20BalanceRepository
     {
-        private readonly IBaseSettings                               _baseSettings;
         private readonly IMongoCollection<Erc20BalanceEntity>        _balanceCollection;
         private readonly IMongoCollection<Erc20BalanceHistoryEntity> _historyCollection;
         private readonly IMapper                                     _mapper;
 
-        public Erc20BalanceRepository(IBaseSettings baseSettings, IMongoDatabase database, IMapper mapper)
+        public Erc20BalanceRepository(
+            IMongoDatabase database,
+            IMapper mapper)
         {
-            _baseSettings      = baseSettings;
             _balanceCollection = database.GetCollection<Erc20BalanceEntity>(Constants.Erc20BalanceCollectionName);
             _historyCollection = database.GetCollection<Erc20BalanceHistoryEntity>(Constants.Erc20BalanceHistoryCollectionName);
             _mapper            = mapper;
+
+            _balanceCollection.Indexes.CreateMany(new[]
+            {
+                new CreateIndexModel<Erc20BalanceEntity>
+                (
+                    Builders<Erc20BalanceEntity>.IndexKeys.Combine
+                    (
+                        Builders<Erc20BalanceEntity>.IndexKeys.Descending(x => x.BlockNumber),
+                        Builders<Erc20BalanceEntity>.IndexKeys.Ascending(x => x.AssetHolderAddress),
+                        Builders<Erc20BalanceEntity>.IndexKeys.Ascending(x => x.ContractAddress)
+                    )
+                ),
+                new CreateIndexModel<Erc20BalanceEntity>
+                (
+                    Builders<Erc20BalanceEntity>.IndexKeys.Combine
+                    (
+                        Builders<Erc20BalanceEntity>.IndexKeys.Descending(x => x.BlockNumber),
+                        Builders<Erc20BalanceEntity>.IndexKeys.Ascending(x => x.ContractAddress)
+                    )
+                ),
+                new CreateIndexModel<Erc20BalanceEntity>
+                (
+                    Builders<Erc20BalanceEntity>.IndexKeys.Combine
+                    (
+                        Builders<Erc20BalanceEntity>.IndexKeys.Ascending(x => x.AssetHolderAddress),
+                        Builders<Erc20BalanceEntity>.IndexKeys.Ascending(x => x.ContractAddress),
+                        Builders<Erc20BalanceEntity>.IndexKeys.Descending(x => x.BlockNumber)
+                    )
+                ),
+                new CreateIndexModel<Erc20BalanceEntity>
+                (
+                    Builders<Erc20BalanceEntity>.IndexKeys.Ascending(x => x.ContractAddress)
+                )
+            });
 
             _historyCollection.Indexes.CreateMany(new[]
             {
@@ -130,19 +163,19 @@ namespace EthereumSamurai.MongoDb.Repositories
                 .Select(SetBlockNumberToBalanceEntity)
                 .ToList();
 
-            foreach (var balanceEntity in balanceEntities)
+            await Task.WhenAll(balanceEntities.Select(async balanceEntity =>
             {
                 await _balanceCollection.ReplaceOneAsync
                 (
-                    x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress 
-                      && x.ContractAddress    == balanceEntity.ContractAddress,
+                    x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress
+                         && x.ContractAddress == balanceEntity.ContractAddress,
                     balanceEntity,
                     new UpdateOptions
                     {
                         IsUpsert = true
                     }
                 );
-            }
+            }));
 
             // Update balance history
             await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
