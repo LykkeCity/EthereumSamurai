@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -37,12 +40,12 @@ namespace EthereumSamurai.Services
 
         public async Task IndexBlockAsync(ulong blockNumber, int jobVersion)
         {
-            var blockTransfers = await _transferHistoryRepository.GetAsync(new Erc20TransferHistoryQuery
+            var blockTransfers = (await _transferHistoryRepository.GetAsync(new Erc20TransferHistoryQuery
             {
                 BlockNumber = blockNumber
-            });
-
-            var deposits       = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.To, TransferAmount = x.TransferAmount });
+            })).ToArray();
+            
+            var deposits       = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.To,   TransferAmount = x.TransferAmount });
             var withdrawals    = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.From, TransferAmount = x.TransferAmount * -1 });
             var balanceChanges = from transfer in deposits.Concat(withdrawals)
                                  group transfer
@@ -56,12 +59,12 @@ namespace EthereumSamurai.Services
                                      BlockNumber        = blockNumber
                                  };
 
-            var newBalanceHistories = new List<Erc20BalanceModel>(balanceChanges.Count());
-
-            foreach (var change in balanceChanges)
+            var newBalanceHistories = new ConcurrentBag<Erc20BalanceModel>();
+            
+            await Task.WhenAll(balanceChanges.Select(async change =>
             {
                 var balanceHistory = await _balanceRepository.GetPreviousAsync(change.AssetHolderAddress, change.ContractAddress, change.BlockNumber);
-                var balanceChange = BigInteger.Parse(change.BalanceChange);
+                var balanceChange  = BigInteger.Parse(change.BalanceChange);
 
                 if (balanceHistory != null)
                 {
@@ -78,16 +81,16 @@ namespace EthereumSamurai.Services
                 }
 
                 newBalanceHistories.Add(balanceHistory);
-            }
-
+            }));
+            
             await _balanceRepository.SaveForBlockAsync(newBalanceHistories, blockNumber);
-
+            
             await _indexingRabbitNotifier.NotifyAsync(new EthereumSamurai.Models.Messages.RabbitIndexingMessage()
             {
                 BlockNumber         = blockNumber,
-                IndexingMessageType =EthereumSamurai.Models.Messages.IndexingMessageType.ErcBalances
+                IndexingMessageType = EthereumSamurai.Models.Messages.IndexingMessageType.ErcBalances
             });
-
+            
             await _blockIndexationHistoryRepository.MarkBalancesAsIndexed(blockNumber, jobVersion);
         }
     }
