@@ -5,7 +5,6 @@
         public DB DB { get; set; }
 
         public string EthereumRpcUrl { get; set; }
-        public string ParityRpcUrl { get; set; }
 
         public RabbitMq RabbitMq { get; set; }
     }
