@@ -1,8 +1,6 @@
-﻿//TODO: Cleanup code
-
-using AutoMapper;
-using EthereumSamurai.Models.Blockchain;
-using EthereumSamurai.Responses;
+﻿using AutoMapper;
+using Lykke.Service.EthereumSamurai.Models.Blockchain;
+using Lykke.Service.EthereumSamurai.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
