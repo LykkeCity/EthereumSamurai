@@ -2,12 +2,12 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
-using EthereumSamurai.Core.Services;
-using EthereumSamurai.Filters;
-using EthereumSamurai.Models.Blockchain;
-using EthereumSamurai.Models.Query;
-using EthereumSamurai.Requests;
-using EthereumSamurai.Responses;
+using Lykke.Service.EthereumSamurai.Core.Services;
+using Lykke.Service.EthereumSamurai.Filters;
+using Lykke.Service.EthereumSamurai.Models.Blockchain;
+using Lykke.Service.EthereumSamurai.Models.Query;
+using Lykke.Service.EthereumSamurai.Requests;
+using Lykke.Service.EthereumSamurai.Responses;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EthereumSamurai.Controllers

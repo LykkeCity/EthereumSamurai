@@ -4,7 +4,7 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
 
-namespace EthereumSamurai.Responses
+namespace Lykke.Service.EthereumSamurai.Responses
 {
     [DataContract]
     public class BlockResponse
