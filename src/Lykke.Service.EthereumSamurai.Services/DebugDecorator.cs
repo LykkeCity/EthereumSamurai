@@ -73,6 +73,12 @@ namespace Lykke.Service.EthereumSamurai.Services
             HttpResponseMessage response = await _httpClient.PostAsync(_settings.EthereumRpcUrl, new StreamContent(stream));
             var responseString = await response.Content.ReadAsStringAsync();
             ParityTransactionTraceResponse traceResponse = (ParityTransactionTraceResponse)Newtonsoft.Json.JsonConvert.DeserializeObject(responseString, typeof(ParityTransactionTraceResponse));
+            if (traceResponse?.TransactionTrace == null)
+            {
+                //Means there is no trace for transaction hash;
+                return null;
+            }
+
             string errorMessage = traceResponse.TransactionTrace.FirstOrDefault()?.Error;
             IEnumerable<TransferValueModel> transfers = null;
             bool hasError = !string.IsNullOrEmpty(errorMessage);
