@@ -13,34 +13,34 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public class BlockIndexingJob : IJob
     {
-        private readonly IBlockService     _blockService;
-        private readonly IIndexingService  _indexingService;
+        private readonly IBlockService _blockService;
+        private readonly IIndexingService _indexingService;
         private readonly IIndexingSettings _indexingSettings;
-        private readonly ILog              _logger;
-        private readonly IRpcBlockReader   _rpcBlockReader;
+        private readonly ILog _logger;
+        private readonly IRpcBlockReader _rpcBlockReader;
 
         private bool _firstRun;
 
 
 
         public BlockIndexingJob(
-            IBlockService     blockService,
-            IIndexingService  indexingService,
+            IBlockService blockService,
+            IIndexingService indexingService,
             IIndexingSettings indexingSettings,
-            ILog              logger,
-            IRpcBlockReader   rpcBlockReader)
+            ILog logger,
+            IRpcBlockReader rpcBlockReader)
         {
-            _blockService     = blockService;
-            _firstRun         = true;
-            _indexingService  = indexingService;
+            _blockService = blockService;
+            _firstRun = true;
+            _indexingService = indexingService;
             _indexingSettings = indexingSettings;
-            _logger           = logger;
-            _rpcBlockReader   = rpcBlockReader;
+            _logger = logger;
+            _rpcBlockReader = rpcBlockReader;
         }
 
 
 
-        public string Id 
+        public string Id
             => nameof(BlockIndexingJob);
 
         public int Version
@@ -57,10 +57,10 @@ namespace Lykke.Job.EthereumSamurai.Jobs
             return Task.Factory.StartNew(async () =>
             {
 
-                var indexerId          = _indexingSettings.IndexerId;
+                var indexerId = _indexingSettings.IndexerId;
                 var currentBlockNumber = _indexingSettings.From;
-                var checkDelegate      = GetCheckDelegate(cancellationToken);
-                var lastSyncedNumber   = await _indexingService.GetLastBlockForIndexerAsync(indexerId);
+                var checkDelegate = GetCheckDelegate(cancellationToken);
+                var lastSyncedNumber = await _indexingService.GetLastBlockForIndexerAsync(indexerId);
 
                 currentBlockNumber = lastSyncedNumber.HasValue && (lastSyncedNumber.Value > currentBlockNumber)
                                  ? lastSyncedNumber.Value
@@ -92,7 +92,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
             {
                 checkDelegate = number => !cancellationToken.IsCancellationRequested && number <= _indexingSettings.To;
             }
-            
+
             return checkDelegate;
         }
 
@@ -121,7 +121,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
                     _firstRun = false;
                 }
-                
+
                 var iterationVector = 0;
 
                 while (checkDelegate(currentBlockNumber))
@@ -167,10 +167,10 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                         );
 
                         var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
-                        var blockExists  = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
+                        var blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
 
                         transactionCount = blockContent.Transactions.Count;
-                        iterationVector  = blockExists ? 1 : -1; //That is how we deal with forks
+                        iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
 
                         await _logger.WriteInfoAsync
                         (
@@ -181,7 +181,11 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                             DateTime.UtcNow
                         );
 
-                        await _indexingService.IndexBlockAsync(blockContext);
+                        // Throws Timeout Exception
+                        await TimeoutPolicy.ExecuteAsync(async () =>
+                        {
+                            await _indexingService.IndexBlockAsync(blockContext);
+                        }, TimeSpan.FromMinutes(5));
 
                     }, 5, 100);
 

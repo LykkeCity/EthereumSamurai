@@ -15,7 +15,9 @@ namespace Lykke.Job.EthereumSamurai.Utils
         public static async Task ExecuteAsync(Func<Task> func, TimeSpan timeouTimeSpan)
         {
             var task = func();
-            if (await Task.WhenAny(task, Task.Delay(timeouTimeSpan)) == task)
+            var delayTask = Task.Delay(timeouTimeSpan);
+
+            if (await Task.WhenAny(task, delayTask) == task)
             {
                 await task;
             }
