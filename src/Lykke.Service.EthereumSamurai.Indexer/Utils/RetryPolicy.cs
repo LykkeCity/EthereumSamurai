@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Lykke.Service.EthereumSamurai.Core.Exceptions;
 
 namespace Lykke.Job.EthereumSamurai.Utils
 {
@@ -23,15 +24,20 @@ namespace Lykke.Job.EthereumSamurai.Utils
                     await func();
                     isExecutionCompleted = true;
                 }
+                catch (OperationTimedOutException opTimedOutExc)
+                {
+                    throw;
+                }
                 catch (Exception e)
                 {
                     if (currentTry >= retryCount)
                     {
                         throw;
                     }
+
                     //Exponentially wait 200ms - 400ms - 800ms -...
                     var retryVariable = Math.Pow(2, currentTry);
-                    await Task.Delay(delayMs * (int)retryVariable);
+                    await Task.Delay(delayMs * (int) retryVariable);
                     currentTry++;
                 }
 

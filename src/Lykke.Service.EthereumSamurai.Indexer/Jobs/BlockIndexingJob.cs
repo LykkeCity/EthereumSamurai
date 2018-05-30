@@ -106,7 +106,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     await _logger.WriteInfoAsync
                     (
                         "BlockIndexingJob",
-                        "RunAsync",
+                        "IndexBlocksAsync",
                         indexerId,
                         $"Indexing begins from block-{currentBlockNumber}",
                         DateTime.UtcNow
@@ -133,22 +133,53 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     await _logger.WriteInfoAsync
                     (
                         "BlockIndexingJob",
-                        "RunAsync",
+                        "IndexBlocksAsync",
                         indexerId,
                         $"Indexing block-{currentBlockNumber}, Vector:{iterationVector}",
                         DateTime.UtcNow
                     );
 
+                    //Would throw on time out
                     await RetryPolicy.ExecuteAsync(async () =>
                     {
+                        await _logger.WriteInfoAsync
+                        (
+                            "BlockIndexingJob",
+                            "IndexBlocksAsync",
+                            indexerId,
+                            $"Block-{currentBlockNumber}, Vector:{iterationVector} Reading info",
+                            DateTime.UtcNow
+                        );
 
-                        blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                        //Throws Timeout Exception
+                        await TimeoutPolicy.ExecuteAsync(async () =>
+                        {
+                            blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                        }, TimeSpan.FromMinutes(7));
+
+                        await _logger.WriteInfoAsync
+                        (
+                            "BlockIndexingJob",
+                            "IndexBlocksAsync",
+                            indexerId,
+                            $"Checking existence of the parent-{currentBlockNumber}",
+                            DateTime.UtcNow
+                        );
 
                         var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
                         var blockExists  = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
 
                         transactionCount = blockContent.Transactions.Count;
                         iterationVector  = blockExists ? 1 : -1; //That is how we deal with forks
+
+                        await _logger.WriteInfoAsync
+                        (
+                            "BlockIndexingJob",
+                            "IndexBlocksAsync",
+                            indexerId,
+                            $"Indexing block in DB -{currentBlockNumber}",
+                            DateTime.UtcNow
+                        );
 
                         await _indexingService.IndexBlockAsync(blockContext);
 
@@ -157,7 +188,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     await _logger.WriteInfoAsync
                     (
                         "BlockIndexingJob",
-                        "RunAsync",
+                        "IndexBlocksAsync",
                         indexerId,
                         $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}",
                         DateTime.UtcNow
