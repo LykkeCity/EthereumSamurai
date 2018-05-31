@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Job.EthereumSamurai.Utils;
 using Lykke.Service.EthereumSamurai.Models;
 using Common.Log;
 using Akka.Actor;
@@ -13,39 +12,22 @@ using static Lykke.Job.EthereumSamurai.Messages.BlockIndexingActor;
 using Messages = Lykke.Job.EthereumSamurai.Messages;
 using static Akka.Actor.Status;
 using Akka.Pattern;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
+using Lykke.Service.EthereumSamurai.Core.Exceptions;
+using Lykke.Job.EthereumSamurai.Extensions;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public partial class BlockIndexingActor : ReceiveActor
     {
-        private readonly IBlockService _blockService;
-        private readonly IIndexingService _indexingService;
-        private readonly IIndexingSettings _indexingSettings;
-        private readonly ILog _logger;
-        private readonly IRpcBlockReader _rpcBlockReader;
-
-        private bool _firstRun;
-
-        public string Id => nameof(BlockIndexingJob);
-        public int Version => 1;
+        private readonly IBlockIndexingRole _role;
+        protected Func<BigInteger, BigInteger, Messages.Common.IIndexedBlockNumberMessage> _createMessageDelegate =
+            (ind, next) => new Messages.Common.IndexedBlockNumberMessage(ind, next);
 
         public BlockIndexingActor(
-            IBlockService blockService,
-            IIndexingService indexingService,
-            ILog logger,
-            IRpcBlockReader rpcBlockReader)
+            IBlockIndexingRole role)
         {
-            _blockService = blockService;
-            _firstRun = true;
-            _indexingService = indexingService;
-            _logger = logger;
-            _rpcBlockReader = rpcBlockReader;
-            //var breaker = new CircuitBreaker(
-            //    maxFailures: -1,
-            //    callTimeout: TimeSpan.FromMinutes(5),
-            //    resetTimeout: TimeSpan.FromMinutes(1))
-            //.OnOpen(NotifyMeOnOpen);
-
+            _role = role;
             FirstRun();
         }
 
@@ -55,31 +37,17 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             ReceiveAsync<IndexBlockMessage>(async (message) =>
             {
-                var indexerId = message.IndexerId;
-                var currentBlockNumber = message.BlockNumber;
+                using (var logger = Context.GetLogger(message))
+                {
+                    var indexed = message.BlockNumber;
+                    var nextToIndex = indexed + 1;
 
-                await _logger.WriteInfoAsync
-                (
-                    "BlockIndexingJob",
-                    "RunAsync",
-                    indexerId,
-                    $"Indexing begins from block-{currentBlockNumber}",
-                    DateTime.UtcNow
-                );
+                    await _role.IndexBlockAsync(indexed);
+                    logger.Info($"Indexed block {indexed} starting indexing {nextToIndex};");
+                    Sender.Tell(_createMessageDelegate(indexed, nextToIndex));
 
-                var blockContent = await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
-                var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
-
-                await _indexingService.IndexBlockAsync(blockContext);
-
-                currentBlockNumber++;
-
-                _firstRun = false;
-
-                //After first run
-                Sender.Tell(Messages.Common.CreateIndexedBlockNumberMessage(indexerId, message.BlockNumber, currentBlockNumber));
-
-                Become(NormalState);
+                    Become(NormalState);
+                }
             });
         }
 
@@ -91,52 +59,47 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             ReceiveAsync<IndexBlockMessage>(async (message) =>
             {
-                var indexerId = message.IndexerId;
-                var currentBlockNumber = message.BlockNumber;
-                int iterationVector = 0;
-                BlockContent blockContent = null;
-                int transactionCount = 0;
-
-                await _logger.WriteInfoAsync
-                (
-                    "BlockIndexingJob",
-                    "RunAsync",
-                    indexerId,
-                    $"Indexing block-{currentBlockNumber},",
-                    DateTime.UtcNow
-                );
-
-                await RetryPolicy.ExecuteAsync(async () =>
+                using (var logger = Context.GetLogger(message))
                 {
+                    var indexed = message.BlockNumber;
+                    try
+                    {
+                        var nextToIndex = await _role.IndexBlockAsync(indexed);
+                        logger.Info($"Indexed block {indexed} starting indexing {nextToIndex};");
+                        Sender.Tell(_createMessageDelegate(indexed, nextToIndex));
+                    }
+                    catch (BlockIsNotYetMinedException exc)
+                    {
+                        //TODO: LOG here;
+                        logger.Info($"Tip Not Yet Mined {indexed}");
+                        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(20), Self, message, Sender);
 
-                    blockContent = blockContent ?? await _rpcBlockReader.ReadBlockAsync(currentBlockNumber);
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        //unexpected error
+                        logger.Error(e);
 
-                    var blockContext = new BlockContext(Id, Version, indexerId, blockContent);
-                    var blockExists = await _blockService.DoesBlockExist(blockContent.BlockModel.ParentHash);
-
-                    transactionCount = blockContent.Transactions.Count;
-                    iterationVector = blockExists ? 1 : -1; //That is how we deal with forks
-
-                    await _indexingService.IndexBlockAsync(blockContext);
-
-                }, 5, 100);
-
-                await _logger.WriteInfoAsync
-                (
-                    "BlockIndexingJob",
-                    "RunAsync",
-                    indexerId,
-                    $"Indexing completed for block-{currentBlockNumber}, Vector:{iterationVector}, transaction count - {transactionCount}",
-                    DateTime.UtcNow
-                );
-
-                var indexed = currentBlockNumber;
-                currentBlockNumber += iterationVector;
-
-                Sender.Tell(Messages.Common.CreateIndexedBlockNumberMessage(indexerId, indexed, currentBlockNumber));
+                        throw;
+                    }
+                }
             });
         }
 
         #endregion
+
+        public override void AroundPreRestart(Exception cause, object message)
+        {
+            using (var logger = Context.GetLogger(message))
+            {
+                logger.Error(cause);
+
+                if (message != null)
+                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(2), Self, message, Sender);
+
+                base.AroundPreRestart(cause, message);
+            }
+        }
     }
 }

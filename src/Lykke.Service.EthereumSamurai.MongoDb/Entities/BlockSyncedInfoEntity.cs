@@ -10,8 +10,5 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Entities
     {
         [BsonId]
         public ulong BlockNumber { get; set; }
-        
-        [BsonElement]
-        public string IndexerId { get; set; }
     }
 }

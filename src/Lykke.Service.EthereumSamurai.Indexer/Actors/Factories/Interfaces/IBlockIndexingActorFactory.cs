@@ -8,5 +8,6 @@ namespace Lykke.Job.EthereumSamurai.Actors.Factories
 {
     public interface IBlockIndexingActorFactory : IChildActorFactory
     {
+        IActorRef BuildTip(IUntypedActorContext context, string name);
     }
 }

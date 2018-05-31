@@ -73,7 +73,8 @@ namespace Lykke.Service.EthereumSamurai.Services
                 StateRoot         = block.StateRoot,
                 Timestamp         = block.Timestamp,
                 TotalDifficulty   = block.TotalDifficulty,
-                TransactionsRoot  = block.TransactionsRoot
+                TransactionsRoot  = block.TransactionsRoot,
+                IsIndexed         = true
             };
 
             #endregion

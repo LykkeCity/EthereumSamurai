@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Text;
-using System.Threading;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
 using Newtonsoft.Json;
 using RabbitMQ.Client;
-using RabbitMQ.Client.Exceptions;
 
 namespace Lykke.Service.EthereumSamurai.RabbitMQ
 {
@@ -14,52 +12,52 @@ namespace Lykke.Service.EthereumSamurai.RabbitMQ
     {
         private const string Queue = "lykke.ethereum.indexer.ethereumsamurai.contracts";
 
-        private IModel _channel;
-        private IBasicProperties _publishProperties;
-        private readonly object _dequeueLock;
-        private readonly object _enqueueLock;
-        private readonly IBaseSettings _settings;
-        private readonly ReaderWriterLockSlim _queueUpdateLock;
-        private DateTime _lastTimeQueueWasCreated;
+        private readonly IModel           _channel;
+        private readonly object           _dequeueLock;
+        private readonly object           _enqueueLock;
+        private readonly IBasicProperties _publishProperties;
 
         public Erc20IndexingQueue(IBaseSettings settings)
         {
-            _settings = settings;
-            _dequeueLock = new object();
-            _enqueueLock = new object();
-            _queueUpdateLock = new ReaderWriterLockSlim();
-            _lastTimeQueueWasCreated = DateTime.MinValue;
+            var connectionFactory = new ConnectionFactory
+            {
+                AutomaticRecoveryEnabled = true,
+                HostName                 = settings.RabbitMq.ExternalHost,
+                Port                     = settings.RabbitMq.Port,
+                UserName                 = settings.RabbitMq.Username,
+                Password                 = settings.RabbitMq.Password
+            };
 
-            CreateQueue();
+            _channel           = connectionFactory.CreateConnection().CreateModel();
+            _dequeueLock       = new object();
+            _enqueueLock       = new object();
+            _publishProperties = _channel.CreateBasicProperties();
+
+            _publishProperties.Persistent = true;
+
+            _channel.QueueDeclare
+            (
+                queue:      Queue,
+                durable:    true,
+                exclusive:  false,
+                autoDelete: false,
+                arguments:  null
+            );
         }
 
         public DeployedContractModel Dequeue()
         {
             lock (_dequeueLock)
             {
-                BasicGetResult message = null;
-
-                try
-                {
-                    message = _channel.BasicGet(Queue, false);
-                }
-                catch (OperationInterruptedException e)
-                {
-                    if (e.ShutdownReason.ReplyCode == 404)
-                    {
-                        CreateQueue();
-                    }
-
-                    throw;
-                }
+                var message = _channel.BasicGet(Queue, false);
 
                 if (message != null)
                 {
                     try
                     {
                         var payloadString = Encoding.UTF8.GetString(message.Body);
-                        var contract = JsonConvert.DeserializeObject<DeployedContractModel>(payloadString);
-
+                        var contract      = JsonConvert.DeserializeObject<DeployedContractModel>(payloadString);
+                        
                         _channel.BasicAck(message.DeliveryTag, false);
 
                         return contract;
@@ -82,66 +80,16 @@ namespace Lykke.Service.EthereumSamurai.RabbitMQ
         {
             lock (_enqueueLock)
             {
-                try
-                {
-                    var payloadString = JsonConvert.SerializeObject(contract);
-                    var payloadBytes = Encoding.UTF8.GetBytes(payloadString);
+                var payloadString = JsonConvert.SerializeObject(contract);
+                var payloadBytes  = Encoding.UTF8.GetBytes(payloadString);
 
-                    _queueUpdateLock.EnterReadLock();
-
-                    _channel.BasicPublish
-                    (
-                        exchange: string.Empty,
-                        routingKey: Queue,
-                        basicProperties: _publishProperties,
-                        body: payloadBytes
-                    );
-                }
-                finally
-                {
-                    _queueUpdateLock.ExitReadLock();
-                }
-            }
-        }
-
-        public void CreateQueue()
-        {
-            try
-            {
-                _queueUpdateLock.EnterWriteLock();
-
-                if (DateTime.UtcNow - _lastTimeQueueWasCreated < TimeSpan.FromMinutes(5))
-                {
-                    return;
-                }
-
-                var connectionFactory = new ConnectionFactory
-                {
-                    AutomaticRecoveryEnabled = true,
-                    HostName = _settings.RabbitMq.ExternalHost,
-                    Port = _settings.RabbitMq.Port,
-                    UserName = _settings.RabbitMq.Username,
-                    Password = _settings.RabbitMq.Password
-                };
-
-                _channel = connectionFactory.CreateConnection().CreateModel();
-                _publishProperties = _channel.CreateBasicProperties();
-
-                _publishProperties.Persistent = true;
-                _channel.QueueDeclare
+                _channel.BasicPublish
                 (
-                    queue: Queue,
-                    durable: true,
-                    exclusive: false,
-                    autoDelete: false,
-                    arguments: null
+                    exchange:        string.Empty,
+                    routingKey:      Queue,
+                    basicProperties: _publishProperties,
+                    body:            payloadBytes
                 );
-
-                _lastTimeQueueWasCreated = DateTime.UtcNow;
-            }
-            finally
-            {
-                _queueUpdateLock.ExitWriteLock();
             }
         }
     }

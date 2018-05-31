@@ -6,45 +6,45 @@ using Common.Log;
 using Akka.Actor;
 using Messages = Lykke.Job.EthereumSamurai.Messages;
 using static Akka.Actor.Status;
+using Lykke.Job.EthereumSamurai.Extensions;
 
 namespace Lykke.Job.EthereumSamurai.Jobs
 {
     public partial class Erc20BalanceIndexingActor : ReceiveActor
     {
         private readonly IErc20BalanceIndexingService _indexingService;
-        private readonly ILog _logger;
-        private readonly ulong _startFrom;
 
-        public Erc20BalanceIndexingActor(
-            IErc20BalanceIndexingService indexingService,
-            ILog logger,
-            ulong startFrom)
+        public Erc20BalanceIndexingActor(IErc20BalanceIndexingService indexingService)
         {
             _indexingService = indexingService;
-            _logger = logger;
-            _startFrom = startFrom;
 
             ReceiveAsync<Messages.Erc20BalanceIndexingActor.IndexBlockMessage>(async (message) =>
             {
-                var sender = Sender;
-                var blockNumber = message.BlockNumber;
-                await _indexingService.IndexBlockAsync(blockNumber, Version);
+                var closure = Sender;
 
-                await _logger.WriteInfoAsync
-                (
-                    nameof(Erc20BalanceIndexingJob),
-                    nameof(ReceiveAsync),
-                    "Block balances indexed",
-                    $"Indexed balances of block {blockNumber}.",
-                    DateTime.UtcNow
-                );
+                using (var logger = Context.GetLogger(message))
+                {
+                    try
+                    {
+                        var blockNumber = message.BlockNumber;
+                        await _indexingService.IndexBlockAsync(blockNumber, Version);
 
-                sender.Tell(new Success(true));
+                        logger.Info($"Indexed erc20 balances of block {blockNumber}");
+
+                        closure.Tell(new Messages.Common.OperationResultMessage(true));
+                    }
+                    catch (Exception e)
+                    {
+                        logger.Error(e);
+
+                        closure.Tell(new Messages.Common.OperationResultMessage(true));
+                    }
+                }
             });
         }
 
         public string Id
-            => nameof(Erc20BalanceIndexingJob);
+            => nameof(Erc20BalanceIndexingActor);
 
         public int Version
             => 1;

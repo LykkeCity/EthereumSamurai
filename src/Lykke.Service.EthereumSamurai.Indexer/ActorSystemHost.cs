@@ -7,9 +7,14 @@ using Common.Log;
 using Lykke.Job.EthereumSamurai.Actors.Factories;
 using Lykke.Job.EthereumSamurai.Jobs;
 using Lykke.Service.EthereumSamurai.Core.Models;
+using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
+using Lykke.Service.EthereumSamurai.Logger;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -24,58 +29,31 @@ namespace Lykke.Job.EthereumSamurai
         private IActorRef _erc20ContractIndexingActorDispatcherProps;
         private IContainer _container;
 
-        public ActorSystemHost()
-        {
-            //var systemConfig = ConfigurationFactory.FromResource
-            //(
-            //    "Lykke.Service.EthereumClassicApi.Actors.SystemConfig.json",
-            //    typeof(ActorSystemHost).Assembly
-            //);
-            _actorSystem = ActorSystem.Create(actorSystemName, Config.Empty);
-        }
-
-        public void SetDependencyResolver(IContainer container)
+        public ActorSystemHost(IContainer container)
         {
             _container = container;
+            LykkeLogger.Configure(container.Resolve<ILog>());
+            //Logs are registered here
+            var systemConfig = ConfigurationFactory.FromResource
+            (
+                "Lykke.Job.EthereumSamurai.SystemConfig.json",
+                Assembly.GetExecutingAssembly()
+            );
+
+            _actorSystem = ActorSystem.Create(actorSystemName, systemConfig);
             var propsResolver = new AutoFacDependencyResolver(container, _actorSystem);
         }
 
-        public void Start(ulong currentBlockCount)
+        public void Start()
         {
             var indexerInstanceSettings = _container.Resolve<IIndexerInstanceSettings>();
-            var settings = new List<IIndexingSettings>();
 
             // Blocks indexers
             if (indexerInstanceSettings.IndexBlocks)
             {
-                var lastRpcBlock = currentBlockCount;
-                var from = indexerInstanceSettings.StartBlock;
-                var to = indexerInstanceSettings.StopBlock ?? lastRpcBlock;
-                var partSize = (to - from) / (ulong)indexerInstanceSettings.ThreadAmount;
-
-                ulong? toBlock = from;
-
-
-                for (var i = 0; i < indexerInstanceSettings.ThreadAmount; i++)
-                {
-                    var fromBlock = (ulong)toBlock + 1;
-
-                    toBlock = fromBlock + partSize;
-                    toBlock = toBlock < to ? toBlock : indexerInstanceSettings.StopBlock;
-
-                    var indexerId = $"{indexerInstanceSettings.IndexerId}_thread_{i}";
-                    var setting = new IndexingSettings
-                    {
-                        IndexerId = indexerId,
-                        From = fromBlock,
-                        To = toBlock
-                    };
-
-                    settings.Add(setting);
-                }
-
-                var blockIndexingActorDispatcherProps = Props.Create(() => new BlockIndexingActorDispatcher(settings, 
-                    _container.Resolve<ILog>(), _container.Resolve<IBlockIndexingActorFactory>()));
+                var blockIndexingActorDispatcherProps = Props.Create(() => new BlockIndexingActorDispatcher(
+                    _container.Resolve<IBlockIndexingActorFactory>(),
+                     _container.Resolve<IBlockIndexingDispatcherRole>()));
                 _blockIndexingActorDispatcher = _actorSystem.ActorOf(blockIndexingActorDispatcherProps, "block-indexing-actor-dispatcher");
             }
 
@@ -83,7 +61,11 @@ namespace Lykke.Job.EthereumSamurai
             if (indexerInstanceSettings.IndexBalances)
             {
                 //_indexerInstanceSettings.BalancesStartBlock;
-                var erc20BalanceIndexingActorDispatcherProps = _actorSystem.DI().Props<Erc20BalanceIndexingActorDispatcher>();
+                var erc20BalanceIndexingActorDispatcherProps = Props.Create(() => new Erc20BalanceIndexingActorDispatcher(
+                    _container.Resolve<IErc20BalanceIndexingService>(),
+                     _container.Resolve<IErc20BalanceIndexingActorFactory>(),
+                     indexerInstanceSettings.BalancesStartBlock));
+
                 _erc20BalanceIndexingActorDispatcher = _actorSystem.ActorOf(erc20BalanceIndexingActorDispatcherProps, "erc20-balance-indexing-actor-dispatcher");
             }
 

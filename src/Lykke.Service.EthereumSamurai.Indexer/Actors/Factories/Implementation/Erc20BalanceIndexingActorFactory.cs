@@ -1,5 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.DI.Core;
+using Akka.Routing;
 using Lykke.Job.EthereumSamurai.Actors.Factories.Implementation;
 using Lykke.Job.EthereumSamurai.Jobs;
 using System;

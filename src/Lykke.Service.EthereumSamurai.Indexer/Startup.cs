@@ -24,8 +24,7 @@ namespace Lykke.Job.EthereumSamurai
 {
     public class Startup
     {
-        //private ActorSystemHost _actorSystemHost;
-        private JobApp _jobApp;
+        private ActorSystemHost _actorSystemHost;
         private Task _jobTask;
 
         public IHostingEnvironment Environment { get; }
@@ -66,7 +65,7 @@ namespace Lykke.Job.EthereumSamurai
                 Log = CreateLogWithSlack(services, appSettings);
 
                 builder.RegisterModule(new JobModule(appSettings, Log, Configuration));
-                //builder.RegisterModule(new ActorModule());
+                builder.RegisterModule(new ActorModule());
 
                 builder.Populate(services);
 
@@ -121,12 +120,8 @@ namespace Lykke.Job.EthereumSamurai
             try
             {
                 // NOTE: Job not yet recieve and process IsAlive requests here
-                //_actorSystemHost = new ActorSystemHost();
-                //_actorSystemHost.SetDependencyResolver(ApplicationContainer);
-                //var blockCount = await ApplicationContainer.Resolve<IRpcBlockReader>().GetBlockCount();
-                //_actorSystemHost.Start((ulong)blockCount);
-                _jobApp = new JobApp();
-                await _jobApp.Run(ApplicationContainer);
+                _actorSystemHost = new ActorSystemHost(ApplicationContainer);
+                _actorSystemHost.Start();
 
                 await Log.WriteMonitorAsync("", Program.EnvInfo, "Started");
             }

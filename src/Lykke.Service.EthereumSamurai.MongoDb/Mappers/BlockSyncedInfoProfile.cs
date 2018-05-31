@@ -14,7 +14,6 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Mappers
         public BlockSyncedInfoProfile()
         {
             CreateMap<BlockSyncedInfoModel, BlockSyncedInfoEntity>()
-                .ForMember(dest => dest.IndexerId, opt => opt.MapFrom(src => src.IndexerId))
                 .ForMember(dest => dest.BlockNumber, opt => opt.MapFrom(src => src.BlockNumber))
                 .ReverseMap();
         }

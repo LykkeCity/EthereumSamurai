@@ -25,7 +25,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
         public IJob GetJob(IIndexingSettings settings)
         {
-            return new BlockIndexingJob(_blockService, _indexingService, settings, _logger, _rpcBlockReader);
+            return null; //new BlockIndexingJob(_blockService, _indexingService, settings, _logger, _rpcBlockReader);
         }
     }
 }

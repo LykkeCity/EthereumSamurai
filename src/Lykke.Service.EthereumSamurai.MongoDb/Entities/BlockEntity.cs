@@ -43,7 +43,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Entities
         public string StateRoot { get; set; }
         [BsonElement]
         public int TransactionsCount { get; set; }
-        //[BsonElement]
-        //public bool IsIndexed { get; set; }
+        [BsonElement]
+        public bool IsIndexed { get; set; }
     }
 }

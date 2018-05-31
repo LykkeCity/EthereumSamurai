@@ -14,9 +14,9 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
 {
     public class Erc20BalanceRepository : IErc20BalanceRepository
     {
-        private readonly IMongoCollection<Erc20BalanceEntity>        _balanceCollection;
+        private readonly IMongoCollection<Erc20BalanceEntity> _balanceCollection;
         private readonly IMongoCollection<Erc20BalanceHistoryEntity> _historyCollection;
-        private readonly IMapper                                     _mapper;
+        private readonly IMapper _mapper;
 
         public Erc20BalanceRepository(
             IMongoDatabase database,
@@ -24,9 +24,11 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
         {
             _balanceCollection = database.GetCollection<Erc20BalanceEntity>(Constants.Erc20BalanceCollectionName);
             _historyCollection = database.GetCollection<Erc20BalanceHistoryEntity>(Constants.Erc20BalanceHistoryCollectionName);
-            _mapper            = mapper;
+            _mapper = mapper;
 
-            _balanceCollection.Indexes.CreateMany(new[]
+            #region Indexes
+
+            _balanceCollection.Indexes.CreateMany(new[] 
             {
                 new CreateIndexModel<Erc20BalanceEntity>
                 (
@@ -93,6 +95,30 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                     Builders<Erc20BalanceHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
                 )
             });
+
+            #endregion
+        }
+
+        public async Task<Erc20BalanceModel> GetPreviousAsync(string assetHolderAddress, string contractAddress, ulong currentBlockNumber)
+        {
+            var filterBuilder = Builders<Erc20BalanceHistoryEntity>.Filter;
+            var filter = filterBuilder.Empty;
+
+            filter &= filterBuilder.Eq(x => x.AssetHolderAddress, assetHolderAddress);
+            filter &= filterBuilder.Eq(x => x.ContractAddress, contractAddress);
+            filter &= filterBuilder.Lt(x => x.BlockNumber, currentBlockNumber);
+
+            var sort = Builders<Erc20BalanceHistoryEntity>.Sort
+                .Descending(x => x.BlockNumber);
+
+            var balanceHistory = await _historyCollection
+                .Find(filter)
+                .Sort(sort)
+                .FirstOrDefaultAsync();
+
+            return balanceHistory != null
+                 ? _mapper.Map<Erc20BalanceModel>(balanceHistory)
+                 : null;
         }
 
         public async Task<IEnumerable<Erc20BalanceModel>> GetAsync(Erc20BalanceQuery query)
@@ -109,12 +135,12 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             {
                 filter &= filterBuilder.Eq(x => x.AssetHolderAddress, query.AssetHolder);
             }
-            
+
             if (query.Contracts != null && query.Contracts.Any())
             {
                 filter &= filterBuilder.In(x => x.ContractAddress, query.Contracts.ToList());
             }
-            
+
             return (await _balanceCollection.Find(filter)
                 .SortByDescending(x => x.BlockNumber)
                 .ThenBy(x => x.ContractAddress)
@@ -123,28 +149,6 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                 .Limit(query.Count)
                 .ToListAsync())
                 .Select(_mapper.Map<Erc20BalanceModel>);
-        }
-
-        public async Task<Erc20BalanceModel> GetPreviousAsync(string assetHolderAddress, string contractAddress, ulong currentBlockNumber)
-        {
-            var filterBuilder = Builders<Erc20BalanceHistoryEntity>.Filter;
-            var filter        = filterBuilder.Empty;
-
-            filter &= filterBuilder.Eq(x => x.AssetHolderAddress, assetHolderAddress);
-            filter &= filterBuilder.Eq(x => x.ContractAddress,    contractAddress);
-            filter &= filterBuilder.Lt(x => x.BlockNumber,        currentBlockNumber);
-
-            var sort = Builders<Erc20BalanceHistoryEntity>.Sort
-                .Descending(x => x.BlockNumber);
-
-            var balanceHistory = await _historyCollection
-                .Find(filter)
-                .Sort(sort)
-                .FirstOrDefaultAsync();
-
-            return balanceHistory != null
-                 ? _mapper.Map<Erc20BalanceModel>(balanceHistory)
-                 : null;
         }
 
         public async Task SaveForBlockAsync(IEnumerable<Erc20BalanceModel> balances, ulong blockNumber)
@@ -192,7 +196,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                 .Select(_mapper.Map<Erc20BalanceHistoryEntity>)
                 .Select(SetBlockNumberToHistoryEntity)
                 .ToList();
-            
+
             if (historyEntities.Any())
             {
                 await _historyCollection.InsertManyAsync(historyEntities);
