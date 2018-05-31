@@ -43,13 +43,33 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                 ),
                 new CreateIndexModel<Erc20TransferHistoryEntity>
                 (
+                    Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.TransactionHash)
+                ),
+                new CreateIndexModel<Erc20TransferHistoryEntity>
+                (
                     Builders<Erc20TransferHistoryEntity>.IndexKeys.Combine
                     (
                         Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.From),
                         Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.To),
                         Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
                     )
-                )
+                ),
+                new CreateIndexModel<Erc20TransferHistoryEntity>
+                (
+                    Builders<Erc20TransferHistoryEntity>.IndexKeys.Combine
+                    (
+                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.From),
+                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
+                    )
+                ),
+                new CreateIndexModel<Erc20TransferHistoryEntity>
+                (
+                    Builders<Erc20TransferHistoryEntity>.IndexKeys.Combine
+                    (
+                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.To),
+                        Builders<Erc20TransferHistoryEntity>.IndexKeys.Ascending(x => x.ContractAddress)
+                    )
+                ),
             });
 
             _mapper = mapper;
