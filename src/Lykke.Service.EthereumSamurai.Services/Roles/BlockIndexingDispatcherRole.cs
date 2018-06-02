@@ -44,7 +44,7 @@ namespace Lykke.Service.EthereumSamurai.Services.Roles.Interfaces
             return jobInfo;
         }
 
-        public async Task<IEnumerable<ulong>> RetreiveMiddleBlocksToIndex(int take = 1000)
+        public async Task<IEnumerable<ulong>> RetreiveMiddleBlocksToIndexAsync(int take = 1000)
         {
             var blocksToIndex = await _blockRepository.GetNotSyncedBlocksNumbers(take);
 

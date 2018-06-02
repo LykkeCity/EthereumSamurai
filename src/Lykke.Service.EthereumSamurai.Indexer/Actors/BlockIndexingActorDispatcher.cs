@@ -20,7 +20,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         private bool _firstRun;
         private int _needToProcessCount;
         private int _currentProcessingCount;
-        private const int _batchIndexTasks = 1000;
+        private const int BatchIndexTasks = 1000;
 
         public string Id => nameof(BlockIndexingActorDispatcher);
         public int Version => 1;
@@ -64,7 +64,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                             _firstRun = false;
                         }
 
-                        var numbers = await _role.RetreiveMiddleBlocksToIndex(_batchIndexTasks);
+                        var numbers = await _role.RetreiveMiddleBlocksToIndexAsync(BatchIndexTasks);
                         _needToProcessCount = numbers.Count();
                         _currentProcessingCount = 0;
 

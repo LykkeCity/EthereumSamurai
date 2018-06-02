@@ -11,6 +11,6 @@ namespace Lykke.Service.EthereumSamurai.Services.Roles.Interfaces
     {
         Task<JobInfo> RetreiveJobInfoAsync();
 
-        Task<IEnumerable<ulong>> RetreiveMiddleBlocksToIndex(int take = 1000);
+        Task<IEnumerable<ulong>> RetreiveMiddleBlocksToIndexAsync(int take = 1000);
     }
 }

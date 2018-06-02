@@ -26,6 +26,21 @@ namespace Lykke.Job.EthereumSamurai.Modules
                 .SingleInstance();
 
             builder
+                .RegisterType<Erc20BalanceIndexingActorFactory>()
+                .As<IErc20BalanceIndexingActorFactory>()
+                .SingleInstance();
+
+            builder
+                .RegisterType<Erc20ContractIndexingActorFactory>()
+                .As<IErc20ContractIndexingActorFactory>()
+                .SingleInstance();
+
+            builder
+                .RegisterType<BlockIndexingActorFactory>()
+                .As<IBlockIndexingActorFactory>()
+                .SingleInstance();
+
+            builder
                 .RegisterAssemblyTypes(ThisAssembly)
                 .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(ActorBase)));
         }

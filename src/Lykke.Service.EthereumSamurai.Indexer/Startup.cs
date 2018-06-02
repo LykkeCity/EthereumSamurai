@@ -25,7 +25,6 @@ namespace Lykke.Job.EthereumSamurai
     public class Startup
     {
         private ActorSystemHost _actorSystemHost;
-        private Task _jobTask;
 
         public IHostingEnvironment Environment { get; }
         public IContainer ApplicationContainer { get; private set; }

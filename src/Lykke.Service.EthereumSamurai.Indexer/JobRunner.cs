@@ -1,12 +1,10 @@
 ﻿using Common.Log;
-using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Job.EthereumSamurai.Jobs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Exceptions;
 
 namespace Lykke.Job.EthereumSamurai
 {

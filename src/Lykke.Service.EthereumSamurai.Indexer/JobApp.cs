@@ -1,25 +1,14 @@
-﻿using AutoMapper;
+﻿using Autofac;
 using Common.Log;
-using Lykke.Service.EthereumSamurai.Common;
-using Lykke.Service.EthereumSamurai.Core.Models;
-using Lykke.Service.EthereumSamurai.Core.Repositories;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Job.EthereumSamurai.Dependencies;
 using Lykke.Job.EthereumSamurai.Jobs;
 using Lykke.Job.EthereumSamurai.Settings;
-using Lykke.Service.EthereumSamurai.RabbitMQ;
+using Lykke.Service.EthereumSamurai.Core.Settings;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.Loader;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Autofac;
 
 namespace Lykke.Job.EthereumSamurai
 {
