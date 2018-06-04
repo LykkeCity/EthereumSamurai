@@ -1,16 +1,11 @@
 ﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Common.Log;
 using Akka.Actor;
-using Messages = Lykke.Job.EthereumSamurai.Messages;
-using static Akka.Actor.Status;
 using Lykke.Job.EthereumSamurai.Extensions;
+using Lykke.Service.EthereumSamurai.Core.Services;
 
-namespace Lykke.Job.EthereumSamurai.Jobs
+namespace Lykke.Job.EthereumSamurai.Actors
 {
-    public partial class Erc20BalanceIndexingActor : ReceiveActor
+    public class Erc20BalanceIndexingActor : ReceiveActor
     {
         private readonly IErc20BalanceIndexingService _indexingService;
 
@@ -18,7 +13,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             _indexingService = indexingService;
 
-            ReceiveAsync<Messages.Erc20BalanceIndexingActor.IndexBlockMessage>(async (message) =>
+            ReceiveAsync<Messages.IndexBlockBalancesMessage>(async (message) =>
             {
                 var closure = Sender;
 

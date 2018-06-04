@@ -22,11 +22,9 @@ namespace Lykke.Job.EthereumSamurai
 
             try
             {
-                //Master waits 5 sec before start
-                await Task.Delay(TimeSpan.FromSeconds(5));
                 var webHost = new WebHostBuilder()
                     .UseKestrel()
-                    .UseUrls("http://*:5000")
+                    .UseUrls("http://*:5001")
                     .UseContentRoot(Directory.GetCurrentDirectory())
                     .UseStartup<Startup>()
                     .UseApplicationInsights()
@@ -53,7 +51,6 @@ namespace Lykke.Job.EthereumSamurai
                             }));
             }
 
-            Console.ReadKey(true);
             Console.WriteLine("Terminated");
         }
     }

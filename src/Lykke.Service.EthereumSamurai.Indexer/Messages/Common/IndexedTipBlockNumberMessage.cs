@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Numerics;
-using System.Text;
 
 namespace Lykke.Job.EthereumSamurai.Messages.Common
 {

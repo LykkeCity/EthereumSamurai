@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Lykke.Job.EthereumSamurai.Messages.Delivery;
 using System.ComponentModel;
 using System.Numerics;
-using System.Text;
 
 namespace Lykke.Job.EthereumSamurai.Messages.Common
 {
     [ImmutableObject(true)]
-    public sealed class IndexedBlockNumberMessage : IIndexedBlockNumberMessage
+    public sealed class IndexedBlockNumberMessage : IIndexedBlockNumberMessage, IDeliverable
     {
         public IndexedBlockNumberMessage(BigInteger indexedBlock, BigInteger nextBlock)
         {
@@ -17,6 +15,10 @@ namespace Lykke.Job.EthereumSamurai.Messages.Common
 
         public BigInteger IndexedBlock { get; private set; }
         public BigInteger NextBlock { get; private set; }
+        public long DiliveryId
+        {
+            get { return (long) IndexedBlock % long.MaxValue; }
+        }
     }
 
     public interface IIndexedBlockNumberMessage

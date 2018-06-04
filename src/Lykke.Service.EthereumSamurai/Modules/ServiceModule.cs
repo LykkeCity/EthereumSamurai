@@ -42,6 +42,8 @@ namespace Lykke.Service.EthereumSamurai.Modules
                 .SingleInstance();
 
             _services.ConfigureServices(_cfg);
+            _services.AddSingleton<IBaseSettings>(_settings.CurrentValue.EthereumIndexer);
+            _services.AddSingleton(_settings);
 
             builder.Populate(_services);
         }

@@ -8,6 +8,7 @@ using Lykke.Common.Api.Contract.Responses;
 using Lykke.Common.ApiLibrary.Middleware;
 using Lykke.Common.ApiLibrary.Swagger;
 using Lykke.Job.EthereumSamurai.Modules;
+using Lykke.Job.EthereumSamurai.Slave;
 using Lykke.Logs;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
@@ -24,7 +25,7 @@ namespace Lykke.Job.EthereumSamurai
 {
     public class Startup
     {
-        private ActorSystemHost _actorSystemHost;
+        private ActorSystemSlave _actorSystemHost;
 
         public IHostingEnvironment Environment { get; }
         public IContainer ApplicationContainer { get; private set; }
@@ -119,7 +120,7 @@ namespace Lykke.Job.EthereumSamurai
             try
             {
                 // NOTE: Job not yet recieve and process IsAlive requests here
-                _actorSystemHost = new ActorSystemHost(ApplicationContainer);
+                _actorSystemHost = new ActorSystemSlave(ApplicationContainer);
                 _actorSystemHost.Start();
 
                 await Log.WriteMonitorAsync("", Program.EnvInfo, "Started");

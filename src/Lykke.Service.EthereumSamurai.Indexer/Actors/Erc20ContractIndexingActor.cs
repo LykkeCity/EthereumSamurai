@@ -1,16 +1,12 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Common.Log;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Akka.Actor;
-using Messages = Lykke.Job.EthereumSamurai.Messages;
-using Lykke.Service.EthereumSamurai.Core.Utils;
+﻿using Akka.Actor;
 using Lykke.Job.EthereumSamurai.Extensions;
+using Lykke.Job.EthereumSamurai.Messages;
+using Lykke.Service.EthereumSamurai.Core.Services;
+using Lykke.Service.EthereumSamurai.Core.Utils;
 
-namespace Lykke.Job.EthereumSamurai.Jobs
+namespace Lykke.Job.EthereumSamurai.Actors
 {
-    public partial class Erc20ContractIndexingActor : ReceiveActor
+    public class Erc20ContractIndexingActor : ReceiveActor
     {
         private readonly IErc20ContractIndexingService _indexingService;
 
@@ -19,7 +15,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             _indexingService = indexingService;
 
-            ReceiveAsync<Messages.Erc20ContractIndexingActor.Erc20ContractDeployedMessage>(async (message) =>
+            ReceiveAsync<Erc20ContractDeployedMessage>(async (message) =>
             {
                 using (var logger = Context.GetLogger(message))
                 {

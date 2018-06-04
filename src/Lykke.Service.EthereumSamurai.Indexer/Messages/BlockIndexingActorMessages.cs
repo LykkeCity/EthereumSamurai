@@ -3,25 +3,23 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Numerics;
 using System.Text;
+using Lykke.Job.EthereumSamurai.Messages.Delivery;
 
 namespace Lykke.Job.EthereumSamurai.Messages
 {
-    public partial class BlockIndexingActor
+    [ImmutableObject(true)]
+    public class IndexBlockMessage : IDeliverable
     {
-        public static IndexBlockMessage CreateIndexBlockMessage(BigInteger blockNumber)
+        public BigInteger BlockNumber { get; private set; }
+
+        public IndexBlockMessage(BigInteger blockNumber)
         {
-            return new IndexBlockMessage(blockNumber);
+            BlockNumber = blockNumber;
         }
 
-        [ImmutableObject(true)]
-        public class IndexBlockMessage
+        public long DiliveryId
         {
-            public BigInteger BlockNumber { get; private set; }
-
-            public IndexBlockMessage(BigInteger blockNumber)
-            {
-                BlockNumber = blockNumber;
-            }
+            get { return (long)BlockNumber % long.MaxValue; }
         }
     }
 }

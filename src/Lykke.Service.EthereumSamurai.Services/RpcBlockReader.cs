@@ -74,7 +74,7 @@ namespace Lykke.Service.EthereumSamurai.Services
                 Timestamp         = block.Timestamp,
                 TotalDifficulty   = block.TotalDifficulty,
                 TransactionsRoot  = block.TransactionsRoot,
-                IsIndexed         = true
+                IsIndexed         = false
             };
 
             #endregion
@@ -89,7 +89,9 @@ namespace Lykke.Service.EthereumSamurai.Services
                 var transactionReciept =
                     await _client.Eth.Transactions.GetTransactionReceipt.SendRequestAsync(transaction.TransactionHash);
 
-                
+                if (transactionReciept == null)
+                    throw new BlockIsNotYetMinedException(blockHeight);
+
                 TraceResultModel traceResult = null;
                 try
                 {

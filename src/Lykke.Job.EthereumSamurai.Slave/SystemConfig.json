@@ -1,0 +1,7 @@
+﻿{
+  "akka": {
+    "loggers": [
+      "Lykke.Service.EthereumSamurai.Logger.LykkeLogger, Lykke.Service.EthereumSamurai.Logger"
+    ]
+  }
+}

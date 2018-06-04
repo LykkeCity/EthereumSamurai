@@ -44,6 +44,15 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             await _collection.InsertOneAsync(blockEntity);
         }
 
+        public async Task MarkAsIndexedAsync(ulong number)
+        {
+            var filterBuilder = Builders<BlockEntity>.Filter;
+            FilterDefinition<BlockEntity> filter = filterBuilder.Eq(x => x.Number, number);
+            var definition = Builders<BlockEntity>.Update.Set(o => o.IsIndexed, true);
+
+            await _collection.UpdateOneAsync(filter, definition);
+        }
+
         public async Task<bool> DoesBlockExistAsync(string blockHash)
         {
             var filterBuilder = Builders<BlockEntity>.Filter;

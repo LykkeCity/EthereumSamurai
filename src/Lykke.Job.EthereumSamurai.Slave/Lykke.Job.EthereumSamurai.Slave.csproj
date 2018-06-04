@@ -4,7 +4,7 @@
     <Version>1.0.0</Version>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <AssemblyName>Lykke.Job.EthereumSamurai</AssemblyName>
+    <AssemblyName>Lykke.Job.EthereumSamurai.Slave</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -12,12 +12,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="ethereumSamurai.hocon" />
+    <None Remove="ethereumSamuraiSlave.hocon" />
     <None Remove="SystemConfig.json" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="ethereumSamurai.hocon">
+    <Content Include="ethereumSamuraiSlave.hocon">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -62,6 +62,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Common\Lykke.Service.EthereumSamurai.Common.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Core\Lykke.Service.EthereumSamurai.Core.csproj" />
+    <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Indexer\Lykke.Job.EthereumSamurai.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Logger\Lykke.Service.EthereumSamurai.Logger.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Models\Lykke.Service.EthereumSamurai.Models.csproj" />
     <ProjectReference Include="..\Lykke.Service.EthereumSamurai.MongoDb\Lykke.Service.EthereumSamurai.MongoDb.csproj" />

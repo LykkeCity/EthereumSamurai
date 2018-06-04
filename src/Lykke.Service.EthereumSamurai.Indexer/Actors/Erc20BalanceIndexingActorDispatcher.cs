@@ -1,16 +1,13 @@
-﻿using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Common.Log;
-using Akka.Actor;
-using Messages = Lykke.Job.EthereumSamurai.Messages;
-using Lykke.Job.EthereumSamurai.Actors.Factories;
+﻿using Akka.Actor;
+using Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces;
 using Lykke.Job.EthereumSamurai.Extensions;
+using Lykke.Service.EthereumSamurai.Core.Services;
+using System;
+using System.Threading;
 
-namespace Lykke.Job.EthereumSamurai.Jobs
+namespace Lykke.Job.EthereumSamurai.Actors
 {
-    public partial class Erc20BalanceIndexingActorDispatcher : ReceiveActor
+    public class Erc20BalanceIndexingActorDispatcher : ReceiveActor
     {
         private readonly IErc20BalanceIndexingService _indexingService;
         private readonly ulong _startFrom;
@@ -35,7 +32,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                         if (nextBlockToIndex.HasValue)
                         {
                             await _erc20BalanceIndexingActor.Ask(
-                               new Messages.Erc20BalanceIndexingActor.IndexBlockMessage(nextBlockToIndex.Value), TimeSpan.FromSeconds(90));
+                               new Messages.IndexBlockBalancesMessage(nextBlockToIndex.Value), TimeSpan.FromSeconds(90));
 
                             Self.Tell(new Messages.Common.DoIterationMessage());
                         }
@@ -54,12 +51,6 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
             Self.Tell(new Messages.Common.DoIterationMessage());
         }
-
-        public string Id
-            => nameof(Erc20BalanceIndexingJob);
-
-        public int Version
-            => 1;
 
         #region SupervisionStrategy
 

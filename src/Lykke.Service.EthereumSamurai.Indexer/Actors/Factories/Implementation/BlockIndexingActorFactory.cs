@@ -1,32 +1,30 @@
 ﻿using Akka.Actor;
 using Akka.DI.Core;
 using Akka.Routing;
-using Lykke.Job.EthereumSamurai.Actors.Factories.Implementation;
-using Lykke.Job.EthereumSamurai.Jobs;
-using Lykke.Service.EthereumSamurai.Core.Models;
-using Lykke.Service.EthereumSamurai.Core.Settings;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces;
 
-namespace Lykke.Job.EthereumSamurai.Actors.Factories
+namespace Lykke.Job.EthereumSamurai.Actors.Factories.Implementation
 {
     public class BlockIndexingActorFactory : ChildActorFactory<BlockIndexingActor>, IBlockIndexingActorFactory
     {
-        private readonly IIndexerInstanceSettings _indexerInstanceSettings;
-
-        public BlockIndexingActorFactory(IIndexerInstanceSettings indexerInstanceSettings)
+        public BlockIndexingActorFactory()
         {
-            _indexerInstanceSettings = indexerInstanceSettings;
+        }
+
+        public IActorRef Build(ActorSystem system, string name)
+        {
+            return system.ActorOf
+            (
+                Props.Create(() => new BlockIndexingActor()).WithRouter(FromConfig.Instance),
+                name
+            );
         }
 
         public override IActorRef Build(IUntypedActorContext context, string name)
         {
-            var router = new SmallestMailboxPool(_indexerInstanceSettings.ThreadAmount);
-
             return context.ActorOf
             (
-                context.DI().Props<BlockIndexingActor>().WithRouter(router),
+                Props.Create(() => new BlockIndexingActor()).WithRouter(FromConfig.Instance),
                 name
             );
         }

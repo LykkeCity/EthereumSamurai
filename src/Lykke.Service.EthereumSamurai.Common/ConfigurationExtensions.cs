@@ -23,7 +23,6 @@ namespace Lykke.Service.EthereumSamurai.Common
             this IServiceCollection collection,
                  IConfigurationRoot configuration)
         {
-            collection.GetSettings(configuration);
             collection.ConfigureRepositories();
             collection.ConfigureServices();
 
@@ -33,19 +32,6 @@ namespace Lykke.Service.EthereumSamurai.Common
         public static IServiceCollection ConfigureServices(this IServiceCollection collection)
         {
             collection.RegisterServices();
-            return collection;
-        }
-
-        public static IServiceCollection GetSettings(
-            this IServiceCollection collection,
-                 IConfigurationRoot configuration)
-        {
-            IReloadingManager<AppSettings> settings;
-            settings = configuration.LoadSettings<AppSettings>();
-            
-            collection.AddSingleton<IBaseSettings>(settings.CurrentValue.EthereumIndexer);
-            collection.AddSingleton(settings);
-
             return collection;
         }
     }

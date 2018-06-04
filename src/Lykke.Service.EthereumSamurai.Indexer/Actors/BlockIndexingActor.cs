@@ -1,33 +1,25 @@
 ﻿using System;
 using System.Numerics;
-using System.Threading;
-using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Models;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Service.EthereumSamurai.Models;
-using Common.Log;
 using Akka.Actor;
-using Lykke.Job.EthereumSamurai.Messages;
-using static Lykke.Job.EthereumSamurai.Messages.BlockIndexingActor;
-using Messages = Lykke.Job.EthereumSamurai.Messages;
-using static Akka.Actor.Status;
-using Akka.Pattern;
-using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
-using Lykke.Service.EthereumSamurai.Core.Exceptions;
+using Autofac;
+using Common;
 using Lykke.Job.EthereumSamurai.Extensions;
+using Lykke.Job.EthereumSamurai.Messages.Delivery;
+using Lykke.Job.EthereumSamurai.ServiceLocation;
+using Lykke.Service.EthereumSamurai.Core.Exceptions;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 
-namespace Lykke.Job.EthereumSamurai.Jobs
+namespace Lykke.Job.EthereumSamurai.Actors
 {
-    public partial class BlockIndexingActor : ReceiveActor
+    public class BlockIndexingActor : ReceiveActor
     {
         private readonly IBlockIndexingRole _role;
         protected Func<BigInteger, BigInteger, Messages.Common.IIndexedBlockNumberMessage> _createMessageDelegate =
             (ind, next) => new Messages.Common.IndexedBlockNumberMessage(ind, next);
 
-        public BlockIndexingActor(
-            IBlockIndexingRole role)
+        public BlockIndexingActor()
         {
-            _role = role;
+            _role = ActorLocator.Locator.Resolve<IBlockIndexingRole>();
             FirstRun();
         }
 
@@ -35,10 +27,12 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
         public void FirstRun()
         {
-            ReceiveAsync<IndexBlockMessage>(async (message) =>
+            ReceiveAsync<Messages.IndexBlockMessage>(async (message) =>
             {
                 using (var logger = Context.GetLogger(message))
                 {
+                    logger.Info($"Received {message.ToJson()}");
+                    Sender.Tell(new Confirm((long)message.BlockNumber));
                     var indexed = message.BlockNumber;
                     var nextToIndex = indexed + 1;
 
@@ -57,10 +51,12 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
         public void NormalState()
         {
-            ReceiveAsync<IndexBlockMessage>(async (message) =>
+            ReceiveAsync<Messages.IndexBlockMessage>(async (message) =>
             {
                 using (var logger = Context.GetLogger(message))
                 {
+                    logger.Info($"Received {message.ToJson()}");
+                    Sender.Tell(new Confirm((long)message.BlockNumber));
                     var indexed = message.BlockNumber;
                     try
                     {
@@ -70,11 +66,8 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     }
                     catch (BlockIsNotYetMinedException exc)
                     {
-                        //TODO: LOG here;
                         logger.Info($"Tip Not Yet Mined {indexed}");
-                        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(20), Self, message, Sender);
-
-                        return;
+                        Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(30), Self, message, Sender);
                     }
                     catch (Exception e)
                     {
@@ -96,7 +89,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                 logger.Error(cause);
 
                 if (message != null)
-                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(2), Self, message, Sender);
+                    Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(5), Self, message, Sender);
 
                 base.AroundPreRestart(cause, message);
             }

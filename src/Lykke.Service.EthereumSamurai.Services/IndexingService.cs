@@ -101,8 +101,8 @@ namespace Lykke.Service.EthereumSamurai.Services
             });
 
             await _blockIndexationHistoryRepository.MarkBlockAsIndexed(blockNumber, blockContext.JobVersion);
-            
-            await _blockSyncedInfoRepository.SaveAsync(new BlockSyncedInfoModel((ulong)blockModel.Number));
+            await _blockSyncedInfoRepository.SaveAsync(new BlockSyncedInfoModel(blockNumber));
+            await _blockRepository.MarkAsIndexedAsync(blockNumber);
         }
     }
 }

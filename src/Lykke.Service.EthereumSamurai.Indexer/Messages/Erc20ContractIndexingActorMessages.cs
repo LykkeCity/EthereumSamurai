@@ -1,10 +1,7 @@
-﻿using Lykke.Service.EthereumSamurai.Models.Blockchain;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Text;
+﻿using System.ComponentModel;
+using Lykke.Service.EthereumSamurai.Models.Blockchain;
 
-namespace Lykke.Job.EthereumSamurai.Messages.Erc20ContractIndexingActor
+namespace Lykke.Job.EthereumSamurai.Messages
 {
     [ImmutableObject(true)]
     public class Erc20ContractDeployedMessage

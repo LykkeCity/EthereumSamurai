@@ -1,18 +1,16 @@
-﻿using Autofac;
+﻿using System;
+using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using Common.Log;
-using Lykke.SettingsReader;
-using Lykke.RabbitMqBroker.Publisher;
-using AzureStorage.Blob;
-using Microsoft.Extensions.DependencyInjection;
-using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Service.EthereumSamurai.Core.Services;
 using AutoMapper;
-using System.Reflection;
-using Microsoft.Extensions.Configuration;
+using Common.Log;
 using Lykke.Service.EthereumSamurai.Common;
-using Lykke.Job.EthereumSamurai.Dependencies;
+using Lykke.Service.EthereumSamurai.Core.Services;
+using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.Service.EthereumSamurai.RabbitMQ;
+using Lykke.SettingsReader;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 
 namespace Lykke.Job.EthereumSamurai.Modules
 {
@@ -53,14 +51,18 @@ namespace Lykke.Job.EthereumSamurai.Modules
 
             #endregion
 
+            _services.AddSingleton<IBaseSettings>(_settings.CurrentValue.EthereumIndexer);
+            _services.AddSingleton(_settings);
+
             IConfigurationSection indexerSettingsSection = _configuration.GetSection("IndexerInstanceSettings");
             IndexerInstanceSettings indexerSettings = indexerSettingsSection.Get<IndexerInstanceSettings>();
+            _services.AddSingleton(indexerSettings);
+            _services.AddSingleton<IIndexerInstanceSettings>(indexerSettings);
             _services.ConfigureServices(_configuration);
-            DependencyConfig.RegisterServices(_services, indexerSettings);
             var baseSettings = _settings.CurrentValue.EthereumIndexer;
-            //Console.WriteLine($"Geth node configured at {baseSettings.EthereumRpcUrl}");
             RegisterRabbitQueueEx.RegisterRabbitQueues(_services, baseSettings, _log);
             builder.Populate(_services);
+            Console.WriteLine($"Parity node configured at {baseSettings.EthereumRpcUrl}");
         }
     }
 }

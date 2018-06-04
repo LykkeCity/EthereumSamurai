@@ -1,28 +1,24 @@
 ﻿using Akka.Actor;
+using Akka.Cluster.Tools.Singleton;
 using Akka.Configuration;
 using Akka.DI.AutoFac;
-using Akka.DI.Core;
 using Autofac;
 using Common.Log;
-using Lykke.Job.EthereumSamurai.Actors.Factories;
-using Lykke.Job.EthereumSamurai.Jobs;
-using Lykke.Service.EthereumSamurai.Core.Models;
+using Lykke.Job.EthereumSamurai.Actors;
+using Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces;
+using Lykke.Job.EthereumSamurai.ServiceLocation;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.Service.EthereumSamurai.Logger;
 using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
-using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lykke.Job.EthereumSamurai
 {
     public class ActorSystemHost
     {
-        public const string actorSystemName = "EthereumSamurai";
+        public const string ActorSystemName = "ethereumsamurai";
         private readonly ActorSystem _actorSystem;
         private IActorRef _blockIndexingActorDispatcher;
         private IActorRef _erc20BalanceIndexingActorDispatcher;
@@ -31,16 +27,13 @@ namespace Lykke.Job.EthereumSamurai
 
         public ActorSystemHost(IContainer container)
         {
+            ActorLocator.Locator = container;
             _container = container;
             LykkeLogger.Configure(container.Resolve<ILog>());
             //Logs are registered here
-            var systemConfig = ConfigurationFactory.FromResource
-            (
-                "Lykke.Job.EthereumSamurai.SystemConfig.json",
-                Assembly.GetExecutingAssembly()
-            );
 
-            _actorSystem = ActorSystem.Create(actorSystemName, systemConfig);
+            var systemConfig = ConfigurationFactory.ParseString(File.ReadAllText("ethereumSamurai.hocon"));
+            _actorSystem = ActorSystem.Create(ActorSystemName, systemConfig);
             var propsResolver = new AutoFacDependencyResolver(container, _actorSystem);
         }
 
@@ -51,29 +44,49 @@ namespace Lykke.Job.EthereumSamurai
             // Blocks indexers
             if (indexerInstanceSettings.IndexBlocks)
             {
+                var blockIndexerRouter = _container.Resolve<IBlockIndexingActorFactory>().Build(_actorSystem, "block-indexing-actor");
                 var blockIndexingActorDispatcherProps = Props.Create(() => new BlockIndexingActorDispatcher(
                     _container.Resolve<IBlockIndexingActorFactory>(),
-                     _container.Resolve<IBlockIndexingDispatcherRole>()));
-                _blockIndexingActorDispatcher = _actorSystem.ActorOf(blockIndexingActorDispatcherProps, "block-indexing-actor-dispatcher");
+                    _container.Resolve<IAtLeastOnceDeliveryActorFactory>(),
+                    _container.Resolve<IBlockIndexingDispatcherRole>(),
+                    blockIndexerRouter));
+                var clusterSingletonProps = ClusterSingletonManager.Props(
+                    singletonProps: blockIndexingActorDispatcherProps,
+                    terminationMessage: PoisonPill.Instance,
+                    settings: ClusterSingletonManagerSettings.Create(_actorSystem).WithRole("indexer"));
+
+                _blockIndexingActorDispatcher = _actorSystem.ActorOf(clusterSingletonProps, "block-indexing-actor-dispatcher");
             }
 
             // Balances indexer
             if (indexerInstanceSettings.IndexBalances)
             {
-                //_indexerInstanceSettings.BalancesStartBlock;
                 var erc20BalanceIndexingActorDispatcherProps = Props.Create(() => new Erc20BalanceIndexingActorDispatcher(
                     _container.Resolve<IErc20BalanceIndexingService>(),
                      _container.Resolve<IErc20BalanceIndexingActorFactory>(),
                      indexerInstanceSettings.BalancesStartBlock));
 
-                _erc20BalanceIndexingActorDispatcher = _actorSystem.ActorOf(erc20BalanceIndexingActorDispatcherProps, "erc20-balance-indexing-actor-dispatcher");
+                var clusterSingletonProps = ClusterSingletonManager.Props(
+                    singletonProps: erc20BalanceIndexingActorDispatcherProps,
+                    terminationMessage: PoisonPill.Instance,
+                    settings: ClusterSingletonManagerSettings.Create(_actorSystem).WithRole("indexer"));
+
+                _erc20BalanceIndexingActorDispatcher = _actorSystem.ActorOf(clusterSingletonProps, "erc20-balance-indexing-actor-dispatcher");
             }
 
             // Contracts indexer
             if (indexerInstanceSettings.IndexContracts)
             {
-                //indexerInstanceSettings.ContractsIndexerThreadAmount
-                var erc20ContractIndexingActorDispatcherProps = _actorSystem.DI().Props<Erc20ContractIndexingActorDispatcher>();
+                var erc20ContractIndexingActorDispatcherProps = Props.Create(() => new Erc20ContractIndexingActorDispatcher(
+                    _container.Resolve<IErc20ContractIndexingService>(),
+                    _container.Resolve<ILog>(),
+                    _container.Resolve<IErc20ContractIndexingActorFactory>()));
+
+                var clusterSingletonProps = ClusterSingletonManager.Props(
+                    singletonProps: erc20ContractIndexingActorDispatcherProps,
+                    terminationMessage: PoisonPill.Instance,
+                    settings: ClusterSingletonManagerSettings.Create(_actorSystem).WithRole("indexer"));
+
                 _erc20ContractIndexingActorDispatcherProps = _actorSystem.ActorOf(erc20ContractIndexingActorDispatcherProps, "erc20-contract-indexing-actor-dispatcher");
             }
         }

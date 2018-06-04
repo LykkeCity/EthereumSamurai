@@ -1,13 +1,11 @@
 ﻿using Akka.Actor;
-using Lykke.Service.EthereumSamurai.Core.Models;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Actors.Factories
+namespace Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces
 {
     public interface IBlockIndexingActorFactory : IChildActorFactory
     {
+        IActorRef Build(ActorSystem system, string name);
+
         IActorRef BuildTip(IUntypedActorContext context, string name);
     }
 }

@@ -1,8 +1,6 @@
-﻿using System; 
-using System.Collections.Generic;
-using System.Text;
+﻿using Lykke.Service.EthereumSamurai.Core.Exceptions;
+using System;
 using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Exceptions;
 
 namespace Lykke.Job.EthereumSamurai.Utils
 {

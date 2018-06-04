@@ -1,39 +1,42 @@
 ﻿using System;
-using System.Numerics;
-using System.Threading;
-using Common.Log;
-using Akka.Actor;
-using Lykke.Job.EthereumSamurai.Actors.Factories;
-using System.Linq;
-using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
+using System.Collections.Generic;
 using System.Diagnostics;
-using Lykke.Service.EthereumSamurai.Logger;
+using System.Linq;
+using System.Threading;
+using Akka.Actor;
+using Akka.Util.Internal;
+using Lykke.Job.EthereumSamurai.Actors.Factories;
+using Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces;
 using Lykke.Job.EthereumSamurai.Extensions;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 
-namespace Lykke.Job.EthereumSamurai.Jobs
+namespace Lykke.Job.EthereumSamurai.Actors
 {
-    public partial class BlockIndexingActorDispatcher : ReceiveActor
+    public class BlockIndexingActorDispatcher : ReceiveActor
     {
+        private readonly Guid _id = Guid.NewGuid();
         private readonly IBlockIndexingDispatcherRole _role;
         private readonly IActorRef _blockIndexingActor;
         private readonly IActorRef _tipBlockIndexingActor;
         private bool _firstRun;
         private int _needToProcessCount;
         private int _currentProcessingCount;
-        private const int BatchIndexTasks = 1000;
-
-        public string Id => nameof(BlockIndexingActorDispatcher);
-        public int Version => 1;
+        private readonly IAtLeastOnceDeliveryActorFactory _atLeastOnceDeliveryActorFactory;
+        private Dictionary<ulong, IActorRef> _currentWaitingActors;
+        private const int BatchIndexTasks = 100;
 
         public BlockIndexingActorDispatcher(
             IBlockIndexingActorFactory blockIndexingActorFactory,
-            IBlockIndexingDispatcherRole role)
+            IAtLeastOnceDeliveryActorFactory atLeastOnceDeliveryActorFactory,
+            IBlockIndexingDispatcherRole role,
+            IActorRef blockIndexerRouter)
         {
             _firstRun = true;
             _role = role;
 
-            _blockIndexingActor = blockIndexingActorFactory.Build(Context, $"BlockIndexingActor");
-            _tipBlockIndexingActor = blockIndexingActorFactory.BuildTip(Context, $"TipBlockIndexingActor");
+            _blockIndexingActor = blockIndexerRouter;
+            _tipBlockIndexingActor = blockIndexingActorFactory.BuildTip(Context, $"block-indexing-actor-tip");
+            _atLeastOnceDeliveryActorFactory = atLeastOnceDeliveryActorFactory;
 
             Become(NormalState);
 
@@ -57,21 +60,33 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                             sw.Start();
 
                             var jobInfo = await _role.RetreiveJobInfoAsync();
-                            _tipBlockIndexingActor.Tell(Messages.BlockIndexingActor.CreateIndexBlockMessage(jobInfo.TipBlock));
+                            _tipBlockIndexingActor.Tell(new Messages.IndexBlockMessage(jobInfo.TipBlock));
 
                             logger.Info($"Retreived tasks in {sw.ElapsedMilliseconds} ms");
 
                             _firstRun = false;
                         }
 
-                        var numbers = await _role.RetreiveMiddleBlocksToIndexAsync(BatchIndexTasks);
+                        var numbers = (await _role.RetreiveMiddleBlocksToIndexAsync(BatchIndexTasks))?.ToList();
                         _needToProcessCount = numbers.Count();
                         _currentProcessingCount = 0;
+                        _currentWaitingActors?.ForEach(x => x.Value.Tell(PoisonPill.Instance));
+                        _currentWaitingActors = new Dictionary<ulong, IActorRef>();
 
                         foreach (var nextBlock in numbers)
                         {
-                            _blockIndexingActor.Tell(Messages.BlockIndexingActor.CreateIndexBlockMessage(nextBlock));
+                            var atLeastOnceDeliveryActor = _atLeastOnceDeliveryActorFactory
+                                .Build<Messages.IndexBlockMessage>
+                                (Context, 
+                                 _blockIndexingActor,
+                                 Self, 
+                                 $"at-least-once-delivery-proxy-{Guid.NewGuid()}");
+                            _currentWaitingActors[nextBlock] = atLeastOnceDeliveryActor;
+
+                            _blockIndexingActor.Tell(new Messages.IndexBlockMessage(nextBlock));
                         }
+
+                        logger.Info($"Dispatched {BatchIndexTasks} more tasks at {DateTime.UtcNow} UTC ");
 
                         Become(BusyState);
                     }
@@ -126,7 +141,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
         {
             Receive<Messages.Common.IndexedTipBlockNumberMessage>((message) =>
             {
-                _tipBlockIndexingActor.Tell(new Messages.BlockIndexingActor.IndexBlockMessage(message.NextBlock));
+                _tipBlockIndexingActor.Tell(new Messages.IndexBlockMessage(message.NextBlock));
             });
         }
 

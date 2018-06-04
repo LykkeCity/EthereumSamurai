@@ -1,9 +1,6 @@
 ﻿using Akka.Actor;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Actors.Factories
+namespace Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces
 {
     public interface IChildActorFactory
     {

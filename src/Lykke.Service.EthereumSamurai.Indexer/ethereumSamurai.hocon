@@ -1,0 +1,95 @@
+﻿akka {
+    actor {
+        stdout-loglevel = DEBUG
+        loglevel = DEBUG
+        log-config-on-start = on
+        debug {  
+              receive = on 
+              autoreceive = on
+              lifecycle = on
+              event-stream = on
+              unhandled = on
+        }
+        serialize-messages = on
+        serializers {
+            hyperion = "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+        }
+        serialization-settings {
+            preserve-object-references = true
+            #known-types-provider = "MyNamespace.MyKnownTypesProvider, MyAssembly"
+        }
+        serialization-bindings {
+            "System.Object" = hyperion
+        }
+
+        provider = cluster
+        deployment {
+            "/block-indexing-actor" {
+                router = round-robin-pool
+                nr-of-instances = 64
+                cluster {
+                    enabled = on
+                    allow-local-routees = on
+                    use-role = slave
+                    max-nr-of-instances-per-node = 2
+                }
+            }
+        }
+    }
+
+    remote {
+        dot-netty.tcp {
+                hostname = "127.0.0.1"
+                port = 4051
+                maximum-frame-size = 1024000b
+            }
+    }
+
+    cluster {
+        seed-nodes = ["akka.tcp://ethereumsamurai@127.0.0.1:4051"] 
+        roles = ["indexer", "slave"]
+
+        singleton {
+            # The actor name of the child singleton actor.
+            singleton-name = "block-indexing-actor-dispatcher"
+
+            # Singleton among the nodes tagged with specified role.
+            # If the role is not specified it's a singleton among all nodes in the cluster.
+            # role = ""
+
+            # When a node is becoming oldest it sends hand-over request to previous oldest, 
+            # that might be leaving the cluster. This is retried with this interval until 
+            # the previous oldest confirms that the hand over has started or the previous 
+            # oldest member is removed from the cluster (+ akka.cluster.down-removal-margin).
+            hand-over-retry-interval = 10s
+            
+            # The number of retries are derived from hand-over-retry-interval and
+            # akka.cluster.down-removal-margin (or ClusterSingletonManagerSettings.RemovalMargin),
+            # but it will never be less than this property.
+            min-number-of-hand-over-retries = 120
+        }
+
+        singleton-proxy {
+           # The actor name of the singleton actor that is started by the ClusterSingletonManager
+           singleton-name = "block-indexing-actor-dispatcher"
+           
+           # The role of the cluster nodes where the singleton can be deployed. 
+           # If the role is not specified then any node will do.
+           role = "indexer"
+           
+           # Interval at which the proxy will try to resolve the singleton instance.
+           singleton-identification-interval = 5s
+           
+           # If the location of the singleton is unknown the proxy will buffer this
+           # number of messages and deliver them when the singleton is identified. 
+           # When the buffer is full old messages will be dropped when new messages are
+           # sent via the proxy.
+           # Use 0 to disable buffering, i.e. messages will be dropped immediately if
+           # the location of the singleton is unknown.
+           # Maximum allowed buffer size is 10000.
+           buffer-size = 1000 
+        }
+    }
+
+    loggers = ["Lykke.Service.EthereumSamurai.Logger.LykkeLogger, Lykke.Service.EthereumSamurai.Logger"]
+}

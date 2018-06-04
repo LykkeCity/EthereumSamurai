@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Numerics;
-using System.Text;
 
-namespace Lykke.Job.EthereumSamurai.Messages.Erc20BalanceIndexingActorDispatcher
+namespace Lykke.Job.EthereumSamurai.Messages
 {
     [ImmutableObject(true)]
     public sealed class BalanceChangeMessage

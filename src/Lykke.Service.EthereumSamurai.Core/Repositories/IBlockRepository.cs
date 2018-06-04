@@ -7,6 +7,8 @@ namespace Lykke.Service.EthereumSamurai.Core.Repositories
 {
     public interface IBlockRepository
     {
+        Task MarkAsIndexedAsync(ulong number);
+
         Task<bool> DoesBlockExistAsync(string blockHash);
 
         Task<BlockModel> GetForHashAsync(string blockHash);

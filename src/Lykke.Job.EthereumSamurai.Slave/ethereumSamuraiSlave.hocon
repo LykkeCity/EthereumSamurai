@@ -1,0 +1,58 @@
+﻿akka {
+    serialize-messages = on
+    stdout-loglevel = DEBUG
+    loglevel = DEBUG
+    log-config-on-start = on
+    actor {
+        serializers {
+            hyperion = "Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion"
+        }
+        serialization-bindings {
+            "System.Object" = hyperion
+        }
+
+        provider = cluster
+        debug {  
+              receive = on 
+              autoreceive = on
+              lifecycle = on
+              event-stream = on
+              unhandled = on
+        }
+    }
+
+     cluster {
+        seed-nodes = ["akka.tcp://ethereumsamurai@127.0.0.1:4051"] 
+        roles = [slave]
+        singleton-proxy {
+            # The actor name of the singleton actor that is started by the ClusterSingletonManager
+            singleton-name = "block-indexing-actor-dispatcher"
+            
+            # The role of the cluster nodes where the singleton can be deployed. 
+            # If the role is not specified then any node will do.
+            role = "indexer"
+            
+            # Interval at which the proxy will try to resolve the singleton instance.
+            singleton-identification-interval = 5s
+            
+            # If the location of the singleton is unknown the proxy will buffer this
+            # number of messages and deliver them when the singleton is identified. 
+            # When the buffer is full old messages will be dropped when new messages are
+            # sent via the proxy.
+            # Use 0 to disable buffering, i.e. messages will be dropped immediately if
+            # the location of the singleton is unknown.
+            # Maximum allowed buffer size is 10000.
+            buffer-size = 1000 
+        }
+    }
+
+    remote {
+        dot-netty.tcp {
+                hostname = "127.0.0.1"
+                port = 4052
+                maximum-frame-size = 1024000b
+            }
+    }
+
+    loggers = ["Lykke.Service.EthereumSamurai.Logger.LykkeLogger, Lykke.Service.EthereumSamurai.Logger"]
+}

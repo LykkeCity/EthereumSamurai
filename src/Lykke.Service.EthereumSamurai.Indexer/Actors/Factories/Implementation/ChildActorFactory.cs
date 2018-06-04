@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Akka.Actor;
+﻿using Akka.Actor;
 using Akka.DI.Core;
+using Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces;
 
 namespace Lykke.Job.EthereumSamurai.Actors.Factories.Implementation
 {

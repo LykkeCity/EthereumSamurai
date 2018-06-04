@@ -1,11 +1,7 @@
 ﻿using Akka.Actor;
 using Autofac;
-using Lykke.Job.EthereumSamurai.Actors.Factories;
-using Lykke.Job.EthereumSamurai.Roles.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Text;
+using Lykke.Job.EthereumSamurai.Actors.Factories.Interfaces;
+using Lykke.Service.EthereumSamurai.Services.Roles.Interfaces;
 
 namespace Lykke.Job.EthereumSamurai.Modules
 {
@@ -14,34 +10,19 @@ namespace Lykke.Job.EthereumSamurai.Modules
         protected override void Load(ContainerBuilder builder)
         {
             builder
-                .RegisterAssemblyTypes(ThisAssembly)
+                .RegisterAssemblyTypes(typeof(IActorRole).Assembly)
                 .AssignableTo<IActorRole>()
                 .AsImplementedInterfaces()
                 .SingleInstance();
 
             builder
-                .RegisterAssemblyTypes(ThisAssembly)
+                .RegisterAssemblyTypes(typeof(IChildActorFactory).Assembly)
                 .AssignableTo<IChildActorFactory>()
                 .AsImplementedInterfaces()
                 .SingleInstance();
 
             builder
-                .RegisterType<Erc20BalanceIndexingActorFactory>()
-                .As<IErc20BalanceIndexingActorFactory>()
-                .SingleInstance();
-
-            builder
-                .RegisterType<Erc20ContractIndexingActorFactory>()
-                .As<IErc20ContractIndexingActorFactory>()
-                .SingleInstance();
-
-            builder
-                .RegisterType<BlockIndexingActorFactory>()
-                .As<IBlockIndexingActorFactory>()
-                .SingleInstance();
-
-            builder
-                .RegisterAssemblyTypes(ThisAssembly)
+                .RegisterAssemblyTypes(typeof(IChildActorFactory).Assembly)
                 .Where(x => !x.IsAbstract && x.IsSubclassOf(typeof(ActorBase)));
         }
     }

@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+  jobrunner:
+    image: lykkedev/lykke-ethereum-indexer-jobs:${tag}
+    environment:
+     - ConnectionStrings__ConnectionString=${SettingsConnString}
+     - IndexerInstanceSettings__IndexerId=${IndexerId}
+     - IndexerInstanceSettings__ThreadAmount=${ThreadAmount}
+     - IndexerInstanceSettings__StartBlock=${StartBlock}
+     - IndexerInstanceSettings__StopBlock=${StopBlock}
+     - IndexerInstanceSettings__BalancesStartBlock=${BalancesStartBlock}
+     - IndexerInstanceSettings__IndexBalances=${IndexBalances}
+     - IndexerInstanceSettings__IndexBlocks=${IndexBlocks}
+     - IndexerInstanceSettings__SendEventsToRabbit=${SendEventsToRabbit}
+     - IndexerInstanceSettings__ContractsIndexerThreadAmount=${ContractsIndexerThreadAmount}
+     - IndexerInstanceSettings__IndexContracts=${IndexContracts}

@@ -22,7 +22,6 @@ namespace Lykke.Service.EthereumSamurai.Logger
                     $"{nameof(LykkeLogger)} {nameof(Configure)} method should be called before actor system will be created.");
             }
 
-
             Receive<InitializeLogger>(
                 msg => ProcessMessage(msg));
 
