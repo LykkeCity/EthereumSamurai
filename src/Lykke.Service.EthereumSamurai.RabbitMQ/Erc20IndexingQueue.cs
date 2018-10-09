@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading;
 using Lykke.Service.EthereumSamurai.Core.Services;
@@ -147,6 +147,8 @@ namespace Lykke.Service.EthereumSamurai.RabbitMQ
                 {
                     throw;
                 }
+                
+                _queueUpdateLock.ExitWriteLock();
                 Thread.Sleep(5000);
                 CreateQueue();
             }
