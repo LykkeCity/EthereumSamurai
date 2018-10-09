@@ -104,10 +104,12 @@ namespace Lykke.Service.EthereumSamurai.RabbitMQ
             }
         }
 
+        private int _retryCount = 0;
         public void CreateQueue()
         {
             try
             {
+                _retryCount++;
                 _queueUpdateLock.EnterWriteLock();
 
                 if (DateTime.UtcNow - _lastTimeQueueWasCreated < TimeSpan.FromMinutes(5))
@@ -138,6 +140,15 @@ namespace Lykke.Service.EthereumSamurai.RabbitMQ
                 );
 
                 _lastTimeQueueWasCreated = DateTime.UtcNow;
+            }
+            catch (BrokerUnreachableException e)
+            {
+                if (_retryCount >= 5)
+                {
+                    throw;
+                }
+                Thread.Sleep(5000);
+                CreateQueue();
             }
             finally
             {
