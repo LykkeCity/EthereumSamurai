@@ -143,11 +143,6 @@ namespace CashinReportGenerator
                             string address = GetUserInputWithWalidation<string>("Type address to generate  fee report",
                                 "WrongAddress", (ad) =>
                                 {
-                                    //var validationService =
-                                    //    (IExchangeContractService)ServiceProvider.GetService(
-                                    //        typeof(IExchangeContractService));
-                                    //var isValid = validationService.IsValidAddress(ad);
-
                                     return (true,  true ? ad : "Address is not a valid deposit address");
                                 });
 
@@ -304,7 +299,7 @@ namespace CashinReportGenerator
         static IReloadingManager<AppSettings> GetCurrentSettingsFromUrl()
         {
             FileInfo fi = new FileInfo(System.Reflection.Assembly.GetEntryAssembly().Location);
-            var location = Path.Combine(fi.DirectoryName, "..", "..", "..");
+            var location = Path.Combine(fi.DirectoryName);//, "..", "..", "..");
             var builder = new ConfigurationBuilder()
                 .SetBasePath(location)
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
