@@ -130,7 +130,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             MongoDB.Driver.
             IFindFluent<TransactionEntity, TransactionEntity> search = _collection.Find(filter);
             result = new List<TransactionModel>();
-            search = search.Sort(sort);
+            //search = search.Sort(sort);
 
             transactionQuery.Start = transactionQuery.Start.HasValue ? transactionQuery.Start : 0;
             transactionQuery.Count = transactionQuery.Count.HasValue && transactionQuery.Count != 0 ? transactionQuery.Count : (int)await search.CountAsync();
