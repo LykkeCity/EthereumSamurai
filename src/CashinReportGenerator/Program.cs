@@ -125,7 +125,8 @@ namespace CashinReportGenerator
             var samuraiApi = ServiceProvider.GetService<ITransactionRepository>();
             var ethPrecision = BigInteger.Pow(10, 18);
             string command = "-1";
-            Console.WriteLine("Type 0 - to make feesReport for address");
+            Console.WriteLine("Type 0 - to make feesReport(Cashin) for address");
+            Console.WriteLine("Type 1 - to make feesReport(Cashout) for address");
             //Console.WriteLine("Type 1 - to make cashinReport");
             //Console.WriteLine("Type 2 - to make balance report");
             //Console.WriteLine("Type 3 - to fill pending actions for users");
@@ -139,75 +140,9 @@ namespace CashinReportGenerator
                 switch (command)
                 {
                     case "0":
-                        {
-                            string address = GetUserInputWithWalidation<string>("Type address to generate  fee report",
-                                "WrongAddress", (ad) =>
-                                {
-                                    return (true,  true ? ad : "Address is not a valid deposit address");
-                                });
-
-                            using (var streamWriter = new StreamWriter("feeReport_" + address + ".csv"))
-                            using (var csvWriter = new CsvHelper.CsvWriter(streamWriter, false))
-                            {
-                                Console.WriteLine("Fee report generation started!");
-
-                                int count = 1000;
-                                int start = 0;
-                                Console.WriteLine($"Asking Samurai about {address}");
-                                IEnumerable<TransactionModel> batchRead = null;
-                                csvWriter.WriteHeader<TransactionFeeModel>();
-                                csvWriter.NextRecord();
-                                var sw = new Stopwatch();
-
-                                do
-                                {
-                                    RetryPolicy.ExecuteUnlimitedAsync(async () =>
-                                    {
-                                        Console.WriteLine($"Requesting for: {address} - from :{start} - count: {count}");
-                                        sw.Start();
-                                        batchRead = await GetTransactionHistory(samuraiApi,
-                                            address,
-                                            start,
-                                            count);
-
-                                    }, 300).Wait();
-                                    sw.Stop();
-                                    Console.WriteLine($"Time for thr request is {sw.ElapsedMilliseconds} ms");
-                                    sw.Reset();
-
-                                    foreach (var item in batchRead)
-                                    {
-                                        if (item.From?.ToLower() != address.ToLower())
-                                        {
-                                            continue;
-                                        }
-
-                                        //var amount = BigInteger.Parse(item.Value);
-                                        var itemFee = (item.GasPrice * item.GasUsed).ToString(CultureInfo.InvariantCulture);
-                                        TransactionFeeModel model = new TransactionFeeModel()
-                                        {
-                                            DateTimeUtc = UnixTimeStampToDateTime((ulong)item.BlockTimestamp),
-                                            EthAmount = ConvertFromContract(item.Value.ToString(), 18, 18).ToString(CultureInfo.InvariantCulture),
-                                            RecieverAddress = item.To,
-                                            SenderAddress = item.From,
-                                            TransactionHash = item.TransactionHash,
-                                            FeeInEth = ConvertFromContract(itemFee, 18, 18).ToString(CultureInfo.InvariantCulture),
-                                        };
-
-                                        csvWriter.WriteRecord<TransactionFeeModel>(model);
-                                        csvWriter.NextRecord();
-
-                                        //Console.WriteLine($"Written ${model.ToJson()}");
-                                    }
-
-                                    Console.WriteLine($"Completed {address} - {start} - {count}");
-
-                                    start += count;
-                                } while (batchRead != null && batchRead.Count() != 0);
-
-                                Console.WriteLine("Fee report generation completed!");
-                            }
-                        }
+                    {
+                        GenerateCashinReportAsync(samuraiApi);
+                    }
                         break;
                     //case "3":
                     //    bcnRepositoryReader.ProcessAllAsync(async (wallet) =>
@@ -293,6 +228,74 @@ namespace CashinReportGenerator
                     default:
                         break;
                 }
+            }
+        }
+
+        private static void GenerateCashinReportAsync(ITransactionRepository samuraiApi)
+        {
+            string address = GetUserInputWithWalidation<string>("Type address to generate  fee report",
+                "WrongAddress", (ad) => { return (true, true ? ad : "Address is not a valid deposit address"); });
+
+            using (var streamWriter = new StreamWriter("feeReport_" + address + ".csv"))
+            using (var csvWriter = new CsvHelper.CsvWriter(streamWriter, false))
+            {
+                Console.WriteLine("Fee report generation started!");
+
+                int count = 1000;
+                int start = 0;
+                Console.WriteLine($"Asking Samurai about {address}");
+                IEnumerable<TransactionModel> batchRead = null;
+                csvWriter.WriteHeader<TransactionFeeModel>();
+                csvWriter.NextRecord();
+                var sw = new Stopwatch();
+
+                do
+                {
+                    RetryPolicy.ExecuteUnlimitedAsync(async () =>
+                    {
+                        Console.WriteLine($"Requesting for: {address} - from :{start} - count: {count}");
+                        sw.Start();
+                        batchRead = await GetTransactionHistory(samuraiApi,
+                            address,
+                            start,
+                            count);
+                    }, 300).Wait();
+                    sw.Stop();
+                    Console.WriteLine($"Time for thr request is {sw.ElapsedMilliseconds} ms");
+                    sw.Reset();
+
+                    foreach (var item in batchRead)
+                    {
+                        if (item.From?.ToLower() != address.ToLower())
+                        {
+                            continue;
+                        }
+
+                        //var amount = BigInteger.Parse(item.Value);
+                        var itemFee = (item.GasPrice * item.GasUsed).ToString(CultureInfo.InvariantCulture);
+                        TransactionFeeModel model = new TransactionFeeModel()
+                        {
+                            DateTimeUtc = UnixTimeStampToDateTime((ulong) item.BlockTimestamp),
+                            EthAmount = ConvertFromContract(item.Value.ToString(), 18, 18)
+                                .ToString(CultureInfo.InvariantCulture),
+                            RecieverAddress = item.To,
+                            SenderAddress = item.From,
+                            TransactionHash = item.TransactionHash,
+                            FeeInEth = ConvertFromContract(itemFee, 18, 18).ToString(CultureInfo.InvariantCulture),
+                        };
+
+                        csvWriter.WriteRecord<TransactionFeeModel>(model);
+                        csvWriter.NextRecord();
+
+                        //Console.WriteLine($"Written ${model.ToJson()}");
+                    }
+
+                    Console.WriteLine($"Completed {address} - {start} - {count}");
+
+                    start += count;
+                } while (batchRead != null && batchRead.Count() != 0);
+
+                Console.WriteLine("Fee report generation completed!");
             }
         }
 
