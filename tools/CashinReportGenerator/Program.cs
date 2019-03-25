@@ -122,8 +122,8 @@ namespace CashinReportGenerator
             var samuraiApi = ServiceProvider.GetService<ITransactionRepository>();
             var ethPrecision = BigInteger.Pow(10, 18);
             string command = "-1";
-            Console.WriteLine("Type 0 - to make feesReport(Cashin) for address");
-            //Console.WriteLine("Type 1 - to make feesReport(Cashout) for address");
+            Console.WriteLine("Type 0 - to make feesReport(Cashout) for address");
+            //Console.WriteLine("Type 1 - to make feesReport(Cashin) for address");
             //Console.WriteLine("Type 1 - to make cashinReport");
             //Console.WriteLine("Type 2 - to make balance report");
             //Console.WriteLine("Type 3 - to fill pending actions for users");
@@ -138,7 +138,7 @@ namespace CashinReportGenerator
                 {
                     case "0":
                     {
-                        GenerateCashinReportAsync(samuraiApi);
+                        GenerateCashoutReportAsync(samuraiApi);
                     }
                         break;
                     //case "3":
@@ -228,7 +228,7 @@ namespace CashinReportGenerator
             }
         }
 
-        private static void GenerateCashinReportAsync(ITransactionRepository samuraiApi)
+        private static void GenerateCashoutReportAsync(ITransactionRepository samuraiApi)
         {
             string address = GetUserInputWithWalidation<string>("Type address to generate  fee report",
                 "WrongAddress", (ad) => { return (true, true ? ad : "Address is not a valid deposit address"); });
@@ -317,7 +317,8 @@ namespace CashinReportGenerator
             {
                 Count = count,
                 Start = start,
-                FromAddress = address
+                FromAddress = address,
+                ShouldSkipSorting = true
             });
 
             return result;

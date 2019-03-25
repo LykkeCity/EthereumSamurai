@@ -83,10 +83,10 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
 
         public async Task<TransactionModel> GetAsync(string transactionHash)
         {
-            var filter            = Builders<TransactionEntity>.Filter.Eq("_id", transactionHash);
-            var cursor            = await _collection.FindAsync(filter);
+            var filter = Builders<TransactionEntity>.Filter.Eq("_id", transactionHash);
+            var cursor = await _collection.FindAsync(filter);
             var transactionEntity = cursor.FirstOrDefault();
-            var transactionModel  = transactionEntity != null ? _mapper.Map<TransactionModel>(transactionEntity) : null;
+            var transactionModel = transactionEntity != null ? _mapper.Map<TransactionModel>(transactionEntity) : null;
 
             return transactionModel;
         }
@@ -127,7 +127,9 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             MongoDB.Driver.
             IFindFluent<TransactionEntity, TransactionEntity> search = _collection.Find(filter);
             result = new List<TransactionModel>();
-            //search = search.Sort(sort);
+
+            if (!transactionQuery.ShouldSkipSorting)
+                search = search.Sort(sort);
 
             transactionQuery.Start = transactionQuery.Start.HasValue ? transactionQuery.Start : 0;
             transactionQuery.Count = transactionQuery.Count.HasValue && transactionQuery.Count != 0 ? transactionQuery.Count : (int)await search.CountAsync();

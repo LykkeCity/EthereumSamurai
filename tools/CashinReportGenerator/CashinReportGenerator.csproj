@@ -1,6 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Version>1.0.0</Version>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
@@ -15,8 +16,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lykke.Service.EthereumSamurai.Core\Lykke.Service.EthereumSamurai.Core.csproj" />
-    <ProjectReference Include="..\Lykke.Service.EthereumSamurai\Lykke.Service.EthereumSamurai.csproj" />
+    <ProjectReference Include="..\..\src\Lykke.Service.EthereumSamurai.Core\Lykke.Service.EthereumSamurai.Core.csproj" />
+    <ProjectReference Include="..\..\src\Lykke.Service.EthereumSamurai\Lykke.Service.EthereumSamurai.csproj" />
   </ItemGroup>
 
   <ItemGroup>
