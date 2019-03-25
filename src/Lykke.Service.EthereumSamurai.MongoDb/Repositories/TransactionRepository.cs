@@ -7,11 +7,8 @@ using Lykke.Service.EthereumSamurai.Models.Query;
 using Lykke.Service.EthereumSamurai.MongoDb.Entities;
 using Lykke.Service.EthereumSamurai.MongoDb.Utils;
 using MongoDB.Driver;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories

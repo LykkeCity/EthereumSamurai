@@ -1,5 +1,12 @@
-﻿using Common;
+﻿using AutoMapper;
 using Common.Log;
+using Lykke.Service.EthereumSamurai.Core.Repositories;
+using Lykke.Service.EthereumSamurai.Core.Settings;
+using Lykke.Service.EthereumSamurai.Filters;
+using Lykke.Service.EthereumSamurai.Mappers;
+using Lykke.Service.EthereumSamurai.Models.Blockchain;
+using Lykke.Service.EthereumSamurai.Models.Query;
+using Lykke.Service.EthereumSamurai.MongoDb;
 using Lykke.SettingsReader;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,16 +20,6 @@ using System.Linq;
 using System.Numerics;
 using System.Reflection;
 using System.Threading.Tasks;
-using AutoMapper;
-using Lykke.Service.EthereumSamurai.Core.Repositories;
-using Lykke.Service.EthereumSamurai.Core.Settings;
-using Lykke.Service.EthereumSamurai.Filters;
-using Lykke.Service.EthereumSamurai.Mappers;
-using Lykke.Service.EthereumSamurai.Models.Blockchain;
-using Lykke.Service.EthereumSamurai.Models.Query;
-using Lykke.Service.EthereumSamurai.MongoDb;
-using Lykke.Service.EthereumSamurai.MongoDb.Entities;
-using Lykke.Service.EthereumSamurai.Responses;
 
 namespace CashinReportGenerator
 {
@@ -126,7 +123,7 @@ namespace CashinReportGenerator
             var ethPrecision = BigInteger.Pow(10, 18);
             string command = "-1";
             Console.WriteLine("Type 0 - to make feesReport(Cashin) for address");
-            Console.WriteLine("Type 1 - to make feesReport(Cashout) for address");
+            //Console.WriteLine("Type 1 - to make feesReport(Cashout) for address");
             //Console.WriteLine("Type 1 - to make cashinReport");
             //Console.WriteLine("Type 2 - to make balance report");
             //Console.WriteLine("Type 3 - to fill pending actions for users");
@@ -256,7 +253,7 @@ namespace CashinReportGenerator
                         Console.WriteLine($"Requesting for: {address} - from :{start} - count: {count}");
                         sw.Start();
                         batchRead = await GetTransactionHistory(samuraiApi,
-                            address,
+                            address.ToLowerInvariant(),
                             start,
                             count);
                     }, 300).Wait();
