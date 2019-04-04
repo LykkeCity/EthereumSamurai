@@ -33,6 +33,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{29B5E197
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CashinReportGenerator", "tools\CashinReportGenerator\CashinReportGenerator.csproj", "{9AD9F3D4-0136-4467-B093-E2387BC7E65B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MigrationTool", "tools\MigrationTool\MigrationTool\MigrationTool.csproj", "{0DC1D343-BF76-4FFF-BD1A-B8F26E0D1119}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -79,6 +81,10 @@ Global
 		{9AD9F3D4-0136-4467-B093-E2387BC7E65B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AD9F3D4-0136-4467-B093-E2387BC7E65B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AD9F3D4-0136-4467-B093-E2387BC7E65B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DC1D343-BF76-4FFF-BD1A-B8F26E0D1119}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DC1D343-BF76-4FFF-BD1A-B8F26E0D1119}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DC1D343-BF76-4FFF-BD1A-B8F26E0D1119}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DC1D343-BF76-4FFF-BD1A-B8F26E0D1119}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -91,6 +97,7 @@ Global
 		{53189241-8C68-434E-890A-ADE6BC61BDCD} = {E0CC9E4A-0E98-48AD-A507-30658F53AD00}
 		{2E32F8DE-7F20-44A2-966E-01DEF4490290} = {2EFF31FF-84FD-4BBA-8171-0C7F36D6F141}
 		{9AD9F3D4-0136-4467-B093-E2387BC7E65B} = {29B5E197-9B30-4734-9C45-B8FDC219C44F}
+		{0DC1D343-BF76-4FFF-BD1A-B8F26E0D1119} = {29B5E197-9B30-4734-9C45-B8FDC219C44F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E3529BAF-F89F-47A1-9E9A-B0CDE9E8487F}

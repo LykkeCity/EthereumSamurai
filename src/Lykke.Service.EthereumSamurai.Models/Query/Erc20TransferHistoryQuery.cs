@@ -8,7 +8,7 @@ namespace Lykke.Service.EthereumSamurai.Models.Query
 
         public ulong? BlockNumber { get; set; }
 
-        public IEnumerable<string> Contracts { get; set; }
+        public string ContractAddress { get; set; }
 
         public int? Count { get; set; }
 

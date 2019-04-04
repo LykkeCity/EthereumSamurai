@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using AutoMapper;
+﻿using AutoMapper;
 using Lykke.Service.EthereumSamurai.Core;
 using Lykke.Service.EthereumSamurai.Core.Repositories;
 using Lykke.Service.EthereumSamurai.Core.Settings;
@@ -9,20 +6,19 @@ using Lykke.Service.EthereumSamurai.Models.Blockchain;
 using Lykke.Service.EthereumSamurai.Models.Query;
 using Lykke.Service.EthereumSamurai.MongoDb.Entities;
 using MongoDB.Driver;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
 {
     public class AddressHistoryRepository : IAddressHistoryRepository
     {
-        private readonly IBaseSettings                          _baseSettings;
         private readonly IMongoCollection<AddressHistoryEntity> _collection;
-        private readonly IMongoDatabase                         _database;
-        private readonly IMapper                                _mapper;
+        private readonly IMapper _mapper;
 
         public AddressHistoryRepository(IBaseSettings baseSettings, IMongoDatabase database, IMapper mapper)
         {
-            _baseSettings = baseSettings;
-            _database = database;
             _collection = database.GetCollection<AddressHistoryEntity>(Constants.AddressHistoryCollectionName);
 
             _collection.Indexes.CreateMany(new[]
@@ -31,20 +27,22 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                 (
                     Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionHash)
                 ),
-                new CreateIndexModel<AddressHistoryEntity>
+                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Combine
                 (
-                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.BlockNumber)
-                ),
-                new CreateIndexModel<AddressHistoryEntity>
-                (
-                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.From)
-                ),
-                new CreateIndexModel<AddressHistoryEntity>
-                (
-                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.To)
+                        Builders<AddressHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber),
+                        Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionIndex),
+                        Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.MessageIndex))
                 ),
                 new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Combine
                 (
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.From),
+                    Builders<AddressHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber),
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionIndex),
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.MessageIndex))
+                ),
+                new CreateIndexModel<AddressHistoryEntity>(Builders<AddressHistoryEntity>.IndexKeys.Combine
+                (
+                    Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.To),
                     Builders<AddressHistoryEntity>.IndexKeys.Descending(x => x.BlockNumber),
                     Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.TransactionIndex),
                     Builders<AddressHistoryEntity>.IndexKeys.Ascending(x => x.MessageIndex))
@@ -62,7 +60,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
         public async Task<IEnumerable<AddressHistoryModel>> GetAsync(AddressHistoryQuery addressHistoryQuery)
         {
             var filterBuilder = Builders<AddressHistoryEntity>.Filter;
-            var filter        = filterBuilder.Empty;
+            var filter = filterBuilder.Empty;
 
             if (!string.IsNullOrEmpty(addressHistoryQuery.FromAddress))
             {
@@ -77,7 +75,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                     ? filter | filterTo
                     : filter & filterTo;
             }
-            
+
             if (addressHistoryQuery.StartBlock.HasValue)
             {
                 var unixTime = addressHistoryQuery.StartBlock.Value;
@@ -88,7 +86,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             if (addressHistoryQuery.StopBlock.HasValue)
             {
                 var unixTime = addressHistoryQuery.StopBlock.Value;
-                
+
                 filter &= filterBuilder.Lte(x => x.BlockNumber, unixTime);
             }
 
@@ -106,7 +104,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             addressHistoryQuery.Start = addressHistoryQuery.Start ?? 0;
             addressHistoryQuery.Count = addressHistoryQuery.Count.HasValue && addressHistoryQuery.Count != 0
                 ? addressHistoryQuery.Count
-                : (int) await search.CountAsync();
+                : (int)await search.CountAsync();
 
             search = search.Skip(addressHistoryQuery.Start).Limit(addressHistoryQuery.Count);
 
@@ -120,7 +118,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
             {
                 return;
             }
-            
+
             var entities = addressHistoryModels.Select(_mapper.Map<AddressHistoryEntity>);
 
             await _collection.DeleteManyAsync(x => x.BlockNumber == blockNumber);
