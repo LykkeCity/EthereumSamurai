@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Numerics;
-using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Repositories;
+﻿using Lykke.Service.EthereumSamurai.Core.Repositories;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
 using Lykke.Service.EthereumSamurai.Models.Query;
+using System.Collections.Concurrent;
+using System.Linq;
+using System.Numerics;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.EthereumSamurai.Services
 {
