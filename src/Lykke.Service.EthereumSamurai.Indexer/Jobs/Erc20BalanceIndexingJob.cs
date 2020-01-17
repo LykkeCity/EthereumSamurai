@@ -42,6 +42,15 @@ namespace Lykke.Job.EthereumSamurai.Jobs
             {
                 try
                 {
+                    await _logger.WriteInfoAsync
+                    (
+                        nameof(Erc20BalanceIndexingJob),
+                        nameof(RunAsync),
+                        "",
+                        $"Block balances indexation started.",
+                        DateTime.UtcNow
+                    );
+
                     while (!cancellationToken.IsCancellationRequested)
                     {
                         var nextBlockToIndex = await _indexingService.GetNextBlockToIndexAsync(_startFrom);
@@ -78,6 +87,15 @@ namespace Lykke.Job.EthereumSamurai.Jobs
 
                     throw;
                 }
+
+                await _logger.WriteInfoAsync
+                (
+                    nameof(Erc20BalanceIndexingJob),
+                    nameof(RunAsync),
+                    "",
+                    $"Block balances indexation stopped.",
+                    DateTime.UtcNow
+                );
 
             }, cancellationToken).Unwrap();
         }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Lykke.Service.EthereumSamurai.Core.Models;
 using Lykke.Service.EthereumSamurai.Core.Repositories;
 using Lykke.Service.EthereumSamurai.Core.Services;
@@ -81,6 +82,15 @@ namespace Lykke.Job.EthereumSamurai.Settings
             if (_indexerInstanceSettings.IndexBalances)
             {
                 jobs.Add(_erc20BalanceIndexingJobFactory.GetJob(_indexerInstanceSettings.BalancesStartBlock));
+
+                _logger.WriteInfoAsync
+                (
+                    nameof(InitalJobAssigner),
+                    nameof(GetJobs),
+                    $"{_indexerInstanceSettings.IndexBalances}",
+                    $"Index balances job was created.",
+                    DateTime.UtcNow
+                ).Wait();
             }
             
             // Contracts indexer
