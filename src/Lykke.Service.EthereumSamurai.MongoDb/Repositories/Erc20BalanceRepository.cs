@@ -2,9 +2,9 @@
 using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Log;
 using Lykke.Service.EthereumSamurai.Core;
 using Lykke.Service.EthereumSamurai.Core.Repositories;
-using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
 using Lykke.Service.EthereumSamurai.Models.Query;
 using Lykke.Service.EthereumSamurai.MongoDb.Entities;
@@ -16,14 +16,17 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
     {
         private readonly IMongoCollection<Erc20BalanceEntity>        _balanceCollection;
         private readonly IMongoCollection<Erc20BalanceHistoryEntity> _historyCollection;
+        private readonly ILog _log;
         private readonly IMapper                                     _mapper;
 
         public Erc20BalanceRepository(
+            ILog log, 
             IMongoDatabase database,
             IMapper mapper)
         {
             _balanceCollection = database.GetCollection<Erc20BalanceEntity>(Constants.Erc20BalanceCollectionName);
             _historyCollection = database.GetCollection<Erc20BalanceHistoryEntity>(Constants.Erc20BalanceHistoryCollectionName);
+            _log = log.CreateComponentScope(nameof(Erc20BalanceRepository));
             _mapper            = mapper;
 
             _balanceCollection.Indexes.CreateMany(new[]
@@ -147,10 +150,29 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                  : null;
         }
 
-        public async Task SaveForBlockAsync(IEnumerable<Erc20BalanceModel> balances, ulong blockNumber)
+        public async Task SaveForBlockAsync(IReadOnlyCollection<Erc20BalanceModel> balances, ulong blockNumber)
         {
+            var balancesToDeleteCount = await _balanceCollection.CountAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber,
+                    balancesToDeleteCount = balancesToDeleteCount
+                },
+                "balances to delete counted");
+
             // Refresh current balances
             await _balanceCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber
+                },
+                "balances were removed");
 
             Erc20BalanceEntity SetBlockNumberToBalanceEntity(Erc20BalanceEntity entity)
             {
@@ -178,8 +200,35 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                 );
             }));
 
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber
+                },
+                "balances were replaced");
+
+            var historyToDeleteCount = await _historyCollection.CountAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber,
+                    historyToDeleteCount = historyToDeleteCount
+                },
+                "history to delete counted");
+
             // Update balance history
             await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber
+                },
+                "history was removed");
 
             Erc20BalanceHistoryEntity SetBlockNumberToHistoryEntity(Erc20BalanceHistoryEntity entity)
             {
@@ -192,10 +241,18 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                 .Select(_mapper.Map<Erc20BalanceHistoryEntity>)
                 .Select(SetBlockNumberToHistoryEntity)
                 .ToList();
-            
+
             if (historyEntities.Any())
             {
                 await _historyCollection.InsertManyAsync(historyEntities);
+
+                _log.WriteInfo(
+                    nameof(SaveForBlockAsync),
+                    new
+                    {
+                        blockNumber = blockNumber
+                    },
+                    "history was inserted");
             }
         }
     }
