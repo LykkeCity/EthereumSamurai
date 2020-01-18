@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Common.Log;
@@ -152,8 +150,19 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                  : null;
         }
 
-        public async Task SaveForBlockAsync(IEnumerable<Erc20BalanceModel> balances, ulong blockNumber)
+        public async Task SaveForBlockAsync(IReadOnlyCollection<Erc20BalanceModel> balances, ulong blockNumber)
         {
+            var balancesToDeleteCount = await _balanceCollection.CountAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber,
+                    balancesToDeleteCount = balancesToDeleteCount
+                },
+                "balances to delete counted");
+
             // Refresh current balances
             await _balanceCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
 
@@ -198,6 +207,17 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                     blockNumber = blockNumber
                 },
                 "balances were replaced");
+
+            var historyToDeleteCount = await _historyCollection.CountAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber,
+                    historyToDeleteCount = historyToDeleteCount
+                },
+                "history to delete counted");
 
             // Update balance history
             await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
