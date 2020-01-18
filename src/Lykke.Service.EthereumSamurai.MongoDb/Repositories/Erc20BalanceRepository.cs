@@ -154,10 +154,77 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
 
         public async Task SaveForBlockAsync(IEnumerable<Erc20BalanceModel> balances, ulong blockNumber)
         {
-            using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)))
+            // Refresh current balances
+            await _balanceCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber
+                },
+                "balances were removed");
+
+            Erc20BalanceEntity SetBlockNumberToBalanceEntity(Erc20BalanceEntity entity)
             {
-                // Refresh current balances
-                await _balanceCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber, cts.Token);
+                entity.BlockNumber = blockNumber;
+
+                return entity;
+            }
+
+            var balanceEntities = balances
+                .Select(_mapper.Map<Erc20BalanceEntity>)
+                .Select(SetBlockNumberToBalanceEntity)
+                .ToList();
+
+            await Task.WhenAll(balanceEntities.Select(async balanceEntity =>
+            {
+                await _balanceCollection.ReplaceOneAsync
+                (
+                    x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress
+                         && x.ContractAddress == balanceEntity.ContractAddress,
+                    balanceEntity,
+                    new UpdateOptions
+                    {
+                        IsUpsert = true
+                    }
+                );
+            }));
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber
+                },
+                "balances were replaced");
+
+            // Update balance history
+            await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
+
+            _log.WriteInfo(
+                nameof(SaveForBlockAsync),
+                new
+                {
+                    blockNumber = blockNumber
+                },
+                "history was removed");
+
+            Erc20BalanceHistoryEntity SetBlockNumberToHistoryEntity(Erc20BalanceHistoryEntity entity)
+            {
+                entity.BlockNumber = blockNumber;
+
+                return entity;
+            }
+
+            var historyEntities = balances
+                .Select(_mapper.Map<Erc20BalanceHistoryEntity>)
+                .Select(SetBlockNumberToHistoryEntity)
+                .ToList();
+
+            if (historyEntities.Any())
+            {
+                await _historyCollection.InsertManyAsync(historyEntities);
 
                 _log.WriteInfo(
                     nameof(SaveForBlockAsync),
@@ -165,78 +232,7 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
                     {
                         blockNumber = blockNumber
                     },
-                    "balances were removed");
-
-                Erc20BalanceEntity SetBlockNumberToBalanceEntity(Erc20BalanceEntity entity)
-                {
-                    entity.BlockNumber = blockNumber;
-
-                    return entity;
-                }
-
-                var balanceEntities = balances
-                    .Select(_mapper.Map<Erc20BalanceEntity>)
-                    .Select(SetBlockNumberToBalanceEntity)
-                    .ToList();
-
-                await Task.WhenAll(balanceEntities.Select(async balanceEntity =>
-                {
-                    await _balanceCollection.ReplaceOneAsync
-                    (
-                        x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress
-                             && x.ContractAddress == balanceEntity.ContractAddress,
-                        balanceEntity,
-                        new UpdateOptions
-                        {
-                            IsUpsert = true
-                        },
-                        cts.Token
-                    );
-                }));
-
-                _log.WriteInfo(
-                    nameof(SaveForBlockAsync),
-                    new
-                    {
-                        blockNumber = blockNumber
-                    },
-                    "balances were replaced");
-
-                // Update balance history
-                await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber, cts.Token);
-
-                _log.WriteInfo(
-                    nameof(SaveForBlockAsync),
-                    new
-                    {
-                        blockNumber = blockNumber
-                    },
-                    "history was removed");
-
-                Erc20BalanceHistoryEntity SetBlockNumberToHistoryEntity(Erc20BalanceHistoryEntity entity)
-                {
-                    entity.BlockNumber = blockNumber;
-
-                    return entity;
-                }
-
-                var historyEntities = balances
-                    .Select(_mapper.Map<Erc20BalanceHistoryEntity>)
-                    .Select(SetBlockNumberToHistoryEntity)
-                    .ToList();
-
-                if (historyEntities.Any())
-                {
-                    await _historyCollection.InsertManyAsync(historyEntities, cancellationToken: cts.Token);
-
-                    _log.WriteInfo(
-                        nameof(SaveForBlockAsync),
-                        new
-                        {
-                            blockNumber = blockNumber
-                        },
-                        "history was inserted");
-                }
+                    "history was inserted");
             }
         }
     }
