@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using Common.Log;
 using Lykke.Service.EthereumSamurai.Core;
 using Lykke.Service.EthereumSamurai.Core.Repositories;
-using Lykke.Service.EthereumSamurai.Core.Settings;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
 using Lykke.Service.EthereumSamurai.Models.Query;
 using Lykke.Service.EthereumSamurai.MongoDb.Entities;
@@ -16,14 +18,17 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
     {
         private readonly IMongoCollection<Erc20BalanceEntity>        _balanceCollection;
         private readonly IMongoCollection<Erc20BalanceHistoryEntity> _historyCollection;
+        private readonly ILog _log;
         private readonly IMapper                                     _mapper;
 
         public Erc20BalanceRepository(
+            ILog log, 
             IMongoDatabase database,
             IMapper mapper)
         {
             _balanceCollection = database.GetCollection<Erc20BalanceEntity>(Constants.Erc20BalanceCollectionName);
             _historyCollection = database.GetCollection<Erc20BalanceHistoryEntity>(Constants.Erc20BalanceHistoryCollectionName);
+            _log = log.CreateComponentScope(nameof(Erc20BalanceRepository));
             _mapper            = mapper;
 
             _balanceCollection.Indexes.CreateMany(new[]
@@ -149,53 +154,89 @@ namespace Lykke.Service.EthereumSamurai.MongoDb.Repositories
 
         public async Task SaveForBlockAsync(IEnumerable<Erc20BalanceModel> balances, ulong blockNumber)
         {
-            // Refresh current balances
-            await _balanceCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
-
-            Erc20BalanceEntity SetBlockNumberToBalanceEntity(Erc20BalanceEntity entity)
+            using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)))
             {
-                entity.BlockNumber = blockNumber;
+                // Refresh current balances
+                await _balanceCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber, cts.Token);
 
-                return entity;
-            }
-
-            var balanceEntities = balances
-                .Select(_mapper.Map<Erc20BalanceEntity>)
-                .Select(SetBlockNumberToBalanceEntity)
-                .ToList();
-
-            await Task.WhenAll(balanceEntities.Select(async balanceEntity =>
-            {
-                await _balanceCollection.ReplaceOneAsync
-                (
-                    x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress
-                         && x.ContractAddress == balanceEntity.ContractAddress,
-                    balanceEntity,
-                    new UpdateOptions
+                _log.WriteInfo(
+                    nameof(SaveForBlockAsync),
+                    new
                     {
-                        IsUpsert = true
-                    }
-                );
-            }));
+                        blockNumber = blockNumber
+                    },
+                    "balances were removed");
 
-            // Update balance history
-            await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber);
+                Erc20BalanceEntity SetBlockNumberToBalanceEntity(Erc20BalanceEntity entity)
+                {
+                    entity.BlockNumber = blockNumber;
 
-            Erc20BalanceHistoryEntity SetBlockNumberToHistoryEntity(Erc20BalanceHistoryEntity entity)
-            {
-                entity.BlockNumber = blockNumber;
+                    return entity;
+                }
 
-                return entity;
-            }
+                var balanceEntities = balances
+                    .Select(_mapper.Map<Erc20BalanceEntity>)
+                    .Select(SetBlockNumberToBalanceEntity)
+                    .ToList();
 
-            var historyEntities = balances
-                .Select(_mapper.Map<Erc20BalanceHistoryEntity>)
-                .Select(SetBlockNumberToHistoryEntity)
-                .ToList();
-            
-            if (historyEntities.Any())
-            {
-                await _historyCollection.InsertManyAsync(historyEntities);
+                await Task.WhenAll(balanceEntities.Select(async balanceEntity =>
+                {
+                    await _balanceCollection.ReplaceOneAsync
+                    (
+                        x => x.AssetHolderAddress == balanceEntity.AssetHolderAddress
+                             && x.ContractAddress == balanceEntity.ContractAddress,
+                        balanceEntity,
+                        new UpdateOptions
+                        {
+                            IsUpsert = true
+                        },
+                        cts.Token
+                    );
+                }));
+
+                _log.WriteInfo(
+                    nameof(SaveForBlockAsync),
+                    new
+                    {
+                        blockNumber = blockNumber
+                    },
+                    "balances were replaced");
+
+                // Update balance history
+                await _historyCollection.DeleteManyAsync(x => x.BlockNumber >= blockNumber, cts.Token);
+
+                _log.WriteInfo(
+                    nameof(SaveForBlockAsync),
+                    new
+                    {
+                        blockNumber = blockNumber
+                    },
+                    "history was removed");
+
+                Erc20BalanceHistoryEntity SetBlockNumberToHistoryEntity(Erc20BalanceHistoryEntity entity)
+                {
+                    entity.BlockNumber = blockNumber;
+
+                    return entity;
+                }
+
+                var historyEntities = balances
+                    .Select(_mapper.Map<Erc20BalanceHistoryEntity>)
+                    .Select(SetBlockNumberToHistoryEntity)
+                    .ToList();
+
+                if (historyEntities.Any())
+                {
+                    await _historyCollection.InsertManyAsync(historyEntities, cancellationToken: cts.Token);
+
+                    _log.WriteInfo(
+                        nameof(SaveForBlockAsync),
+                        new
+                        {
+                            blockNumber = blockNumber
+                        },
+                        "history was inserted");
+                }
             }
         }
     }
