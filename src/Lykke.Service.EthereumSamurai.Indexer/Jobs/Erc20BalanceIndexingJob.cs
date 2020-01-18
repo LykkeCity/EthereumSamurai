@@ -55,6 +55,15 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     {
                         var nextBlockToIndex = await _indexingService.GetNextBlockToIndexAsync(_startFrom);
 
+                        await _logger.WriteInfoAsync
+                        (
+                            nameof(Erc20BalanceIndexingJob),
+                            nameof(RunAsync),
+                            $"{nextBlockToIndex?.ToString() ?? "No block to index"}",
+                            $"Received next block to index.",
+                            DateTime.UtcNow
+                        );
+
                         if (nextBlockToIndex.HasValue)
                         {
                             await _indexingService.IndexBlockAsync(nextBlockToIndex.Value, Version);
@@ -70,6 +79,14 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                         }
                         else
                         {
+                            await _logger.WriteInfoAsync
+                            (
+                                nameof(Erc20BalanceIndexingJob),
+                                nameof(RunAsync),
+                                "No block for balance indexation waiting for 10 sec.",
+                                $"Indexed balances of block.",
+                                DateTime.UtcNow
+                            );
                             await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
                         }
                     }
@@ -80,7 +97,7 @@ namespace Lykke.Job.EthereumSamurai.Jobs
                     (
                         nameof(Erc20BalanceIndexingJob),
                         nameof(RunAsync),
-                        "Indexing failed",
+                        "Balance indexing failed",
                         e,
                         DateTime.UtcNow
                     );
