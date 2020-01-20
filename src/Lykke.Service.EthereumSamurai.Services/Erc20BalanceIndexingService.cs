@@ -6,13 +6,11 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Common.Log;
 
 namespace Lykke.Service.EthereumSamurai.Services
 {
     public class Erc20BalanceIndexingService : IErc20BalanceIndexingService
     {
-        private readonly ILog _log;
         private readonly IErc20BalanceRepository           _balanceRepository;
         private readonly IBlockIndexationHistoryRepository _blockIndexationHistoryRepository;
         private readonly IErc20TransferHistoryRepository   _transferHistoryRepository;
@@ -20,13 +18,11 @@ namespace Lykke.Service.EthereumSamurai.Services
 
 
         public Erc20BalanceIndexingService(
-            ILog log, 
             IErc20BalanceRepository           balanceRepository,
             IBlockIndexationHistoryRepository blockIndexationHistoryRepository,
             IErc20TransferHistoryRepository   transferHistoryRepository,
             IIndexingRabbitNotifier           indexingRabbitNotifier)
         {
-            _log = log.CreateComponentScope(nameof(Erc20BalanceIndexingService));
             _balanceRepository                = balanceRepository;
             _blockIndexationHistoryRepository = blockIndexationHistoryRepository;
             _transferHistoryRepository        = transferHistoryRepository;
@@ -45,19 +41,10 @@ namespace Lykke.Service.EthereumSamurai.Services
             {
                 BlockNumber = blockNumber
             })).ToArray();
-
-            _log.WriteInfo(
-                nameof(IndexBlockAsync),
-                new
-                {
-                    blockNumber = blockNumber,
-                    blockTransfersCount = blockTransfers.Length
-                },
-                "blockTransfers read");
             
             var deposits       = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.To,   TransferAmount = x.TransferAmount });
             var withdrawals    = blockTransfers.Select(x => new { x.ContractAddress, AssetHolder = x.From, TransferAmount = x.TransferAmount * -1 });
-            var balanceChanges = (from transfer in deposits.Concat(withdrawals)
+            var balanceChanges = from transfer in deposits.Concat(withdrawals)
                                  group transfer
                                     by new { transfer.ContractAddress, transfer.AssetHolder }
                                   into g
@@ -67,16 +54,7 @@ namespace Lykke.Service.EthereumSamurai.Services
                                      ContractAddress    = g.Key.ContractAddress,
                                      BalanceChange      = g.Select(x => x.TransferAmount).Aggregate((a, b) => a + b).ToString(),
                                      BlockNumber        = blockNumber
-                                 }).ToArray();
-
-            _log.WriteInfo(
-                nameof(IndexBlockAsync),
-                new
-                {
-                    blockNumber = blockNumber,
-                    balanceChangesCount = balanceChanges.Length
-                },
-                "balanceChanges evaluated");
+                                 };
 
             var newBalanceHistories = new ConcurrentBag<Erc20BalanceModel>();
             
@@ -101,49 +79,16 @@ namespace Lykke.Service.EthereumSamurai.Services
 
                 newBalanceHistories.Add(balanceHistory);
             }));
-
-            _log.WriteInfo(
-                nameof(IndexBlockAsync),
-                new
-                {
-                    blockNumber = blockNumber,
-                    newBalanceHistoriesCount = newBalanceHistories.Count
-                },
-                "newBalanceHistories evaluated");
             
             await _balanceRepository.SaveForBlockAsync(newBalanceHistories, blockNumber);
-
-            _log.WriteInfo(
-                nameof(IndexBlockAsync),
-                new
-                {
-                    blockNumber = blockNumber
-                },
-                "newBalanceHistories saved");
             
             await _indexingRabbitNotifier.NotifyAsync(new Lykke.Service.EthereumSamurai.Models.Messages.RabbitIndexingMessage()
             {
                 BlockNumber         = blockNumber,
                 IndexingMessageType = EthereumSamurai.Models.Messages.IndexingMessageType.ErcBalances
             });
-
-            _log.WriteInfo(
-                nameof(IndexBlockAsync),
-                new
-                {
-                    blockNumber = blockNumber
-                },
-                "RabbitIndexingMessage sent");
             
             await _blockIndexationHistoryRepository.MarkBalancesAsIndexed(blockNumber, jobVersion);
-
-            _log.WriteInfo(
-                nameof(IndexBlockAsync),
-                new
-                {
-                    blockNumber = blockNumber
-                },
-                "balances marked as indexed");
         }
     }
 }
