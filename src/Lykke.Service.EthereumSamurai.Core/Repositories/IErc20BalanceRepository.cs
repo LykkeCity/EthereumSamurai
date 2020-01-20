@@ -11,6 +11,6 @@ namespace Lykke.Service.EthereumSamurai.Core.Repositories
 
         Task<Erc20BalanceModel> GetPreviousAsync(string assetHolderAddress, string contractAddress, ulong currentBlockNumber);
 
-        Task SaveForBlockAsync(IReadOnlyCollection<Erc20BalanceModel> balances, ulong blockNumber);
+        Task SaveForBlockAsync(IEnumerable<Erc20BalanceModel> balances, ulong blockNumber);
     }
 }
