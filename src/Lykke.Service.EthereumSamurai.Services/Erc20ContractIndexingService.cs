@@ -7,6 +7,7 @@ using Lykke.Service.EthereumSamurai.Core.Services.Erc20;
 using Lykke.Service.EthereumSamurai.Models.Blockchain;
 using Nethereum.Contracts;
 using Lykke.Service.EthereumSamurai.Core.Settings;
+using Nethereum.Web3;
 
 namespace Lykke.Service.EthereumSamurai.Services
 {
