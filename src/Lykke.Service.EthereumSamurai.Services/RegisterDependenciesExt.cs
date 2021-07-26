@@ -47,14 +47,14 @@ namespace Lykke.Service.EthereumSamurai.Services
             {
                 var web3 = provider.GetService<IWeb3>();
 
-                return new DebugApiService(web3.Client);
+                return new Nethereum.Geth.DebugApiService(web3.Client);
             });
 
             collection.AddSingleton<IWeb3>((provider) =>
             {
                 var web3 = provider.GetService<Web3>();
 
-                return new Web3Decorator(web3);
+                return web3;
             });
 
             return collection;
