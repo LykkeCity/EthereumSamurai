@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Lykke.Service.EthereumSamurai.Core.Eip1559;
 using Lykke.Service.EthereumSamurai.Core.Exceptions;
 using Lykke.Service.EthereumSamurai.Core.Services;
 using Lykke.Service.EthereumSamurai.Models;
@@ -22,7 +21,6 @@ namespace Lykke.Service.EthereumSamurai.Services
     {
         private readonly IWeb3 _client;
         private readonly IDebug _debug;
-        private Eip1559EthGetBlockWithTransactionsByNumber _blockGetter;
 
         public RpcBlockReader(
             IWeb3 web3,
@@ -30,7 +28,6 @@ namespace Lykke.Service.EthereumSamurai.Services
         {
             _client = web3;
             _debug  = debug;
-            _blockGetter = new Eip1559EthGetBlockWithTransactionsByNumber(web3.Client);
         }
 
         //just the tip
@@ -46,7 +43,7 @@ namespace Lykke.Service.EthereumSamurai.Services
         /// <returns>BlockContent</returns>
         public async Task<BlockContent> ReadBlockAsync(BigInteger blockHeight)
         {
-            var block = await _blockGetter
+            var block = await _client.Eth.Blocks.GetBlockWithTransactionsByNumber
                 .SendRequestAsync(new HexBigInteger(blockHeight));
 
             var logs = new EthGetLogs(_client.Client);
