@@ -1,12 +1,7 @@
-﻿using Lykke.Service.EthereumSamurai.Core.Repositories;
-using Lykke.Service.EthereumSamurai.Core.Services;
-using Lykke.Service.EthereumSamurai.Models.Blockchain;
-using Lykke.Service.EthereumSamurai.Models.Query;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Lykke.Service.EthereumSamurai.Core.Services;
+using Nethereum.Web3;
 using System.Numerics;
+using System.Threading.Tasks;
 
 namespace Lykke.Service.EthereumSamurai.Services
 {
